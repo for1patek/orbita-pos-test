@@ -258,6 +258,22 @@
         .pedido-total { font-family: 'Bebas Neue', sans-serif; font-size: 1.1rem; color: var(--green); }
         .edit-form { background: var(--bg); border: 1px solid var(--accent); border-radius: 12px; padding: 14px; margin-top: 10px; display: none; }
         .edit-form.open { display: block; }
+        /* Modal agregar producto */
+        .modal-agregar-overlay { display:none; position:fixed; inset:0; background:rgba(0,0,0,0.7); z-index:9999; align-items:center; justify-content:center; padding:16px; }
+        .modal-agregar-overlay.open { display:flex; }
+        .modal-agregar-box { background:var(--card); border-radius:18px; padding:24px 20px; width:100%; max-width:420px; border:1px solid var(--accent); }
+        .modal-agregar-box h3 { margin:0 0 18px; font-size:1.1rem; color:var(--accent); }
+        .mag-row { margin-bottom:13px; }
+        .mag-row label { display:block; font-size:0.8rem; color:var(--muted); margin-bottom:5px; font-weight:600; text-transform:uppercase; letter-spacing:.04em; }
+        .mag-row input, .mag-row select { width:100%; padding:10px 12px; border-radius:10px; border:1px solid var(--border2); background:var(--bg); color:var(--text); font-size:0.95rem; box-sizing:border-box; }
+        .canal-btns { display:flex; gap:8px; flex-wrap:wrap; }
+        .canal-btn { flex:1; min-width:90px; padding:9px 6px; border-radius:10px; border:1px solid var(--border2); background:var(--bg); color:var(--muted); font-size:0.82rem; cursor:pointer; text-align:center; transition:all .15s; }
+        .canal-btn.active { border-color:var(--accent); background:var(--accent); color:var(--dark); font-weight:700; }
+        .mag-footer { display:flex; gap:10px; margin-top:18px; }
+        .mag-footer button { flex:1; padding:11px; border-radius:11px; border:none; cursor:pointer; font-weight:700; font-size:0.9rem; }
+        .mag-btn-cancel { background:var(--border2); color:var(--muted); }
+        .mag-btn-add { background:var(--accent); color:var(--dark); }
+        .mag-error { color:#f87171; font-size:0.82rem; margin-top:8px; display:none; }
         .edit-row { display: flex; gap: 8px; align-items: center; margin-bottom: 10px; }
         .edit-row label { font-size: 0.8rem; color: var(--muted); min-width: 60px; }
         .edit-row input { flex: 1; background: var(--surface); border: 1px solid var(--border2); border-radius: 8px; padding: 8px 10px; color: var(--text); font-family: 'DM Sans', sans-serif; font-size: 0.9rem; outline: none; margin-bottom: 0; }
@@ -2180,6 +2196,7 @@
                                 <div class="edit-row"><label>Nombre</label><input type="text" id="edit-nombre-${p.id}" value="${escHtml(p.nombre)}"></div>
                                 <div class="edit-row"><label>Precio venta</label><input type="number" id="edit-precio-${p.id}" value="${p.precio}" step="100"></div>
                                 <div class="edit-row"><label>Costo unitario</label><input type="number" id="edit-costo-${p.id}" value="${Number(p.costo)||0}" step="100" min="0"></div>
+                                <div class="edit-row"><label>Canal</label><select id="edit-canal-${p.id}" style="width:100%;padding:8px 10px;border-radius:8px;border:1px solid var(--border2);background:var(--bg);color:var(--text);"><option value="ambos" ${(p.canal||'ambos')==='ambos'?'selected':''}>🌐 Web y POS</option><option value="web" ${p.canal==='web'?'selected':''}>💻 Solo web</option><option value="pos" ${p.canal==='pos'?'selected':''}>🖥️ Solo POS</option></select></div>
                                 ${stockHtml}
                                 <button class="btn-sm btn-fire" style="background:var(--accent);color:var(--dark);width:100%;padding:9px;margin-top:4px;" onclick="guardarProductoF('${p.id}',${i})">💾 GUARDAR</button>
                             </div>
@@ -2213,12 +2230,13 @@
         const n  = document.getElementById('edit-nombre-'+id).value.trim();
         const pr = parseInt(document.getElementById('edit-precio-'+id).value);
         const co = parseInt(document.getElementById('edit-costo-'+id).value) || 0;
+        const canal = document.getElementById('edit-canal-'+id)?.value || 'ambos';
         if (!n||isNaN(pr)||pr<0||co<0) { alert('Datos inválidos'); return; }
         const papaIdx = PAPAS_TAMANIOS.findIndex(p=>p.id===id);
         if (papaIdx>=0) {
             PAPAS_TAMANIOS[papaIdx].nombre=n; PAPAS_TAMANIOS[papaIdx].precio=pr; PAPAS_TAMANIOS[papaIdx].costo=co;
         }
-        else { const pi=productos.findIndex(p=>p.id===id); if(pi>=0){productos[pi].nombre=n;productos[pi].precio=pr;productos[pi].costo=co;} }
+        else { const pi=productos.findIndex(p=>p.id===id); if(pi>=0){productos[pi].nombre=n;productos[pi].precio=pr;productos[pi].costo=co;productos[pi].canal=canal;} }
         renderMenu(); renderProductosAdmin();
         persistirCatalogoFuente();
     }
@@ -2241,16 +2259,38 @@
     }
 
     function abrirAgregarProductoFuente() {
-        const nombre = prompt('Nombre del producto:');
-        if (!nombre || !nombre.trim()) return;
-        const precioStr = prompt('Precio (CLP, sin puntos):', '0');
-        const precio = parseInt(precioStr, 10);
-        if (isNaN(precio) || precio < 0) { alert('Precio inválido.'); return; }
-        const cat = prompt('Categoría (sandwich, completo, extra, jugo, bebida, agua):', 'sandwich') || 'sandwich';
+        document.getElementById('ag-fuente-nombre').value = '';
+        document.getElementById('ag-fuente-desc').value = '';
+        document.getElementById('ag-fuente-precio').value = '';
+        document.getElementById('ag-fuente-costo').value = '';
+        document.getElementById('ag-fuente-cat').value = 'sandwich';
+        document.querySelectorAll('#modal-agregar-fuente .canal-btn').forEach(b => b.classList.toggle('active', b.dataset.canal === 'ambos'));
+        document.getElementById('err-agregar-fuente').style.display = 'none';
+        document.getElementById('modal-agregar-fuente').classList.add('open');
+    }
+    function cerrarModalAgregarFuente() {
+        document.getElementById('modal-agregar-fuente').classList.remove('open');
+    }
+    function confirmarAgregarFuente() {
+        const nombre = document.getElementById('ag-fuente-nombre').value.trim();
+        const desc   = document.getElementById('ag-fuente-desc').value.trim();
+        const cat    = document.getElementById('ag-fuente-cat').value;
+        const precio = parseInt(document.getElementById('ag-fuente-precio').value) || 0;
+        const costo  = parseInt(document.getElementById('ag-fuente-costo').value) || 0;
+        const canal  = document.querySelector('#modal-agregar-fuente .canal-btn.active')?.dataset.canal || 'ambos';
+        const errEl  = document.getElementById('err-agregar-fuente');
+        if (!nombre) { errEl.textContent = 'El nombre es obligatorio.'; errEl.style.display='block'; return; }
+        if (precio < 0 || costo < 0) { errEl.textContent = 'Precio y costo deben ser 0 o más.'; errEl.style.display='block'; return; }
+        errEl.style.display = 'none';
         const id = 'p_' + Date.now();
-        productos.push({ id, nombre: nombre.trim(), precio, activo: true, cat, desc: '', bebida: false });
+        productos.push({ id, nombre, precio, costo, activo: true, cat, desc, canal, bebida: false });
         renderMenu(); renderProductosAdmin();
         persistirCatalogoFuente();
+        cerrarModalAgregarFuente();
+    }
+    function selCanalF(btn, modalId) {
+        document.querySelectorAll('#' + modalId + ' .canal-btn').forEach(b => b.classList.remove('active'));
+        btn.classList.add('active');
     }
 
     // Helpers para compatibilidad: BEBIDAS puede contener strings u objetos {nombre, activo}.
@@ -2634,5 +2674,52 @@
 </script>
 <script src="./orbita-pago-flow.js"></script>
 <script src="./orbita-pago-rapido.js"></script>
+
+  <!-- Modal agregar producto fuente -->
+  <div class="modal-agregar-overlay" id="modal-agregar-fuente">
+    <div class="modal-agregar-box">
+      <h3>+ Agregar producto</h3>
+      <div class="mag-row">
+        <label>Nombre *</label>
+        <input type="text" id="ag-fuente-nombre" placeholder="Ej: Completo Italiano">
+      </div>
+      <div class="mag-row">
+        <label>Descripción (opcional)</label>
+        <input type="text" id="ag-fuente-desc" placeholder="Ej: Con papas + bebida">
+      </div>
+      <div class="mag-row">
+        <label>Categoría *</label>
+        <select id="ag-fuente-cat">
+          <option value="sandwich">🥪 Sándwich</option>
+          <option value="completo">🌭 Completo</option>
+          <option value="extra">➕ Extra</option>
+          <option value="jugo">🥤 Jugo</option>
+          <option value="bebida">🥤 Bebida</option>
+          <option value="agua">💧 Agua</option>
+        </select>
+      </div>
+      <div class="mag-row">
+        <label>Precio venta (CLP)</label>
+        <input type="number" id="ag-fuente-precio" placeholder="0" min="0" step="100">
+      </div>
+      <div class="mag-row">
+        <label>Costo unitario (CLP)</label>
+        <input type="number" id="ag-fuente-costo" placeholder="0" min="0" step="100">
+      </div>
+      <div class="mag-row">
+        <label>Disponible en</label>
+        <div class="canal-btns">
+          <button class="canal-btn active" data-canal="ambos" onclick="selCanalF(this,'modal-agregar-fuente')">🌐 Web y POS</button>
+          <button class="canal-btn" data-canal="web" onclick="selCanalF(this,'modal-agregar-fuente')">💻 Solo web</button>
+          <button class="canal-btn" data-canal="pos" onclick="selCanalF(this,'modal-agregar-fuente')">🖥️ Solo POS</button>
+        </div>
+      </div>
+      <div class="mag-error" id="err-agregar-fuente"></div>
+      <div class="mag-footer">
+        <button class="mag-btn-cancel" onclick="cerrarModalAgregarFuente()">Cancelar</button>
+        <button class="mag-btn-add" onclick="confirmarAgregarFuente()">+ AGREGAR</button>
+      </div>
+    </div>
+  </div>
 </body>
 </html>
