@@ -140,6 +140,22 @@
 
         .edit-form { background: var(--black); border: 1px solid var(--fire); border-radius: 12px; padding: 14px; margin-top: 10px; display: none; }
         .edit-form.open { display: block; }
+        /* Modal agregar producto */
+        .modal-agregar-overlay { display:none; position:fixed; inset:0; background:rgba(0,0,0,0.7); z-index:9999; align-items:center; justify-content:center; padding:16px; }
+        .modal-agregar-overlay.open { display:flex; }
+        .modal-agregar-box { background:var(--card,#1a1a1a); border-radius:18px; padding:24px 20px; width:100%; max-width:420px; border:1px solid var(--fire); }
+        .modal-agregar-box h3 { margin:0 0 18px; font-size:1.1rem; color:var(--fire); }
+        .mag-row { margin-bottom:13px; }
+        .mag-row label { display:block; font-size:0.8rem; color:var(--muted,#888); margin-bottom:5px; font-weight:600; text-transform:uppercase; letter-spacing:.04em; }
+        .mag-row input, .mag-row select { width:100%; padding:10px 12px; border-radius:10px; border:1px solid var(--border2,#333); background:var(--black,#111); color:var(--white,#fff); font-size:0.95rem; box-sizing:border-box; }
+        .canal-btns { display:flex; gap:8px; flex-wrap:wrap; }
+        .canal-btn { flex:1; min-width:90px; padding:9px 6px; border-radius:10px; border:1px solid var(--border2,#333); background:var(--black,#111); color:var(--muted,#888); font-size:0.82rem; cursor:pointer; text-align:center; transition:all .15s; }
+        .canal-btn.active { border-color:var(--fire); background:var(--fire); color:#fff; font-weight:700; }
+        .mag-footer { display:flex; gap:10px; margin-top:18px; }
+        .mag-footer button { flex:1; padding:11px; border-radius:11px; border:none; cursor:pointer; font-weight:700; font-size:0.9rem; }
+        .mag-btn-cancel { background:var(--border2,#333); color:var(--muted,#888); }
+        .mag-btn-add { background:var(--fire); color:#fff; }
+        .mag-error { color:#f87171; font-size:0.82rem; margin-top:8px; display:none; }
         .edit-row { display: flex; gap: 8px; align-items: center; margin-bottom: 10px; }
         .edit-row label { font-size: 0.8rem; color: var(--muted); min-width: 60px; }
         .edit-row input { flex: 1; background: var(--surface); border: 1px solid var(--border); border-radius: 8px; padding: 8px 10px; color: var(--text); font-family: 'DM Sans', sans-serif; font-size: 0.9rem; outline: none; margin-bottom: 0; }
@@ -1459,6 +1475,10 @@
                                     <label>Costo unitario</label>
                                     <input type="number" id="edit-costo-${p.id}" value="${Number(p.costo)||0}" step="100" min="0">
                                 </div>
+                                <div class="edit-row">
+                                    <label>Canal</label>
+                                    <select id="edit-canal-${p.id}" style="width:100%;padding:8px 10px;border-radius:8px;border:1px solid var(--border2,#333);background:var(--black,#111);color:var(--white,#fff);"><option value="ambos" ${(p.canal||'ambos')==='ambos'?'selected':''}>🌐 Web y POS</option><option value="web" ${p.canal==='web'?'selected':''}>💻 Solo web</option><option value="pos" ${p.canal==='pos'?'selected':''}>🖥️ Solo POS</option></select>
+                                </div>
                                 <button class="btn-sm btn-fire" style="width:100%;padding:9px;margin-top:4px;" onclick="guardarProducto(${idx})">💾 GUARDAR</button>
                             </div>
                         </div>
@@ -1485,10 +1505,12 @@
         const nuevoNombre = document.getElementById('edit-nombre-' + p.id).value.trim();
         const nuevoPrecio = parseInt(document.getElementById('edit-precio-' + p.id).value);
         const nuevoCosto = parseInt(document.getElementById('edit-costo-' + p.id).value) || 0;
+        const canal = document.getElementById('edit-canal-' + p.id)?.value || 'ambos';
         if (!nuevoNombre || isNaN(nuevoPrecio) || nuevoPrecio < 0 || nuevoCosto < 0) { alert('Datos inválidos'); return; }
         productos[i].nombre = nuevoNombre;
         productos[i].precio = nuevoPrecio;
         productos[i].costo = nuevoCosto;
+        productos[i].canal = canal;
         renderMenu();
         renderProductosAdmin();
         persistirCatalogoHandroll();
@@ -1505,17 +1527,39 @@
     }
 
     function abrirAgregarProducto() {
-        const nombre = prompt('Nombre del producto:');
-        if (!nombre || !nombre.trim()) return;
-        const precioStr = prompt('Precio (CLP, sin puntos):', '0');
-        const precio = parseInt(precioStr, 10);
-        if (isNaN(precio) || precio < 0) { alert('Precio inválido.'); return; }
-        const categoria = prompt('Categoría (handroll, jugo, bebida, agua):', 'handroll') || 'handroll';
+        document.getElementById('ag-hr-nombre').value = '';
+        document.getElementById('ag-hr-desc').value = '';
+        document.getElementById('ag-hr-precio').value = '';
+        document.getElementById('ag-hr-costo').value = '';
+        document.getElementById('ag-hr-cat').value = 'handroll';
+        document.querySelectorAll('#modal-agregar-handroll .canal-btn').forEach(b => b.classList.toggle('active', b.dataset.canal === 'ambos'));
+        document.getElementById('err-agregar-handroll').style.display = 'none';
+        document.getElementById('modal-agregar-handroll').classList.add('open');
+    }
+    function cerrarModalAgregarHR() {
+        document.getElementById('modal-agregar-handroll').classList.remove('open');
+    }
+    function confirmarAgregarHR() {
+        const nombre = document.getElementById('ag-hr-nombre').value.trim();
+        const desc   = document.getElementById('ag-hr-desc').value.trim();
+        const cat    = document.getElementById('ag-hr-cat').value;
+        const precio = parseInt(document.getElementById('ag-hr-precio').value) || 0;
+        const costo  = parseInt(document.getElementById('ag-hr-costo').value) || 0;
+        const canal  = document.querySelector('#modal-agregar-handroll .canal-btn.active')?.dataset.canal || 'ambos';
+        const errEl  = document.getElementById('err-agregar-handroll');
+        if (!nombre) { errEl.textContent = 'El nombre es obligatorio.'; errEl.style.display='block'; return; }
+        if (precio < 0 || costo < 0) { errEl.textContent = 'Precio y costo deben ser 0 o más.'; errEl.style.display='block'; return; }
+        errEl.style.display = 'none';
         const id = 'p_' + Date.now();
-        productos.push({ id, nombre: nombre.trim(), precio, activo: true, categoria });
+        productos.push({ id, nombre, precio, costo, activo: true, categoria: cat, desc, canal });
         renderMenu();
         renderProductosAdmin();
         persistirCatalogoHandroll();
+        cerrarModalAgregarHR();
+    }
+    function selCanalHR(btn, modalId) {
+        document.querySelectorAll('#' + modalId + ' .canal-btn').forEach(b => b.classList.remove('active'));
+        btn.classList.add('active');
     }
 
     // ── RESEÑAS ADMIN ──
@@ -1659,5 +1703,50 @@
 </script>
 <script src="./orbita-pago-flow.js"></script>
 <script src="./orbita-pago-rapido.js"></script>
+
+  <!-- Modal agregar producto handroll -->
+  <div class="modal-agregar-overlay" id="modal-agregar-handroll">
+    <div class="modal-agregar-box">
+      <h3>+ Agregar producto</h3>
+      <div class="mag-row">
+        <label>Nombre *</label>
+        <input type="text" id="ag-hr-nombre" placeholder="Ej: Hand Roll Salmón">
+      </div>
+      <div class="mag-row">
+        <label>Descripción (opcional)</label>
+        <input type="text" id="ag-hr-desc" placeholder="Ej: Con palta y pepino">
+      </div>
+      <div class="mag-row">
+        <label>Categoría *</label>
+        <select id="ag-hr-cat">
+          <option value="handroll">🍣 Hand Roll</option>
+          <option value="jugo">🥤 Jugo</option>
+          <option value="bebida">🥤 Bebida</option>
+          <option value="agua">💧 Agua</option>
+        </select>
+      </div>
+      <div class="mag-row">
+        <label>Precio venta (CLP)</label>
+        <input type="number" id="ag-hr-precio" placeholder="0" min="0" step="100">
+      </div>
+      <div class="mag-row">
+        <label>Costo unitario (CLP)</label>
+        <input type="number" id="ag-hr-costo" placeholder="0" min="0" step="100">
+      </div>
+      <div class="mag-row">
+        <label>Disponible en</label>
+        <div class="canal-btns">
+          <button class="canal-btn active" data-canal="ambos" onclick="selCanalHR(this,'modal-agregar-handroll')">🌐 Web y POS</button>
+          <button class="canal-btn" data-canal="web" onclick="selCanalHR(this,'modal-agregar-handroll')">💻 Solo web</button>
+          <button class="canal-btn" data-canal="pos" onclick="selCanalHR(this,'modal-agregar-handroll')">🖥️ Solo POS</button>
+        </div>
+      </div>
+      <div class="mag-error" id="err-agregar-handroll"></div>
+      <div class="mag-footer">
+        <button class="mag-btn-cancel" onclick="cerrarModalAgregarHR()">Cancelar</button>
+        <button class="mag-btn-add" onclick="confirmarAgregarHR()">+ AGREGAR</button>
+      </div>
+    </div>
+  </div>
 </body>
 </html>
