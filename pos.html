@@ -1,0 +1,370 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>POS · Órbita 300</title>
+    <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>🛒</text></svg>">
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link href="https://fonts.googleapis.com/css2?family=Bebas+Neue&family=DM+Sans:wght@300;400;500;700&display=swap" rel="stylesheet">
+    <style>
+        :root {
+            --primary:  #8B1A1A;
+            --accent:   #A0522D;
+            --gold:     #C4922A;
+            --bg:       #0f0f0f;
+            --card:     #1a1a1a;
+            --border:   #2e2e2e;
+            --text:     #f0f0f0;
+            --muted:    #888;
+            --surface:  #222;
+            --green:    #22c55e;
+            --red:      #ef4444;
+            --yellow:   #f59e0b;
+            --blue:     #3b82f6;
+        }
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        body { background: var(--bg); color: var(--text); font-family: 'DM Sans', sans-serif; height: 100dvh; overflow: hidden; }
+
+        /* ── LOGIN ── */
+        #pantalla-login {
+            display: flex; flex-direction: column; align-items: center; justify-content: center;
+            height: 100dvh; gap: 24px; padding: 20px;
+        }
+        .login-logo { font-family: 'Bebas Neue', sans-serif; font-size: 2.8rem; color: var(--primary); letter-spacing: 3px; }
+        .login-sub  { font-size: 0.8rem; letter-spacing: 4px; text-transform: uppercase; color: var(--muted); margin-top: -18px; }
+        .login-card { background: var(--card); border: 1px solid var(--border); border-radius: 16px; padding: 28px 24px; width: 100%; max-width: 360px; }
+        .login-card h2 { font-size: 1rem; font-weight: 700; margin-bottom: 20px; text-align: center; color: var(--muted); letter-spacing: 2px; text-transform: uppercase; }
+        .local-select { display: flex; gap: 10px; margin-bottom: 20px; }
+        .local-btn { flex: 1; padding: 12px 8px; border: 2px solid var(--border); border-radius: 12px; background: var(--surface); color: var(--muted); font-family: 'DM Sans', sans-serif; font-size: 0.9rem; font-weight: 700; cursor: pointer; transition: all 0.2s; }
+        .local-btn.active { border-color: var(--primary); color: var(--text); background: #2a0808; }
+        .usuario-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; margin-bottom: 20px; }
+        .usuario-btn { padding: 14px 8px; border: 1px solid var(--border); border-radius: 12px; background: var(--surface); color: var(--text); font-family: 'DM Sans', sans-serif; font-size: 0.88rem; font-weight: 600; cursor: pointer; transition: all 0.2s; text-align: center; }
+        .usuario-btn:hover { border-color: var(--primary); }
+        .usuario-btn.selected { border-color: var(--gold); background: #2a1e00; }
+        .pin-display { background: var(--surface); border: 1px solid var(--border); border-radius: 12px; padding: 14px; text-align: center; font-size: 1.8rem; letter-spacing: 10px; margin-bottom: 14px; min-height: 58px; color: var(--text); }
+        .pin-grid { display: grid; grid-template-columns: repeat(3,1fr); gap: 10px; }
+        .pin-btn { padding: 18px; border: 1px solid var(--border); border-radius: 12px; background: var(--surface); color: var(--text); font-family: 'Bebas Neue', sans-serif; font-size: 1.5rem; cursor: pointer; transition: all 0.15s; }
+        .pin-btn:hover { background: var(--card); border-color: var(--primary); }
+        .pin-btn.del { color: var(--red); }
+        .pin-btn.enter { background: var(--primary); border-color: var(--primary); color: #fff; }
+        .pin-btn.enter:hover { background: #a01f1f; }
+        .login-error { color: var(--red); font-size: 0.82rem; text-align: center; min-height: 20px; margin-top: -4px; }
+
+        /* ── LAYOUT POS ── */
+        #pantalla-pos { display: none; height: 100dvh; flex-direction: column; }
+        .pos-header { display: flex; align-items: center; justify-content: space-between; padding: 10px 16px; background: var(--card); border-bottom: 1px solid var(--border); flex-shrink: 0; }
+        .pos-header-left { display: flex; align-items: center; gap: 12px; }
+        .pos-titulo { font-family: 'Bebas Neue', sans-serif; font-size: 1.4rem; letter-spacing: 2px; color: var(--primary); }
+        .pos-local-badge { background: var(--surface); border: 1px solid var(--border); border-radius: 20px; padding: 4px 12px; font-size: 0.75rem; font-weight: 700; color: var(--muted); letter-spacing: 1px; text-transform: uppercase; }
+        .pos-usuario-badge { font-size: 0.8rem; color: var(--muted); }
+        .pos-header-right { display: flex; gap: 10px; align-items: center; }
+        .header-btn { padding: 8px 14px; border: 1px solid var(--border); border-radius: 10px; background: var(--surface); color: var(--muted); font-family: 'DM Sans', sans-serif; font-size: 0.8rem; font-weight: 700; cursor: pointer; transition: all 0.2s; }
+        .header-btn:hover { border-color: var(--primary); color: var(--text); }
+        .header-btn.danger { border-color: var(--red); color: var(--red); }
+
+        .pos-body { display: flex; flex: 1; overflow: hidden; }
+
+        /* ── PANEL IZQUIERDO: MENÚ ── */
+        .panel-menu { flex: 1.4; display: flex; flex-direction: column; border-right: 1px solid var(--border); overflow: hidden; }
+        .tabs-locales { display: none; } /* se muestra si hay pedidos web */
+        .cat-tabs { display: flex; gap: 6px; padding: 10px 12px; overflow-x: auto; flex-shrink: 0; border-bottom: 1px solid var(--border); scrollbar-width: none; }
+        .cat-tabs::-webkit-scrollbar { display: none; }
+        .cat-tab { padding: 8px 14px; border: 1px solid var(--border); border-radius: 20px; background: var(--surface); color: var(--muted); font-size: 0.8rem; font-weight: 700; cursor: pointer; white-space: nowrap; transition: all 0.2s; flex-shrink: 0; }
+        .cat-tab.active { background: var(--primary); border-color: var(--primary); color: #fff; }
+        .productos-grid { flex: 1; overflow-y: auto; padding: 12px; display: grid; grid-template-columns: repeat(auto-fill, minmax(140px, 1fr)); gap: 10px; align-content: start; }
+        .producto-card { background: var(--card); border: 1px solid var(--border); border-radius: 14px; padding: 14px 12px; cursor: pointer; transition: all 0.15s; text-align: left; }
+        .producto-card:hover { border-color: var(--primary); transform: translateY(-1px); }
+        .producto-card:active { transform: scale(0.97); }
+        .prod-nombre { font-size: 0.88rem; font-weight: 700; color: var(--text); line-height: 1.3; margin-bottom: 4px; }
+        .prod-desc { font-size: 0.72rem; color: var(--muted); margin-bottom: 8px; line-height: 1.3; }
+        .prod-precio { font-family: 'Bebas Neue', sans-serif; font-size: 1.1rem; color: var(--gold); }
+        .prod-precio.sin-precio { color: var(--red); font-size: 0.75rem; font-family: 'DM Sans', sans-serif; font-weight: 700; }
+
+        /* pedidos web */
+        .pedidos-web-list { flex: 1; overflow-y: auto; padding: 12px; display: flex; flex-direction: column; gap: 10px; }
+        .pedido-web-card { background: var(--card); border: 1px solid var(--border); border-radius: 14px; padding: 14px; }
+        .pedido-web-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 8px; }
+        .pedido-web-nombre { font-weight: 700; font-size: 0.95rem; }
+        .badge-estado { padding: 4px 10px; border-radius: 20px; font-size: 0.72rem; font-weight: 700; text-transform: uppercase; letter-spacing: 1px; }
+        .badge-pagado    { background: #14532d; color: #86efac; }
+        .badge-whatsapp  { background: #1a3a00; color: #a3e635; }
+        .badge-en-camino { background: #1e3a5f; color: #93c5fd; }
+        .badge-pendiente { background: #1e2a1e; color: #86efac; }
+        .pedido-web-items { font-size: 0.82rem; color: var(--muted); margin-bottom: 10px; line-height: 1.6; }
+        .pedido-web-total { font-family: 'Bebas Neue', sans-serif; font-size: 1.2rem; color: var(--gold); margin-bottom: 10px; }
+        .pedido-web-dir { font-size: 0.78rem; color: var(--blue); margin-bottom: 10px; }
+        .pedido-web-actions { display: flex; gap: 8px; }
+        .btn-accion { flex: 1; padding: 10px; border-radius: 10px; border: none; font-family: 'DM Sans', sans-serif; font-size: 0.82rem; font-weight: 700; cursor: pointer; transition: all 0.15s; }
+        .btn-confirmar  { background: var(--green); color: #fff; }
+        .btn-despachar  { background: var(--blue); color: #fff; }
+        .btn-anular-web { background: #2a0808; border: 1px solid var(--red); color: var(--red); }
+
+        /* ── PANEL DERECHO: COMANDA ── */
+        .panel-comanda { width: 320px; flex-shrink: 0; display: flex; flex-direction: column; overflow: hidden; }
+        .comanda-header { padding: 12px 14px; border-bottom: 1px solid var(--border); flex-shrink: 0; }
+        .comanda-titulo { font-family: 'Bebas Neue', sans-serif; font-size: 1.1rem; letter-spacing: 2px; color: var(--muted); margin-bottom: 10px; }
+        .comanda-campos { display: flex; flex-direction: column; gap: 8px; }
+        .campo-row { display: flex; gap: 8px; }
+        .campo-input { flex: 1; background: var(--surface); border: 1px solid var(--border); border-radius: 10px; padding: 10px 12px; color: var(--text); font-family: 'DM Sans', sans-serif; font-size: 0.88rem; outline: none; transition: border-color 0.2s; }
+        .campo-input:focus { border-color: var(--primary); }
+        .campo-input::placeholder { color: var(--muted); }
+        .campo-select { flex: 1; background: var(--surface); border: 1px solid var(--border); border-radius: 10px; padding: 10px 12px; color: var(--text); font-family: 'DM Sans', sans-serif; font-size: 0.88rem; outline: none; cursor: pointer; }
+        .comanda-items { flex: 1; overflow-y: auto; padding: 10px 14px; }
+        .comanda-vacia { color: var(--muted); font-size: 0.85rem; text-align: center; padding: 30px 0; }
+        .comanda-item { display: flex; align-items: center; gap: 10px; padding: 8px 0; border-bottom: 1px solid var(--border); }
+        .item-qty-ctrl { display: flex; align-items: center; gap: 6px; }
+        .qty-btn { width: 26px; height: 26px; border-radius: 50%; border: 1px solid var(--border); background: var(--surface); color: var(--text); font-size: 1rem; cursor: pointer; display: flex; align-items: center; justify-content: center; transition: all 0.15s; }
+        .qty-btn:hover { background: var(--primary); border-color: var(--primary); }
+        .qty-num { font-weight: 700; min-width: 20px; text-align: center; font-size: 0.9rem; }
+        .item-info { flex: 1; min-width: 0; }
+        .item-nombre { font-size: 0.85rem; font-weight: 600; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+        .item-subtotal { font-family: 'Bebas Neue', sans-serif; font-size: 1rem; color: var(--gold); }
+        .comanda-footer { padding: 12px 14px; border-top: 1px solid var(--border); flex-shrink: 0; }
+        .total-row { display: flex; justify-content: space-between; align-items: baseline; margin-bottom: 12px; }
+        .total-label { font-size: 0.85rem; color: var(--muted); font-weight: 700; letter-spacing: 1px; text-transform: uppercase; }
+        .total-monto { font-family: 'Bebas Neue', sans-serif; font-size: 2rem; color: var(--text); }
+        .metodo-pago { display: grid; grid-template-columns: repeat(3,1fr); gap: 8px; margin-bottom: 10px; }
+        .mp-btn { padding: 10px 6px; border: 1px solid var(--border); border-radius: 10px; background: var(--surface); color: var(--muted); font-size: 0.75rem; font-weight: 700; cursor: pointer; text-align: center; transition: all 0.2s; }
+        .mp-btn.active { border-color: var(--gold); color: var(--gold); background: #1a1400; }
+        .comanda-acciones { display: flex; gap: 8px; }
+        .btn-limpiar { padding: 12px; border: 1px solid var(--border); border-radius: 12px; background: var(--surface); color: var(--muted); font-family: 'DM Sans', sans-serif; font-size: 0.82rem; font-weight: 700; cursor: pointer; transition: all 0.2s; }
+        .btn-limpiar:hover { border-color: var(--red); color: var(--red); }
+        .btn-cobrar { flex: 1; padding: 14px; border: none; border-radius: 12px; background: var(--primary); color: #fff; font-family: 'Bebas Neue', sans-serif; font-size: 1.3rem; letter-spacing: 2px; cursor: pointer; transition: all 0.2s; }
+        .btn-cobrar:hover { background: #a01f1f; }
+        .btn-cobrar:disabled { background: var(--surface); color: var(--muted); cursor: not-allowed; }
+
+        /* ── MODAL COBRO ── */
+        .modal-overlay { position: fixed; inset: 0; background: rgba(0,0,0,0.85); display: flex; align-items: center; justify-content: center; z-index: 100; padding: 20px; }
+        .modal-card { background: var(--card); border: 1px solid var(--border); border-radius: 20px; padding: 32px 28px; width: 100%; max-width: 380px; text-align: center; }
+        .modal-titulo { font-family: 'Bebas Neue', sans-serif; font-size: 1.2rem; letter-spacing: 2px; color: var(--muted); margin-bottom: 6px; }
+        .modal-cliente { font-size: 1rem; font-weight: 700; margin-bottom: 20px; }
+        .modal-monto { font-family: 'Bebas Neue', sans-serif; font-size: 4rem; color: var(--text); line-height: 1; margin-bottom: 6px; }
+        .modal-metodo { font-size: 0.85rem; color: var(--muted); margin-bottom: 28px; text-transform: uppercase; letter-spacing: 2px; }
+        .modal-acciones { display: flex; gap: 12px; }
+        .btn-modal-cancel { flex: 1; padding: 14px; border: 1px solid var(--border); border-radius: 12px; background: var(--surface); color: var(--muted); font-family: 'DM Sans', sans-serif; font-size: 0.9rem; font-weight: 700; cursor: pointer; }
+        .btn-modal-confirm { flex: 2; padding: 14px; border: none; border-radius: 12px; background: var(--green); color: #fff; font-family: 'Bebas Neue', sans-serif; font-size: 1.4rem; letter-spacing: 2px; cursor: pointer; }
+        .btn-modal-anular { width: 100%; padding: 14px; border: none; border-radius: 12px; background: #2a0808; border: 1px solid var(--red); color: var(--red); font-family: 'DM Sans', sans-serif; font-size: 0.9rem; font-weight: 700; cursor: pointer; margin-top: 10px; }
+
+        /* ── MODAL CIERRE TURNO ── */
+        .cierre-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; margin: 20px 0; text-align: left; }
+        .cierre-item { background: var(--surface); border-radius: 12px; padding: 14px; }
+        .cierre-label { font-size: 0.72rem; color: var(--muted); text-transform: uppercase; letter-spacing: 1px; margin-bottom: 4px; }
+        .cierre-valor { font-family: 'Bebas Neue', sans-serif; font-size: 1.4rem; color: var(--gold); }
+        .cierre-total { background: var(--primary); border-radius: 12px; padding: 16px; margin-bottom: 16px; }
+        .cierre-total .cierre-label { color: #fecaca; }
+        .cierre-total .cierre-valor { font-size: 2rem; color: #fff; }
+
+        /* ── TOAST ── */
+        .toast { position: fixed; bottom: 24px; left: 50%; transform: translateX(-50%); background: #1a1a1a; border: 1px solid var(--border); border-radius: 12px; padding: 12px 20px; font-size: 0.88rem; font-weight: 600; z-index: 200; opacity: 0; transition: opacity 0.3s; pointer-events: none; }
+        .toast.show { opacity: 1; }
+        .toast.ok  { border-color: var(--green); color: var(--green); }
+        .toast.err { border-color: var(--red);   color: var(--red); }
+
+        /* ── RESPONSIVE ── */
+        @media (max-width: 768px) {
+            .panel-comanda { width: 100%; position: fixed; bottom: 0; left: 0; right: 0; height: 50dvh; border-top: 2px solid var(--border); border-right: none; z-index: 10; }
+            .panel-menu { height: 50dvh; border-right: none; }
+            .pos-body { flex-direction: column; }
+            .productos-grid { grid-template-columns: repeat(auto-fill, minmax(110px, 1fr)); }
+        }
+        @media (max-width: 480px) {
+            .panel-comanda { height: 55dvh; }
+            .panel-menu { height: 45dvh; }
+        }
+
+        .hidden { display: none !important; }
+    </style>
+</head>
+<body>
+
+<!-- ══════════════════════════════════════════════
+     PANTALLA LOGIN
+══════════════════════════════════════════════ -->
+<div id="pantalla-login">
+    <div class="login-logo">ÓRBITA 300</div>
+    <div class="login-sub">Punto de Venta</div>
+
+    <div class="login-card">
+        <h2>Selecciona local</h2>
+        <div class="local-select">
+            <button class="local-btn active" data-local="cafe" onclick="seleccionarLocal('cafe',this)">☕ Café</button>
+            <button class="local-btn" data-local="fuente" onclick="seleccionarLocal('fuente',this)">🌭 Fuente</button>
+        </div>
+
+        <h2>¿Quién eres?</h2>
+        <div class="usuario-grid" id="usuario-grid">
+            <!-- se rellena dinámicamente desde Supabase -->
+            <div style="grid-column:1/-1;text-align:center;color:var(--muted);font-size:0.82rem;padding:10px;">Cargando usuarios…</div>
+        </div>
+
+        <div class="pin-display" id="pin-display">·  ·  ·  ·</div>
+        <div class="login-error" id="login-error"></div>
+        <div class="pin-grid">
+            <button class="pin-btn" onclick="pinDigit('1')">1</button>
+            <button class="pin-btn" onclick="pinDigit('2')">2</button>
+            <button class="pin-btn" onclick="pinDigit('3')">3</button>
+            <button class="pin-btn" onclick="pinDigit('4')">4</button>
+            <button class="pin-btn" onclick="pinDigit('5')">5</button>
+            <button class="pin-btn" onclick="pinDigit('6')">6</button>
+            <button class="pin-btn" onclick="pinDigit('7')">7</button>
+            <button class="pin-btn" onclick="pinDigit('8')">8</button>
+            <button class="pin-btn" onclick="pinDigit('9')">9</button>
+            <button class="pin-btn del" onclick="pinDel()">⌫</button>
+            <button class="pin-btn" onclick="pinDigit('0')">0</button>
+            <button class="pin-btn enter" onclick="pinEnter()">✓</button>
+        </div>
+    </div>
+</div>
+
+<!-- ══════════════════════════════════════════════
+     PANTALLA POS
+══════════════════════════════════════════════ -->
+<div id="pantalla-pos">
+    <!-- Header -->
+    <div class="pos-header">
+        <div class="pos-header-left">
+            <span class="pos-titulo">ÓRBITA POS</span>
+            <span class="pos-local-badge" id="header-local">Café</span>
+            <span class="pos-usuario-badge" id="header-usuario">—</span>
+        </div>
+        <div class="pos-header-right">
+            <button class="header-btn" onclick="mostrarTabPedidos()" id="btn-tab-pedidos">📋 Pedidos web</button>
+            <button class="header-btn" onclick="mostrarTabVenta()" id="btn-tab-venta">🛒 Nueva venta</button>
+            <button class="header-btn" onclick="abrirCierreTurno()">🔒 Cerrar turno</button>
+            <button class="header-btn danger" onclick="cerrarSesionPOS()">Salir</button>
+        </div>
+    </div>
+
+    <!-- Body -->
+    <div class="pos-body">
+
+        <!-- Panel izquierdo -->
+        <div class="panel-menu">
+
+            <!-- Vista: nueva venta -->
+            <div id="vista-venta">
+                <div class="cat-tabs" id="cat-tabs"><!-- dinámico --></div>
+                <div class="productos-grid" id="productos-grid"><!-- dinámico --></div>
+            </div>
+
+            <!-- Vista: pedidos web -->
+            <div id="vista-pedidos" class="hidden">
+                <div class="cat-tabs" style="border-bottom:1px solid var(--border);padding:10px 12px;">
+                    <span style="font-size:0.8rem;color:var(--muted);font-weight:700;letter-spacing:1px;text-transform:uppercase;">Pedidos pendientes del local</span>
+                    <button onclick="cargarPedidosWeb()" style="margin-left:auto;padding:6px 12px;border:1px solid var(--border);border-radius:8px;background:var(--surface);color:var(--muted);font-size:0.75rem;cursor:pointer;">↺ Actualizar</button>
+                </div>
+                <div class="pedidos-web-list" id="pedidos-web-list"><!-- dinámico --></div>
+            </div>
+        </div>
+
+        <!-- Panel derecho: comanda -->
+        <div class="panel-comanda">
+            <div class="comanda-header">
+                <div class="comanda-titulo">COMANDA</div>
+                <div class="comanda-campos">
+                    <input class="campo-input" id="campo-nombre" type="text" placeholder="Nombre del cliente *" autocomplete="off" maxlength="40">
+                    <div class="campo-row">
+                        <select class="campo-select" id="campo-tipo">
+                            <option value="local">🏠 Para el local</option>
+                            <option value="llevar">🛍️ Para llevar</option>
+                        </select>
+                    </div>
+                </div>
+            </div>
+
+            <div class="comanda-items" id="comanda-items">
+                <div class="comanda-vacia">Sin productos</div>
+            </div>
+
+            <div class="comanda-footer">
+                <div class="total-row">
+                    <span class="total-label">Total</span>
+                    <span class="total-monto" id="total-monto">$0</span>
+                </div>
+                <div class="metodo-pago">
+                    <button class="mp-btn active" data-mp="efectivo" onclick="seleccionarPago('efectivo',this)">💵 Efectivo</button>
+                    <button class="mp-btn" data-mp="tarjeta" onclick="seleccionarPago('tarjeta',this)">💳 Tarjeta</button>
+                    <button class="mp-btn" data-mp="transferencia" onclick="seleccionarPago('transferencia',this)">📲 Transfer.</button>
+                </div>
+                <div class="comanda-acciones">
+                    <button class="btn-limpiar" onclick="limpiarComanda()">🗑️ Limpiar</button>
+                    <button class="btn-cobrar" id="btn-cobrar" onclick="abrirModalCobro()">COBRAR</button>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- ══════════════════════════════════════════════
+     MODAL: COBRO
+══════════════════════════════════════════════ -->
+<div class="modal-overlay hidden" id="modal-cobro">
+    <div class="modal-card">
+        <div class="modal-titulo">CONFIRMAR COBRO</div>
+        <div class="modal-cliente" id="modal-cliente-nombre">—</div>
+        <div class="modal-monto" id="modal-monto">$0</div>
+        <div class="modal-metodo" id="modal-metodo">efectivo</div>
+        <div class="modal-acciones">
+            <button class="btn-modal-cancel" onclick="cerrarModalCobro()">Cancelar</button>
+            <button class="btn-modal-confirm" onclick="confirmarCobro()">COBRADO ✓</button>
+        </div>
+    </div>
+</div>
+
+<!-- ══════════════════════════════════════════════
+     MODAL: ANULAR PEDIDO WEB
+══════════════════════════════════════════════ -->
+<div class="modal-overlay hidden" id="modal-anular">
+    <div class="modal-card">
+        <div class="modal-titulo">⚠️ ANULAR PEDIDO</div>
+        <div class="modal-cliente" id="anular-cliente">—</div>
+        <p style="color:var(--muted);font-size:0.85rem;margin-bottom:24px;">Esta acción queda registrada. ¿Confirmas la anulación?</p>
+        <div class="modal-acciones">
+            <button class="btn-modal-cancel" onclick="cerrarModalAnular()">Cancelar</button>
+            <button class="btn-modal-anular" style="flex:2;margin-top:0;" onclick="confirmarAnulacion()">ANULAR</button>
+        </div>
+    </div>
+</div>
+
+<!-- ══════════════════════════════════════════════
+     MODAL: CIERRE DE TURNO
+══════════════════════════════════════════════ -->
+<div class="modal-overlay hidden" id="modal-cierre">
+    <div class="modal-card" style="max-width:440px;">
+        <div class="modal-titulo">🔒 CIERRE DE TURNO</div>
+        <div class="modal-cliente" id="cierre-cajero">—</div>
+        <div class="cierre-total">
+            <div class="cierre-label">Total vendido</div>
+            <div class="cierre-valor" id="cierre-total-monto">$0</div>
+        </div>
+        <div class="cierre-grid">
+            <div class="cierre-item"><div class="cierre-label">💵 Efectivo</div><div class="cierre-valor" id="cierre-efectivo">$0</div></div>
+            <div class="cierre-item"><div class="cierre-label">💳 Tarjeta</div><div class="cierre-valor" id="cierre-tarjeta">$0</div></div>
+            <div class="cierre-item"><div class="cierre-label">📲 Transferencia</div><div class="cierre-valor" id="cierre-transfer">$0</div></div>
+            <div class="cierre-item"><div class="cierre-label">🌐 Online</div><div class="cierre-valor" id="cierre-online">$0</div></div>
+            <div class="cierre-item"><div class="cierre-label">✅ Transacciones</div><div class="cierre-valor" id="cierre-num-trans">0</div></div>
+            <div class="cierre-item"><div class="cierre-label">❌ Anuladas</div><div class="cierre-valor" id="cierre-num-anul">0</div></div>
+        </div>
+        <div class="modal-acciones">
+            <button class="btn-modal-cancel" onclick="cerrarModalCierre()">Volver</button>
+            <button class="btn-modal-confirm" onclick="confirmarCierre()">CERRAR TURNO</button>
+        </div>
+    </div>
+</div>
+
+<!-- ══════════════════════════════════════════════
+     TOAST
+══════════════════════════════════════════════ -->
+<div class="toast" id="toast"></div>
+
+<!-- ══════════════════════════════════════════════
+     SCRIPTS
+══════════════════════════════════════════════ -->
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/dist/umd/supabase.js"></script>
+<script src="./orbita-auth.js"></script>
+<script src="./orbita-productos.js"></script>
+<script src="./orbita-pos.js"></script>
+
+</body>
+</html>

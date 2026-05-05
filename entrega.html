@@ -1,0 +1,185 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Confirmar Entrega · Órbita 300</title>
+    <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>🛵</text></svg>">
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link href="https://fonts.googleapis.com/css2?family=Bebas+Neue&family=DM+Sans:wght@300;400;500;700&display=swap" rel="stylesheet">
+    <style>
+        :root {
+            --primary: #8B1A1A;
+            --green:   #22c55e;
+            --red:     #ef4444;
+            --gold:    #C4922A;
+            --bg:      #0f0f0f;
+            --card:    #1a1a1a;
+            --border:  #2e2e2e;
+            --text:    #f0f0f0;
+            --muted:   #888;
+            --surface: #222;
+        }
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        body { background: var(--bg); color: var(--text); font-family: 'DM Sans', sans-serif; min-height: 100dvh; display: flex; align-items: center; justify-content: center; padding: 20px; }
+
+        .container { width: 100%; max-width: 360px; text-align: center; }
+        .logo { font-family: 'Bebas Neue', sans-serif; font-size: 2rem; color: var(--primary); letter-spacing: 3px; margin-bottom: 4px; }
+        .logo-sub { font-size: 0.75rem; letter-spacing: 3px; text-transform: uppercase; color: var(--muted); margin-bottom: 28px; }
+
+        .card { background: var(--card); border: 1px solid var(--border); border-radius: 20px; padding: 28px 24px; }
+
+        /* Estados */
+        .estado-cargando .icono::after { content: '⏳'; }
+        .estado-listo    .icono::after { content: '🛵'; }
+        .estado-ok       .icono::after { content: '✅'; }
+        .estado-error    .icono::after { content: '❌'; }
+        .estado-ya       .icono::after { content: '✔️'; }
+
+        .icono { font-size: 3.5rem; margin-bottom: 16px; display: block; }
+        .titulo { font-family: 'Bebas Neue', sans-serif; font-size: 1.6rem; letter-spacing: 2px; margin-bottom: 8px; }
+        .subtitulo { font-size: 0.88rem; color: var(--muted); margin-bottom: 20px; line-height: 1.5; }
+
+        .pedido-card { background: var(--surface); border-radius: 14px; padding: 16px; text-align: left; margin-bottom: 20px; }
+        .pedido-row { display: flex; justify-content: space-between; align-items: baseline; margin-bottom: 6px; }
+        .pedido-label { font-size: 0.75rem; color: var(--muted); text-transform: uppercase; letter-spacing: 1px; }
+        .pedido-valor { font-size: 0.9rem; font-weight: 700; }
+        .pedido-dir { font-size: 0.82rem; color: #60a5fa; margin-top: 4px; }
+        .pedido-items { font-size: 0.82rem; color: var(--muted); margin-top: 8px; line-height: 1.6; border-top: 1px solid var(--border); padding-top: 8px; }
+        .pedido-total { font-family: 'Bebas Neue', sans-serif; font-size: 1.6rem; color: var(--gold); margin-top: 8px; }
+
+        .btn-confirmar { width: 100%; padding: 18px; border: none; border-radius: 14px; background: var(--green); color: #fff; font-family: 'Bebas Neue', sans-serif; font-size: 1.5rem; letter-spacing: 2px; cursor: pointer; transition: all 0.2s; }
+        .btn-confirmar:hover { opacity: 0.9; transform: scale(0.99); }
+        .btn-confirmar:disabled { background: var(--surface); color: var(--muted); cursor: not-allowed; transform: none; }
+
+        .msg-ok    { color: var(--green); font-weight: 700; font-size: 1rem; }
+        .msg-error { color: var(--red);   font-weight: 700; font-size: 0.9rem; }
+
+        #estado-ya-entregado { display: none; }
+    </style>
+</head>
+<body>
+<div class="container">
+    <div class="logo">ÓRBITA 300</div>
+    <div class="logo-sub">Confirmación de entrega</div>
+
+    <!-- Cargando -->
+    <div class="card estado-cargando" id="vista-cargando">
+        <span class="icono"></span>
+        <div class="titulo">Cargando pedido…</div>
+    </div>
+
+    <!-- Listo para confirmar -->
+    <div class="card estado-listo hidden" id="vista-listo">
+        <span class="icono"></span>
+        <div class="titulo">¿Entregaste este pedido?</div>
+        <div class="subtitulo">Revisa los datos antes de confirmar.</div>
+
+        <div class="pedido-card">
+            <div class="pedido-row">
+                <span class="pedido-label">Cliente</span>
+                <span class="pedido-valor" id="ent-nombre">—</span>
+            </div>
+            <div class="pedido-dir" id="ent-dir"></div>
+            <div class="pedido-items" id="ent-items"></div>
+            <div class="pedido-total" id="ent-total"></div>
+        </div>
+
+        <button class="btn-confirmar" id="btn-confirmar" onclick="confirmarEntrega()">
+            ✅ CONFIRMAR ENTREGA
+        </button>
+        <div id="msg-confirmar" style="margin-top:12px;min-height:20px;"></div>
+    </div>
+
+    <!-- Ya entregado -->
+    <div class="card estado-ya hidden" id="vista-ya">
+        <span class="icono"></span>
+        <div class="titulo">Ya confirmado</div>
+        <div class="subtitulo">Este pedido ya fue marcado como entregado anteriormente.</div>
+    </div>
+
+    <!-- Error -->
+    <div class="card estado-error hidden" id="vista-error">
+        <span class="icono"></span>
+        <div class="titulo">Pedido no encontrado</div>
+        <div class="subtitulo">El link puede ser inválido o el pedido fue anulado. Contacta al local.</div>
+    </div>
+
+    <!-- Confirmado exitosamente -->
+    <div class="card estado-ok hidden" id="vista-ok">
+        <span class="icono"></span>
+        <div class="titulo">¡Entrega confirmada!</div>
+        <div class="subtitulo msg-ok">El pedido fue marcado como recibido. ¡Gracias! 🛵</div>
+    </div>
+</div>
+
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/dist/umd/supabase.js"></script>
+<script src="./orbita-auth.js"></script>
+<script>
+(async function () {
+    const SB = supabase.createClient(window.orbitaAuth.url, window.orbitaAuth.anonKey);
+    function fmt(n) { return '$' + Math.round(n).toLocaleString('es-CL'); }
+
+    function show(id) {
+        ['vista-cargando','vista-listo','vista-ya','vista-error','vista-ok'].forEach(v => {
+            document.getElementById(v).classList.add('hidden');
+        });
+        document.getElementById(id).classList.remove('hidden');
+    }
+
+    // Obtener id del pedido desde la URL
+    const params = new URLSearchParams(window.location.search);
+    const pedidoId = params.get('id');
+
+    if (!pedidoId) { show('vista-error'); return; }
+
+    // Cargar pedido
+    const { data: pedido, error } = await SB
+        .from('pedidos')
+        .select('*')
+        .eq('id', pedidoId)
+        .single();
+
+    if (error || !pedido) { show('vista-error'); return; }
+
+    // Si ya fue recibido
+    if (pedido.estado === 'recibido') { show('vista-ya'); return; }
+
+    // Si fue anulado o rechazado
+    if (pedido.estado === 'anulado' || pedido.estado === 'rechazado') { show('vista-error'); return; }
+
+    // Mostrar datos del pedido
+    document.getElementById('ent-nombre').textContent = pedido.nombre || '—';
+    document.getElementById('ent-dir').textContent    = pedido.direccion || '';
+    const items = Array.isArray(pedido.items_json)
+        ? pedido.items_json.map(i => `${i.qty}x ${i.nombre}`).join('\n')
+        : '—';
+    document.getElementById('ent-items').textContent  = items;
+    document.getElementById('ent-total').textContent  = fmt(pedido.total || 0) + ' · pagado ✅';
+    show('vista-listo');
+
+    // Confirmar entrega
+    window.confirmarEntrega = async function () {
+        const btn = document.getElementById('btn-confirmar');
+        const msg = document.getElementById('msg-confirmar');
+        btn.disabled   = true;
+        btn.textContent = 'Confirmando…';
+
+        const { error: err } = await SB
+            .from('pedidos')
+            .update({ estado: 'recibido' })
+            .eq('id', pedidoId);
+
+        if (err) {
+            btn.disabled    = false;
+            btn.textContent = '✅ CONFIRMAR ENTREGA';
+            msg.innerHTML   = '<span class="msg-error">Error al confirmar. Intenta de nuevo.</span>';
+            return;
+        }
+
+        show('vista-ok');
+    };
+})();
+</script>
+</body>
+</html>
