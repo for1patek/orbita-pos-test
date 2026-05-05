@@ -1,0 +1,104 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Órbita · Frutillar</title>
+    <meta name="description" content="Hand Roll, Café Órbita y Fuente de soda — un solo lugar para entrar a cada menú.">
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link href="https://fonts.googleapis.com/css2?family=Bebas+Neue&family=DM+Sans:wght@400;500;600;700&display=swap" rel="stylesheet">
+    <style>
+        :root {
+            --bg: #08080a;
+            --card: #121216;
+            --border: #2a2a32;
+            --muted: #8a8a98;
+            --text: #f0f0f5;
+            --hand: #ff4d00;
+            --cafe: #8B1A1A;
+            --fuente: #D4872A;
+        }
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        body {
+            min-height: 100vh; font-family: 'DM Sans', sans-serif; background: var(--bg); color: var(--text);
+            display: flex; flex-direction: column; align-items: center; justify-content: flex-start;
+            padding: 36px 18px 48px;
+        }
+        body::before {
+            content: ''; position: fixed; inset: 0; pointer-events: none; z-index: 0;
+            background: radial-gradient(ellipse 70% 50% at 50% 0%, rgba(255,77,0,0.08), transparent 55%),
+                        radial-gradient(ellipse 50% 40% at 100% 100%, rgba(139,26,26,0.06), transparent 50%);
+        }
+        .wrap { position: relative; z-index: 1; width: 100%; max-width: 520px; }
+        h1 {
+            font-family: 'Bebas Neue', sans-serif; font-size: clamp(2.4rem, 8vw, 3.2rem);
+            letter-spacing: 6px; text-align: center; line-height: 1;
+        }
+        h1 span { color: var(--muted); font-weight: 400; letter-spacing: 4px; font-size: 0.35em; display: block; margin-top: 10px; }
+        .tagline { text-align: center; color: var(--muted); font-size: 0.9rem; margin: 14px 0 32px; line-height: 1.5; }
+        .grid { display: flex; flex-direction: column; gap: 12px; }
+        a.card {
+            display: flex; align-items: center; gap: 16px; text-decoration: none; color: inherit;
+            background: var(--card); border: 1px solid var(--border); border-radius: 18px;
+            padding: 18px 20px; transition: transform 0.2s, border-color 0.2s, box-shadow 0.2s;
+        }
+        a.card:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 12px 40px rgba(0,0,0,0.35);
+        }
+        a.card.hand { border-left: 4px solid var(--hand); }
+        a.card.hand:hover { border-color: #3d3028; }
+        a.card.cafe { border-left: 4px solid #c45c5c; }
+        a.card.cafe:hover { border-color: #4a3030; }
+        a.card.fuente { border-left: 4px solid var(--fuente); }
+        a.card.fuente:hover { border-color: #4a3a20; }
+        .emoji { font-size: 2rem; width: 52px; text-align: center; flex-shrink: 0; }
+        .card-body { text-align: left; flex: 1; }
+        .card-body strong {
+            font-family: 'Bebas Neue', sans-serif; font-size: 1.35rem; letter-spacing: 2px; display: block;
+        }
+        .card.hand .card-body strong { color: var(--hand); }
+        .card.cafe .card-body strong { color: #e8b4b4; }
+        .card.fuente .card-body strong { color: var(--fuente); }
+        .card-body span { font-size: 0.82rem; color: var(--muted); margin-top: 4px; display: block; }
+        a.panel {
+            margin-top: 20px; display: block; text-align: center; padding: 14px 18px;
+            border-radius: 14px; border: 1px dashed var(--border); color: var(--muted);
+            font-size: 0.88rem; text-decoration: none; transition: color 0.2s, border-color 0.2s;
+        }
+        a.panel:hover { color: var(--text); border-color: #555; }
+        footer { margin-top: 36px; text-align: center; font-size: 0.75rem; color: var(--muted); line-height: 1.6; max-width: 420px; }
+    </style>
+</head>
+<body>
+    <div class="wrap">
+        <h1>ÓRBITA<span>Frutillar · Chile</span></h1>
+        <p class="tagline">Elige el local. Misma familia, tres sabores.</p>
+
+        <div class="grid">
+            <a class="card hand" href="index.html">
+                <span class="emoji">🍣</span>
+                <div class="card-body">
+                    <strong>HAND ROLL</strong>
+                    <span>Menú · pedidos · retiro o delivery</span>
+                </div>
+            </a>
+            <a class="card cafe" href="cafe.html">
+                <span class="emoji">☕</span>
+                <div class="card-body">
+                    <strong>CAFÉ ÓRBITA</strong>
+                    <span>Kimbo · cafés y pastelería</span>
+                </div>
+            </a>
+            <a class="card fuente" href="fuente.html">
+                <span class="emoji">🍔</span>
+                <div class="card-body">
+                    <strong>FUENTE DE SODA</strong>
+                    <span>Sándwiches, completos y más</span>
+                </div>
+            </a>
+        </div>
+
+    </div>
+</body>
+</html>

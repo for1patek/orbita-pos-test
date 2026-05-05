@@ -1,0 +1,1717 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Café Órbita | Frutillar</title>
+    <meta name="description" content="Café Órbita — Café Kimbo y pastelería casera en Frutillar.">
+    <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>☕</text></svg>">
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link href="https://fonts.googleapis.com/css2?family=Bebas+Neue&family=DM+Sans:wght@300;400;500;700&family=Playfair+Display:wght@600;700&display=swap" rel="stylesheet">
+    <script src="https://sdk.mercadopago.com/js/v2"></script>
+    <style>
+        :root {
+            --primary:   #8B1A1A;
+            --accent:    #A0522D;
+            --gold:      #C4922A;
+            --bg:        #FAF3E0;
+            --card:      #FFF8EE;
+            --border:    #E8D5B0;
+            --text:      #1A1A1A;
+            --muted:     #7A6040;
+            --surface:   #F5ECD5;
+            --green:     #25d366;
+            --italy-g:   #009246;
+            --italy-r:   #CE2B37;
+        }
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        body { background: var(--bg); color: var(--text); font-family: 'DM Sans', sans-serif; text-align: center; line-height: 1.6; overflow-x: hidden; }
+
+        /* ── HERO ── */
+        .hero { position: relative; z-index: 1; padding: 36px 20px 28px; border-bottom: 3px solid var(--primary); background: var(--bg); }
+        .italy-flag { display: flex; justify-content: center; gap: 4px; margin: 0 auto 14px; max-width: 240px; }
+        .italy-flag span { height: 5px; width: 40px; border-radius: 2px; }
+        .logo { font-family: 'Playfair Display', serif; font-size: 2.4rem; letter-spacing: 2px; color: var(--primary); line-height: 1; }
+        .logo-sub { font-size: 0.85rem; letter-spacing: 4px; text-transform: uppercase; color: var(--accent); margin-top: 4px; }
+        .kimbo-badge { display: inline-block; background: var(--primary); color: #FAF3E0; font-size: 0.72rem; letter-spacing: 2px; text-transform: uppercase; padding: 5px 14px; border-radius: 20px; margin-top: 10px; }
+        .granos-desc { display: flex; gap: 10px; margin: 16px auto 0; max-width: 400px; }
+        .grano-card { flex: 1; background: var(--surface); border: 1px solid var(--border); border-radius: 12px; padding: 10px 12px; text-align: left; }
+        .grano-card h4 { font-size: 0.82rem; font-weight: 700; color: var(--primary); margin-bottom: 3px; }
+        .grano-card p { font-size: 0.72rem; color: var(--muted); line-height: 1.4; }
+
+        /* ── SECTION ── */
+        .section { position: relative; z-index: 1; padding: 20px 20px 10px; max-width: 700px; margin: auto; }
+        .section-title { font-family: 'Bebas Neue', sans-serif; font-size: 1.5rem; letter-spacing: 2px; color: var(--text); margin-bottom: 16px; margin-top: 10px; }
+
+        /* ── BUSCADOR ── */
+        .search-container { max-width: 520px; margin: 0 auto 18px; }
+        .search-wrapper { position: relative; }
+        .search-input { width: 100%; background: var(--surface); border: 1px solid var(--border); border-radius: 12px; padding: 12px 42px 12px 16px; color: var(--text); font-family: 'DM Sans', sans-serif; font-size: 0.95rem; outline: none; transition: border-color 0.2s; }
+        .search-input:focus { border-color: var(--primary); }
+        .search-input::placeholder { color: var(--muted); }
+        .search-clear { position: absolute; right: 8px; top: 50%; transform: translateY(-50%); background: none; border: none; color: var(--muted); cursor: pointer; font-size: 1.3rem; padding: 4px 10px; border-radius: 50%; }
+        .search-clear:hover { background: var(--border); color: var(--text); }
+        .search-results { margin-top: 10px; max-height: 340px; overflow-y: auto; }
+        .search-result-item { background: var(--card); border: 1px solid var(--border); padding: 12px 14px; border-radius: 12px; margin-bottom: 8px; cursor: pointer; transition: all 0.2s; text-align: left; display: flex; justify-content: space-between; align-items: center; gap: 10px; }
+        .search-result-item:hover { border-color: var(--primary); transform: translateY(-1px); }
+        .search-result-info { flex: 1; min-width: 0; }
+        .search-result-name { font-weight: 600; color: var(--text); }
+        .search-result-desc { font-size: 0.78rem; color: var(--muted); margin-top: 2px; }
+        .search-result-price { font-family: 'Bebas Neue', sans-serif; font-size: 1.1rem; color: var(--primary); white-space: nowrap; }
+        .search-no-results { text-align: center; color: var(--muted); font-size: 0.9rem; padding: 16px; }
+
+        @keyframes orbita-pulse-anim {
+            0%, 100% { box-shadow: 0 0 0 0 rgba(139, 26, 26, 0); }
+            30%      { box-shadow: 0 0 0 4px rgba(139, 26, 26, 0.75); }
+            60%      { box-shadow: 0 0 0 2px rgba(139, 26, 26, 0.4); }
+        }
+        .orbita-pulse { animation: orbita-pulse-anim 1.8s ease-in-out; border-radius: 14px; }
+
+        @keyframes orbita-pulse-error-anim {
+            0%, 100% { box-shadow: 0 0 0 0 rgba(193, 18, 31, 0); outline: 2px solid transparent; }
+            25%      { box-shadow: 0 0 0 5px rgba(193, 18, 31, 0.85); outline: 2px solid #c1121f; }
+            50%      { box-shadow: 0 0 0 2px rgba(193, 18, 31, 0.4); outline: 2px solid transparent; }
+            75%      { box-shadow: 0 0 0 5px rgba(193, 18, 31, 0.85); outline: 2px solid #c1121f; }
+        }
+        .orbita-pulse-error { animation: orbita-pulse-error-anim 1.8s ease-in-out 3; border-radius: 12px; }
+
+        /* ── SECCIONES ── */
+        .menu-sections { display: flex; gap: 8px; justify-content: center; flex-wrap: wrap; margin: 10px 0 18px; }
+        .sec-btn { padding: 10px 14px; border: 2px solid var(--border); border-radius: 14px; background: var(--surface); color: var(--muted); font-weight: 800; font-size: 0.86rem; cursor: pointer; transition: all 0.2s; }
+        .sec-btn.active { background: var(--primary); color: #FAF3E0; border-color: var(--primary); transform: scale(1.02); }
+        .sec-panel { display: none; max-width: 520px; margin: 0 auto; }
+        .sec-panel.active { display: block; }
+        .cat-label { font-family: 'Bebas Neue', sans-serif; font-size: 0.95rem; letter-spacing: 3px; color: var(--muted); text-align: left; margin: 0 0 12px; border-left: 3px solid var(--primary); padding-left: 10px; }
+
+        /* ── CARDS ── */
+        .cafe-card { background: var(--card); border: 1px solid var(--border); padding: 16px 18px; border-radius: 16px; margin-bottom: 12px; transition: border-color 0.2s; text-align: left; }
+        .cafe-card:hover { border-color: var(--primary); }
+        .cafe-card.disabled { opacity: 0.4; pointer-events: none; }
+        .cafe-card-header { display: flex; justify-content: space-between; align-items: flex-start; margin-bottom: 10px; }
+        .cafe-card h3 { font-size: 1rem; font-weight: 600; color: var(--text); }
+        .cafe-card .desc { font-size: 0.78rem; color: var(--muted); margin-top: 2px; }
+        .cafe-card .price { font-family: 'Bebas Neue', sans-serif; font-size: 1.4rem; color: var(--primary); letter-spacing: 1px; white-space: nowrap; }
+        .badge-casero { display: inline-block; background: var(--surface); border: 1px solid var(--border); color: var(--accent); font-size: 0.65rem; padding: 2px 8px; border-radius: 20px; font-weight: 700; letter-spacing: 1px; text-transform: uppercase; margin-left: 6px; vertical-align: middle; }
+
+        /* ── SELECTOR GRANO ── */
+
+        /* ── QTY CONTROL ── */
+        .qty-control { display: flex; align-items: center; gap: 0; border: 1px solid var(--border); border-radius: 10px; overflow: hidden; }
+        .qty-btn { background: var(--surface); border: none; width: 40px; height: 40px; font-size: 1.2rem; cursor: pointer; color: var(--text); transition: background 0.15s; display: flex; align-items: center; justify-content: center; }
+        .qty-btn:hover { background: var(--border); }
+        .qty-btn.plus { background: var(--primary); color: #FAF3E0; }
+        .qty-btn.plus:hover { opacity: 0.85; }
+        .qty-num { width: 40px; text-align: center; font-weight: 700; font-size: 0.95rem; background: var(--card); border: none; color: var(--text); }
+
+        /* ── ACORDEÓN REFRESCOS ── */
+        .drinks-box { background: transparent; border: none; padding: 0; margin-bottom: 0; border-radius: 14px; overflow: hidden; }
+        .drinks-box .drinks-acc-head {
+            width: 100%; display: flex; justify-content: space-between; align-items: center;
+            background: var(--card); border: 1px solid var(--border); color: var(--text);
+            font-family: 'Bebas Neue', sans-serif; font-size: 0.92rem; letter-spacing: 2px;
+            padding: 12px 14px; border-radius: 14px; cursor: pointer; text-align: left;
+        }
+        .drinks-box.open .drinks-acc-head { border-radius: 14px 14px 0 0; border-bottom: 1px solid var(--border); }
+        .drinks-acc-title { border-left: 3px solid var(--primary); padding-left: 8px; color: var(--muted); }
+        .drinks-box .acc-chev { transition: transform 0.2s; font-size: 0.65rem; opacity: 0.85; }
+        .drinks-box.open .acc-chev { transform: rotate(180deg); }
+        .drinks-box .drinks-panel { display: none; background: var(--card); border: 1px solid var(--border); border-top: none; padding: 8px 14px 4px; border-radius: 0 0 14px 14px; }
+        .drinks-box.open .drinks-panel { display: block; }
+        .jugo-item { display: flex; justify-content: space-between; align-items: center; padding: 10px 0; border-bottom: 1px solid var(--border); }
+        .jugo-item:last-child { border-bottom: none; }
+        .jugo-info { display: flex; flex-direction: column; gap: 2px; }
+        .jugo-nombre { font-size: 0.92rem; font-weight: 600; color: var(--text); }
+        .jugo-precio { font-family: 'Bebas Neue', sans-serif; font-size: 0.95rem; color: var(--muted); }
+
+        /* ── ENTREGA ── */
+        .entrega-selector { display: flex; gap: 8px; margin: 14px 0 16px; }
+        .entrega-btn { flex: 1; padding: 12px 8px; border: 1px solid var(--border); border-radius: 12px; background: var(--surface); color: var(--muted); font-family: 'DM Sans', sans-serif; font-size: 0.88rem; font-weight: 600; cursor: pointer; transition: all 0.2s; }
+        .entrega-btn:hover { border-color: var(--primary); color: var(--text); }
+        .entrega-btn.active { background: var(--primary); color: #FAF3E0; border-color: var(--primary); }
+        .btn-ubicacion { width: 100%; padding: 12px; background: var(--surface); border: 1px solid var(--border); border-radius: 10px; color: var(--text); font-family: 'DM Sans', sans-serif; font-size: 0.95rem; font-weight: 600; cursor: pointer; transition: all 0.2s; text-align: center; }
+        .btn-ubicacion:hover { border-color: var(--primary); }
+        .btn-ubicacion.obtenida { border-color: var(--green); color: var(--green); }
+
+        /* ── MENSAJES ── */
+        .snack-msg {
+            background: rgba(196,146,42,0.10);
+            border: 1px dashed rgba(196,146,42,0.55);
+            border-radius: 14px;
+            padding: 12px 14px;
+            font-size: 0.92rem;
+            color: var(--muted);
+            text-align: left;
+            margin: 10px 0 2px;
+        }
+
+        /* ── ORDER BOX ── */
+        .order-box { background: var(--card); padding: 22px 20px; border-radius: 20px; border: 2px solid var(--green); margin: 6px 0 20px; }
+        #resumen { font-size: 0.95rem; font-weight: 500; min-height: 24px; }
+        .cliente-form { margin: 14px 0 4px; display: flex; flex-direction: column; gap: 10px; }
+        .cliente-form label { font-size: 0.72rem; text-transform: uppercase; letter-spacing: 1.5px; color: var(--muted); text-align: left; display: block; margin-bottom: 4px; }
+        .cliente-form input { width: 100%; background: var(--surface); border: 1px solid var(--border); border-radius: 10px; padding: 12px 14px; color: var(--text); font-family: 'DM Sans', sans-serif; font-size: 1rem; outline: none; }
+        .cliente-form input:focus { border-color: var(--primary); }
+        .cliente-form input.input-error { border-color: var(--primary); }
+        .btn-wsp { background-color: var(--green); color: #fff; padding: 15px; font-weight: 700; font-family: 'Bebas Neue', sans-serif; font-size: 1.2rem; letter-spacing: 2px; border-radius: 50px; display: block; border: none; cursor: pointer; width: 100%; margin-top: 14px; transition: opacity 0.2s; }
+        .btn-wsp:hover { opacity: 0.9; }
+        .btn-mp { background-color: #009ee3; color: #fff; padding: 15px; font-weight: 700; font-family: 'Bebas Neue', sans-serif; font-size: 1.2rem; letter-spacing: 2px; border-radius: 50px; display: block; border: none; cursor: pointer; width: 100%; margin-top: 10px; transition: opacity 0.2s; }
+        .btn-mp:hover { opacity: 0.9; }
+        .btn-mp:disabled { opacity: 0.5; cursor: not-allowed; }
+        .btn-rayo { 
+            background: linear-gradient(135deg, #FFD700, #FFA500, #FF6347); 
+            color: #000; font-weight: 800; border: 2px solid #FFD700;
+            animation: rayo-pulse 2s infinite; text-shadow: 0 0 8px rgba(255,255,255,0.8);
+            font-family: 'Bebas Neue', sans-serif; font-size: 1.2rem; letter-spacing: 2px;
+            border-radius: 50px; padding: 15px; cursor: pointer; width: 100%; margin-top: 10px;
+            transition: opacity 0.2s;
+        }
+        .btn-rayo:hover { opacity: 0.9; }
+        @keyframes rayo-pulse { 
+            0%, 100% { transform: scale(1); box-shadow: 0 0 20px rgba(255,215,0,0.6); } 
+            50% { transform: scale(1.02); box-shadow: 0 0 30px rgba(255,215,0,0.9); } 
+        }
+
+        /* ── TAMBIÉN SOMOS ── */
+        .tambien-section { position: relative; z-index: 1; max-width: 480px; margin: 0 auto; padding: 0 20px 40px; }
+        .tambien-title { font-size: 0.7rem; text-transform: uppercase; letter-spacing: 2px; color: var(--muted); margin-bottom: 12px; }
+        .tambien-grid { display: flex; gap: 10px; }
+        .tambien-card { flex: 1; border-radius: 14px; padding: 14px 12px; text-align: center; text-decoration: none; transition: opacity 0.2s; }
+        .tambien-card:hover { opacity: 0.85; }
+        .tambien-card.handroll { background: #0a0a0a; border: 1px solid #ff4d00; }
+        .tambien-card.fuente { background: #2C1A0E; border: 1px solid #D4872A; }
+        .tambien-card-name { font-family: 'Bebas Neue', sans-serif; font-size: 1rem; letter-spacing: 2px; display: block; margin-top: 4px; }
+        .tambien-card.handroll .tambien-card-name { color: #ff4d00; }
+        .tambien-card.fuente .tambien-card-name { color: #D4872A; }
+        .tambien-card-sub { font-size: 0.68rem; letter-spacing: 1px; text-transform: uppercase; }
+        .tambien-card.handroll .tambien-card-sub { color: #666; }
+        .tambien-card.fuente .tambien-card-sub { color: #c4a882; }
+
+        /* ── UBICACIÓN ── */
+        .ubicacion-section { position: relative; z-index: 1; max-width: 480px; margin: 0 auto; padding: 0 20px 30px; text-align: center; }
+
+        /* ── RESEÑAS ── */
+        .reviews-section { position: relative; z-index: 1; max-width: 480px; margin: 0 auto; padding: 0 20px 40px; }
+        .reviews-header { display: flex; align-items: center; justify-content: space-between; margin-bottom: 18px; }
+        .reviews-header h2 { font-family: 'Bebas Neue', sans-serif; font-size: 1.6rem; letter-spacing: 2px; color: var(--primary); text-align: left; }
+        .reviews-avg { font-family: 'Bebas Neue', sans-serif; font-size: 1.4rem; color: var(--primary); }
+        .review-card { background: var(--card); border: 1px solid var(--border); border-radius: 14px; padding: 18px; margin-bottom: 12px; text-align: left; animation: fadeUp 0.4s ease; }
+        @keyframes fadeUp { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: translateY(0); } }
+        .review-top { display: flex; justify-content: space-between; align-items: flex-start; margin-bottom: 8px; }
+        .review-name { font-weight: 700; font-size: 0.95rem; color: var(--text); }
+        .review-stars { font-size: 0.95rem; }
+        .review-comment { font-size: 0.9rem; color: var(--muted); line-height: 1.5; }
+        .review-date { font-size: 0.75rem; color: var(--muted); margin-top: 8px; opacity: 0.8; }
+        .no-reviews { color: var(--muted); font-size: 0.9rem; padding: 20px 0; text-align: center; }
+        .ubicacion-title { font-family: 'Bebas Neue', sans-serif; font-size: 1.4rem; letter-spacing: 2px; color: var(--text); margin-bottom: 6px; }
+        .ubicacion-dir { font-size: 0.95rem; font-weight: 600; color: var(--text); margin-bottom: 3px; }
+        .ubicacion-sub { font-size: 0.78rem; color: var(--muted); margin-bottom: 16px; }
+        .btn-como-llegar { display: inline-block; background: var(--primary); color: #FAF3E0; padding: 12px 28px; border-radius: 50px; font-family: 'Bebas Neue', sans-serif; font-size: 1.1rem; letter-spacing: 2px; text-decoration: none; transition: opacity 0.2s; }
+        .btn-como-llegar:hover { opacity: 0.85; }
+
+        .accent-line { height: 1px; background: linear-gradient(90deg, transparent, var(--border), transparent); border: none; max-width: 480px; margin: 10px auto 24px; }
+        footer { position: relative; z-index: 1; padding: 24px 20px; color: var(--muted); font-size: 0.78rem; border-top: 1px solid var(--border); }
+        .admin-link { display: none; }
+
+        /* ── MODAL ── */
+        .modal-overlay { display: none; position: fixed; inset: 0; background: rgba(0,0,0,0.7); z-index: 100; align-items: flex-start; justify-content: center; overflow-y: auto; padding: 20px; }
+        .modal-overlay.open { display: flex; }
+        .modal { background: var(--card); border: 1px solid var(--border); border-radius: 20px; padding: 28px 22px; max-width: 480px; width: 100%; margin: auto; }
+        .modal h3 { font-family: 'Bebas Neue', sans-serif; font-size: 1.4rem; letter-spacing: 2px; margin-bottom: 20px; color: var(--primary); }
+        .modal input[type=password], .modal input[type=text], .modal input[type=email], .modal input[type=number], .modal input[type=tel], .modal input[type=search], .modal input[type=url], .modal select { width: 100%; background: var(--surface); border: 1px solid var(--border); border-radius: 10px; padding: 12px 14px; color: var(--text); font-family: 'DM Sans', sans-serif; font-size: 1rem; outline: none; margin-bottom: 12px; }
+        .modal input:focus { border-color: var(--primary); }
+        .btn-modal { width: 100%; padding: 13px; border: none; border-radius: 10px; font-family: 'Bebas Neue', sans-serif; font-size: 1.1rem; letter-spacing: 1px; cursor: pointer; transition: opacity 0.2s; margin-bottom: 8px; }
+        .btn-fire { background: var(--primary); color: #FAF3E0; }
+        .btn-gray { background: var(--surface); color: var(--muted); border: 1px solid var(--border); }
+        .modal-error { color: var(--primary); font-size: 0.85rem; margin-bottom: 10px; display: none; }
+
+        /* ── ADMIN TABS ── */
+        .admin-tabs { display: flex; flex-wrap: wrap; gap: 6px; margin-bottom: 20px; }
+        .tab-btn { flex: 1; padding: 9px 4px; border: 1px solid var(--border); border-radius: 9px; background: var(--surface); color: var(--muted); font-family: 'DM Sans', sans-serif; font-size: 0.78rem; font-weight: 600; cursor: pointer; transition: all 0.2s; }
+        .tab-btn.active { background: var(--primary); color: #FAF3E0; border-color: var(--primary); }
+        .tab-content { display: none; }
+        .tab-content.active { display: block; }
+        .section-label { font-size: 0.72rem; text-transform: uppercase; letter-spacing: 1.5px; color: var(--muted); margin-bottom: 12px; }
+        .admin-section { display: flex; flex-wrap: wrap; gap: 12px; margin-bottom: 22px; align-items: flex-start; }
+        .admin-section h4 { flex: 1 1 100%; margin: 0 0 8px; color: var(--primary); letter-spacing: 1px; font-size: 0.92rem; }
+        .admin-section .admin-item { flex: 1 1 340px; min-width: 280px; max-width: 450px; }
+        .admin-item { background: var(--surface); border: 1px solid var(--border); border-radius: 12px; padding: 14px; margin-bottom: 10px; text-align: left; }
+        .admin-item-top { display: flex; justify-content: space-between; align-items: center; margin-bottom: 6px; }
+        .btn-sm { border: none; border-radius: 8px; padding: 6px 9px; font-size: 0.74rem; font-weight: 700; cursor: pointer; transition: opacity 0.2s; white-space: nowrap; }
+        .btn-sm:hover { opacity: 0.8; }
+        .btn-red { background: #ff3333; color: #fff; }
+        .btn-orange { background: var(--primary); color: #FAF3E0; }
+        .btn-toggle-on { background: var(--green); color: #fff; }
+        .btn-toggle-off { background: #aaa; color: #fff; }
+        .pedido-item { background: var(--surface); border: 1px solid var(--border); border-radius: 12px; padding: 14px; margin-bottom: 10px; text-align: left; }
+        .pedido-total { font-family: 'Bebas Neue', sans-serif; font-size: 1.1rem; color: var(--green); }
+        .edit-form { background: var(--bg); border: 1px solid var(--primary); border-radius: 12px; padding: 14px; margin-top: 10px; display: none; }
+        .edit-form.open { display: block; }
+        .edit-row { display: flex; gap: 8px; align-items: center; margin-bottom: 10px; }
+        .edit-row label { font-size: 0.8rem; color: var(--muted); min-width: 60px; }
+        .edit-row input { flex: 1; background: var(--surface); border: 1px solid var(--border); border-radius: 8px; padding: 8px 10px; color: var(--text); font-family: 'DM Sans', sans-serif; font-size: 0.9rem; outline: none; margin-bottom: 0; }
+
+        /* ── BANNER RESEÑA ── */
+        .banner-resena { display: none; position: fixed; bottom: 20px; left: 50%; transform: translateX(-50%); width: calc(100% - 40px); max-width: 440px; background: var(--card); border: 1px solid var(--green); border-radius: 16px; padding: 16px 18px; z-index: 50; box-shadow: 0 8px 32px rgba(0,0,0,0.15); animation: slideUp 0.35s ease; }
+        .banner-resena.open { display: flex; align-items: center; gap: 12px; }
+        @keyframes slideUp { from { opacity: 0; transform: translateX(-50%) translateY(20px); } to { opacity: 1; transform: translateX(-50%) translateY(0); } }
+        .banner-resena-text { flex: 1; font-size: 0.9rem; line-height: 1.4; }
+        .banner-resena-text strong { color: var(--green); display: block; margin-bottom: 3px; }
+        .banner-resena-text a { color: var(--primary); font-weight: 700; text-decoration: none; }
+        .banner-resena-close { background: var(--surface); border: 1px solid var(--border); color: var(--muted); border-radius: 50%; width: 30px; height: 30px; font-size: 1rem; cursor: pointer; flex-shrink: 0; display: flex; align-items: center; justify-content: center; }
+    </style>
+</head>
+<body>
+
+<header class="hero">
+    <div class="italy-flag">
+        <span style="background:var(--italy-g)"></span>
+        <span style="background:#fff;border:1px solid var(--border)"></span>
+        <span style="background:var(--italy-r)"></span>
+    </div>
+    <div class="logo">☕ CAFÉ ÓRBITA</div>
+    <p class="logo-sub">Frutillar · Chile</p>
+    <div class="kimbo-badge">Café Kimbo · il Caffè di Napoli</div>
+    <div class="granos-desc">
+        <div class="grano-card">
+            <h4>Armonia</h4>
+            <p>100% Arábica. Sabor dulce y suave.</p>
+        </div>
+        <div class="grano-card">
+            <h4>Napoli</h4>
+            <p>Grano Robusta. Intenso, regusto amargo.</p>
+        </div>
+    </div>
+</header>
+
+<section class="section">
+    <div class="section-title">Nuestro Menú</div>
+    <div class="search-container">
+        <div class="search-wrapper">
+            <input type="text" class="search-input" id="search-input" placeholder="Buscar café, pastelería, refrescos..." oninput="buscarProductos(this.value)">
+            <button type="button" class="search-clear" id="search-clear" onclick="limpiarBusqueda()" style="display:none;">×</button>
+        </div>
+        <div class="search-results" id="search-results" style="display:none;"></div>
+    </div>
+
+    <div class="menu-sections">
+        <button type="button" class="sec-btn active" id="btn-sec-cafe" onclick="setSeccionCafe('cafe')">☕ Café</button>
+        <button type="button" class="sec-btn" id="btn-sec-pastel" onclick="setSeccionCafe('pastel')">🍰 Pastelería</button>
+        <button type="button" class="sec-btn" id="btn-sec-refrescos" onclick="setSeccionCafe('refrescos')">🥤 Refrescos</button>
+    </div>
+
+    <div class="sec-panel active" id="panel-sec-cafe">
+        <div class="cat-label">☕ Cafés</div>
+        <div id="menu-cafes"></div>
+        <div class="snack-msg" style="display:flex;align-items:center;justify-content:space-between;gap:10px;">
+            <span>𝑨 𝒆𝒔𝒆 𝒔𝒐𝒓𝒃𝒐 𝒍𝒆 𝒇𝒂𝒍𝒕𝒂 𝒖𝒏 𝒎𝒐𝒓𝒅𝒊𝒔𝒄𝒐.</span>
+            <button type="button" onclick="setSeccionCafe('pastel'); window.scrollTo({ top: document.getElementById('panel-sec-pastel').offsetTop - 80, behavior: 'smooth' });" style="background:transparent;border:none;cursor:pointer;font-size:1.6rem;line-height:1;padding:4px;" title="Ver pastelería">🍰</button>
+        </div>
+    </div>
+
+    <div class="sec-panel" id="panel-sec-pastel">
+        <div class="cat-label">🍰 Pastelería</div>
+        <div id="menu-pasteles"></div>
+        <div class="snack-msg" style="display:flex;align-items:center;justify-content:space-between;gap:10px;">
+            <span>𝘼 𝙚𝙨𝙚 𝙗𝙤𝙘𝙖𝙙𝙤 𝙡𝙚 𝙛𝙖𝙡𝙩𝙖 𝙪𝙣 𝙨𝙤𝙧𝙗𝙤.</span>
+            <button type="button" onclick="setSeccionCafe('cafe'); window.scrollTo({ top: document.getElementById('panel-sec-cafe').offsetTop - 80, behavior: 'smooth' });" style="background:transparent;border:none;cursor:pointer;font-size:1.6rem;line-height:1;padding:4px;" title="Ver cafés">☕</button>
+        </div>
+    </div>
+
+    <div class="sec-panel" id="panel-sec-refrescos">
+        <div class="cat-label">🥤 Refrescos</div>
+        <div class="drinks-box" id="box-jugos">
+            <button type="button" class="drinks-acc-head" id="head-jugos" onclick="toggleCafeSec('jugos')" aria-expanded="false" aria-controls="panel-jugos">
+                <span class="drinks-acc-title">Jugos naturales</span><span class="acc-chev">▼</span>
+            </button>
+            <div class="drinks-panel" id="panel-jugos">
+                <div id="menu-jugos"></div>
+            </div>
+        </div>
+        <div class="drinks-box" id="box-bebidas">
+            <button type="button" class="drinks-acc-head" id="head-bebidas" onclick="toggleCafeSec('bebidas')" aria-expanded="false" aria-controls="panel-bebidas">
+                <span class="drinks-acc-title">Bebidas</span><span class="acc-chev">▼</span>
+            </button>
+            <div class="drinks-panel" id="panel-bebidas">
+                <div id="menu-bebidas"></div>
+            </div>
+        </div>
+        <div class="drinks-box" id="box-aguas">
+            <button type="button" class="drinks-acc-head" id="head-aguas" onclick="toggleCafeSec('aguas')" aria-expanded="false" aria-controls="panel-aguas">
+                <span class="drinks-acc-title">Aguas</span><span class="acc-chev">▼</span>
+            </button>
+            <div class="drinks-panel" id="panel-aguas">
+                <div id="menu-aguas"></div>
+            </div>
+        </div>
+    </div>
+
+    <div class="order-box">
+        <p id="resumen" style="color:var(--muted);">Tu pedido está vacío</p>
+
+        <div class="entrega-selector">
+            <button class="entrega-btn" id="btn-retiro" onclick="seleccionarEntrega('retiro')">🏪 Retiro en local</button>
+            <button class="entrega-btn" id="btn-delivery" onclick="seleccionarEntrega('delivery')">🛵 Delivery <span id="label-delivery-cost" style="font-size:0.75rem;color:var(--primary);">+$2.000</span></button>
+        </div>
+        <p style="font-size:0.75rem;color:var(--muted);margin:-10px 0 14px;text-align:center;">📍 Delivery solo dentro de Frutillar alto/bajo</p>
+        <div class="cliente-form">
+            <div>
+                <label for="input-nombre">👤 Tu nombre</label>
+                <input type="text" id="input-nombre" placeholder="Ej: María González" autocomplete="name">
+            </div>
+            <div id="campo-hora">
+                <label for="input-hora">⏰ Hora de retiro</label>
+                <input type="time" id="input-hora" min="09:00" max="20:00">
+            </div>
+            <div id="campo-direccion" style="display:none;">
+                <label>📍 Dirección de entrega</label>
+                <div id="dirs-guardadas-delivery" style="margin-bottom:6px;"></div>
+                <input type="text" id="input-direccion-delivery" placeholder="Ej: Calle Los Robles 123, depto 4B" autocomplete="street-address" style="width:100%;padding:10px 14px;border:1px solid var(--border);border-radius:12px;background:var(--surface);color:var(--text);font-size:0.95rem;box-sizing:border-box;margin-bottom:0;">
+                <button type="button" class="btn-ubicacion" id="btn-compartir-ubi" onclick="compartirUbicacion()" style="margin-top:8px;font-size:0.82rem;opacity:0.85;">
+                    📍 Usar GPS para autocompletar (opcional)
+                </button>
+                <p id="ubi-estado" style="font-size:0.78rem;color:var(--muted);margin-top:6px;text-align:left;"></p>
+            </div>
+        </div>
+        <button onclick="enviarPedido()" class="btn-wsp">🛒 PEDIR POR WHATSAPP</button>
+        <button onclick="pagarConMP()" class="btn-mp" id="btn-mp">💳 PAGAR EN LÍNEA</button>
+        <button onclick="OrbitaPagoRapido.pagarRapido()" class="btn-rayo" id="btn-rayo" style="display:none;">⚡ PAGO RÁPIDO ⚡</button>
+    </div>
+</section>
+
+<hr class="accent-line">
+<section class="reviews-section">
+    <div class="reviews-header">
+        <h2>⭐ Reseñas</h2>
+        <span class="reviews-avg" id="avg-display"></span>
+    </div>
+    <div id="reviews-list"><p class="no-reviews">Cargando reseñas...</p></div>
+</section>
+
+<hr class="accent-line">
+<section class="ubicacion-section">
+    <div class="ubicacion-title">📍 ¿Dónde estamos?</div>
+    <p class="ubicacion-dir">Por definir, Frutillar</p>
+    <p class="ubicacion-sub">⏰ Lunes a Domingo · Por definir</p>
+    <a href="#" class="btn-como-llegar">🗺️ Cómo llegar →</a>
+</section>
+
+<hr class="accent-line">
+<section class="tambien-section">
+    <p class="tambien-title">También somos</p>
+    <div class="tambien-grid">
+        <a href="index.html" class="tambien-card handroll">
+            <span style="font-size:1.4rem;">🍣</span>
+            <span class="tambien-card-name">HAND ROLL</span>
+            <span class="tambien-card-sub">Órbita</span>
+        </a>
+        <a href="fuente.html" class="tambien-card fuente">
+            <span style="font-size:1.4rem;">🍔</span>
+            <span class="tambien-card-name">FUENTE DE SODA</span>
+            <span class="tambien-card-sub">Órbita</span>
+        </a>
+    </div>
+</section>
+
+<footer>
+    &copy; 2026 Café Órbita
+    <br><a href="orbita.html" style="color:var(--muted);font-size:0.75rem;text-decoration:none;">Órbita — otros locales</a>
+</footer>
+
+<!-- MODAL ADMIN -->
+<div class="modal-overlay" id="modal-overlay">
+    <div class="modal">
+        <div id="login-section">
+            <h3>🔒 Acceso staff</h3>
+            <p class="modal-error" id="modal-error">Credenciales incorrectas</p>
+            <input type="email" id="admin-email" placeholder="Email (Supabase Auth)" autocomplete="username">
+            <input type="password" id="admin-pass" placeholder="Contraseña" autocomplete="current-password" onkeydown="if(event.key==='Enter') verificarPass()">
+            <button class="btn-modal btn-fire" onclick="verificarPass()">INGRESAR</button>
+            <button type="button" class="btn-modal btn-gray" onclick="resetContrasena()" style="font-size:0.8rem;padding:8px 12px;">Olvidé mi contraseña</button>
+            <button class="btn-modal btn-gray" onclick="cerrarAdmin()">CANCELAR</button>
+        </div>
+        <div id="admin-panel" style="display:none;position:relative;">
+            <button type="button" onclick="cerrarAdmin()" title="Cerrar panel" style="position:absolute;top:-6px;right:-6px;width:36px;height:36px;border-radius:50%;border:1px solid var(--border);background:var(--surface);color:var(--text);font-size:1.2rem;line-height:1;cursor:pointer;z-index:5;">✕</button>
+            <h3>⚙️ Panel Admin — Café Órbita</h3>
+            <div class="admin-tabs">
+                <button class="tab-btn active" onclick="showTab('tab-pedidos',this)">📦 Pedidos</button>
+                <button class="tab-btn" onclick="showTab('tab-productos',this)">☕ Productos</button>
+                <button class="tab-btn" onclick="showTab('tab-resenas',this)">⭐ Reseñas</button>
+                <button class="tab-btn" onclick="showTab('tab-inventario',this)">📦 Inventario</button>
+            </div>
+            <div class="tab-content active" id="tab-pedidos">
+                <p class="section-label">Pedidos de hoy</p>
+                <div id="admin-pedidos-list"><p style="color:var(--muted);font-size:0.9rem;">Cargando...</p></div>
+            </div>
+            <div class="tab-content" id="tab-productos">
+                <p class="section-label">Gestionar productos</p>
+                <button class="btn-modal btn-fire" type="button" style="margin-bottom:12px;padding:10px;" onclick="abrirAgregarProductoCafe()">+ Agregar producto</button>
+                <input id="admin-productos-search" type="text" placeholder="Buscar por nombre o categoría..." oninput="setAdminProductoSearch(this.value)" style="width:100%;background:var(--surface);border:1px solid var(--border);border-radius:10px;padding:12px 14px;margin-bottom:12px;color:var(--text);font-family:'DM Sans',sans-serif;">
+                <div id="admin-productos-list"></div>
+            </div>
+            <div class="tab-content" id="tab-resenas">
+                <p class="section-label">Reseñas de clientes</p>
+                <div id="admin-reviews-list"><p style="color:var(--muted);font-size:0.9rem;">Cargando...</p></div>
+            </div>
+            <div class="tab-content" id="tab-inventario">
+                <p class="section-label">Costo de delivery</p>
+                <p style="font-size:0.78rem;color:var(--muted);text-align:left;margin-bottom:10px;">Se suma al pedido cuando el cliente elige Delivery.</p>
+                <input type="number" id="input-costo-delivery-cafe" placeholder="2000" min="0" step="100">
+                <button class="btn-modal btn-fire" type="button" style="margin-bottom:18px;" onclick="guardarCostoDeliveryCafe()">Guardar costo delivery</button>
+
+                <p class="section-label">Horario de delivery</p>
+                <p style="font-size:0.78rem;color:var(--muted);text-align:left;margin-bottom:10px;">Fuera de este horario, el cliente no podrá elegir Delivery.</p>
+                <div style="display:flex;gap:8px;margin-bottom:10px;">
+                    <div style="flex:1;">
+                        <label style="font-size:0.72rem;color:var(--muted);text-transform:uppercase;letter-spacing:1px;display:block;margin-bottom:4px;">Desde</label>
+                        <input type="time" id="input-hora-ini-cafe" value="09:00">
+                    </div>
+                    <div style="flex:1;">
+                        <label style="font-size:0.72rem;color:var(--muted);text-transform:uppercase;letter-spacing:1px;display:block;margin-bottom:4px;">Hasta</label>
+                        <input type="time" id="input-hora-fin-cafe" value="19:00">
+                    </div>
+                </div>
+                <button class="btn-modal btn-fire" type="button" style="margin-bottom:18px;" onclick="guardarHorarioDeliveryCafe()">Guardar horario delivery</button>
+                <p class="section-label">Inventario e insumos</p>
+                <p style="font-size:0.78rem;color:var(--muted);text-align:left;margin-bottom:12px;">Registra insumos y movimientos desde el propio admin del local.</p>
+                <div class="perf-card" style="padding:16px;margin-bottom:14px;">
+                    <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(160px,1fr));gap:10px;">
+                        <input id="cafe-inv-name" type="text" placeholder="Nombre del insumo" style="width:100%;padding:10px;border:1px solid var(--border);border-radius:10px;background:var(--surface);color:var(--text);">
+                        <input id="cafe-inv-stock" type="number" placeholder="Stock inicial" min="0" step="0.01" style="width:100%;padding:10px;border:1px solid var(--border);border-radius:10px;background:var(--surface);color:var(--text);">
+                        <input id="cafe-inv-unit" type="text" placeholder="Unidad (kg, L, u)" style="width:100%;padding:10px;border:1px solid var(--border);border-radius:10px;background:var(--surface);color:var(--text);">
+                        <input id="cafe-inv-costo" type="number" placeholder="Costo unitario" min="0" step="100" style="width:100%;padding:10px;border:1px solid var(--border);border-radius:10px;background:var(--surface);color:var(--text);">
+                    </div>
+                    <button class="btn-modal btn-fire" type="button" style="margin-top:10px;" onclick="window.orbitaInventario.agregarInsumo('cafe','cafe')">Agregar insumo</button>
+                </div>
+                <div id="cafe-inv-list"></div>
+                <h4 style="margin:18px 0 10px;color:var(--primary);">Historial de movimientos</h4>
+                <div id="cafe-inv-history" class="history-list"></div>
+
+                <p class="section-label" style="margin-top:24px;">Cambiar contraseña</p>
+                <p style="font-size:0.78rem;color:var(--muted);text-align:left;margin-bottom:10px;">Por seguridad, te enviamos un link de restablecimiento a tu correo registrado.</p>
+                <button class="btn-modal btn-fire" type="button" onclick="enviarResetPassAdmin()">Enviar link por correo</button>
+            </div>
+            <p style="margin-top:12px;font-size:0.75rem;"><a href="orbita.html" style="color:var(--muted);">Inicio Órbita</a> · <a href="panel_central.html?k=orbita_8h3k2p_2026" style="color:var(--muted);">Panel central (3 locales)</a> · <button id="btn-admin-reopen" type="button" class="btn-modal btn-fire" onclick="abrirAdmin()" style="margin-left:6px;padding:6px 10px;font-size:0.85rem;">Ingresar credenciales</button></p>
+            <button class="btn-modal btn-gray" style="margin-top:14px;" onclick="cerrarAdmin()">CERRAR</button>
+        </div>
+    </div>
+</div>
+
+<!-- BANNER RESEÑA -->
+<div class="banner-resena" id="banner-resena">
+    <div class="banner-resena-text">
+        <strong>¡Pago recibido! 🎉</strong>
+        ¿Ya retiraste? Déjanos una reseña, nos ayuda mucho.
+        <br><a href="" id="banner-resena-link" target="_blank">⭐ Dejar reseña</a>
+    </div>
+    <button class="banner-resena-close" onclick="document.getElementById('banner-resena').classList.remove('open')">✕</button>
+</div>
+
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.45.4/dist/umd/supabase.min.js"></script>
+<script src="./orbita-auth.js"></script>
+<script src="./orbita-supabase-sync.js"></script>
+<script src="./orbita-delivery.js"></script>
+<script src="./orbita-productos.js"></script>
+<script src="orbita-inventario.js"></script>
+<script>
+    const WSP_NUMBER  = "56971019691"; // ← cambiar al número del café
+    const LINK_RESENA = "resenas.html?sitio=cafe";
+    window.LINK_RESENA = LINK_RESENA;
+    const MP_PUBLIC_KEY = "APP_USR-1b0d847d-66f5-4257-a8a3-ea955b18c660";
+    const MP_EDGE_URL = SUPABASE_URL + "/functions/v1/hyper-worker";
+    const TABLA_PEDIDOS = "pedidos_cafe";
+
+    const GRANOS_INFO = [
+        { id: 'Armonia', label: 'Armonia', tagline: 'Arábica suave',  detalle: '100% Arábica. Sabor dulce y suave, notas a frutos secos. Para quien prefiere un café delicado.' },
+        { id: 'Napoli',  label: 'Napoli',  tagline: 'Robusta intenso', detalle: 'Grano Robusta. Cuerpo intenso, regusto amargo y persistente. Para amantes del café fuerte.' },
+    ];
+    const GRANOS = GRANOS_INFO.map(g => `${g.label} (${g.tagline})`); // compat retro
+    function _granoLabelLargo(idCorto) {
+        const g = GRANOS_INFO.find(x => x.id === idCorto);
+        return g ? `${g.label} (${g.tagline})` : idCorto;
+    }
+
+    const PRODUCTOS_DEF = [
+        // CAFÉS
+        { id: 'c_americano',  nombre: 'Americano',           precio: 0, activo: true, cat: 'cafe',   desc: 'Café Kimbo', grano: true },
+        { id: 'c_espresso',   nombre: 'Espresso',            precio: 0, activo: true, cat: 'cafe',   desc: 'Café Kimbo', grano: true },
+        { id: 'c_cortado',    nombre: 'Cortado',             precio: 0, activo: true, cat: 'cafe',   desc: 'Café Kimbo', grano: true },
+        { id: 'c_latte',      nombre: 'Latte',               precio: 0, activo: true, cat: 'cafe',   desc: 'Café Kimbo', grano: true },
+        { id: 'c_capuchino',  nombre: 'Capuchino',           precio: 0, activo: true, cat: 'cafe',   desc: 'Café Kimbo', grano: true },
+        { id: 'c_mocachino',  nombre: 'Mocachino',           precio: 0, activo: true, cat: 'cafe',   desc: 'Café Kimbo', grano: true },
+        { id: 'c_chocolate',  nombre: 'Chocolate Caliente',  precio: 0, activo: true, cat: 'cafe',   desc: 'Bebida caliente', grano: false },
+        // PASTELERÍA
+        { id: 'p_kuchen',     nombre: 'Kuchen de Migas',     precio: 0, activo: true, cat: 'pastel', desc: 'Frambuesa o arándano · Casero', grano: false },
+        { id: 'p_pie',        nombre: 'Pie de Limón',        precio: 0, activo: true, cat: 'pastel', desc: 'Casero', grano: false },
+        { id: 'p_brownie',    nombre: 'Brownie',             precio: 0, activo: true, cat: 'pastel', desc: 'Casero', grano: false },
+        { id: 'p_cupcake',    nombre: 'Cupcake',             precio: 0, activo: true, cat: 'pastel', desc: 'Casero', grano: false },
+        { id: 'p_queque',     nombre: 'Queque de Zanahoria', precio: 0, activo: true, cat: 'pastel', desc: 'Trozo · Casero', grano: false },
+        { id: 'p_waffle',     nombre: 'Waffle',              precio: 0, activo: true, cat: 'pastel', desc: 'Con toppings · Proveedor', grano: false },
+        // JUGOS / BEBIDAS / AGUAS
+        { id: 'jugo_frambuesa', nombre: 'Jugo Frambuesa', precio: 3000, activo: true, cat: 'jugo', desc: '', grano: false },
+        { id: 'jugo_frutilla', nombre: 'Jugo Frutilla', precio: 2500, activo: true, cat: 'jugo', desc: '', grano: false },
+        { id: 'jugo_arandano', nombre: 'Jugo Arándano', precio: 2500, activo: true, cat: 'jugo', desc: '', grano: false },
+        { id: 'jugo_fru_ara', nombre: 'Jugo Frutilla-Arándano', precio: 2500, activo: true, cat: 'jugo', desc: '', grano: false },
+        { id: 'jugo_fram_ara', nombre: 'Jugo Frambuesa-Arándano', precio: 2500, activo: true, cat: 'jugo', desc: '', grano: false },
+        { id: 'jugo_melon_tuna', nombre: 'Jugo Melón Tuna', precio: 2500, activo: true, cat: 'jugo', desc: '', grano: false },
+        { id: 'jugo_melon_cal', nombre: 'Jugo Melón Calameño', precio: 2500, activo: true, cat: 'jugo', desc: '', grano: false },
+        { id: 'jugo_pina', nombre: 'Jugo Piña', precio: 2500, activo: true, cat: 'jugo', desc: '', grano: false },
+        { id: 'jugo_mango', nombre: 'Jugo Mango', precio: 2500, activo: true, cat: 'jugo', desc: '', grano: false },
+        { id: 'jugo_pina_mango', nombre: 'Jugo Piña-Mango', precio: 2500, activo: true, cat: 'jugo', desc: '', grano: false },
+        { id: 'jugo_naranja_plat', nombre: 'Jugo Naranja-Plátano', precio: 2500, activo: true, cat: 'jugo', desc: '', grano: false },
+        { id: 'beb_coca', nombre: 'Coca-Cola', precio: 0, activo: true, cat: 'bebida', desc: '', grano: false },
+        { id: 'beb_coca_zero', nombre: 'Coca-Cola sin azúcar', precio: 0, activo: true, cat: 'bebida', desc: '', grano: false },
+        { id: 'beb_pepsi', nombre: 'Pepsi', precio: 0, activo: true, cat: 'bebida', desc: '', grano: false },
+        { id: 'beb_kem', nombre: 'Kem', precio: 0, activo: true, cat: 'bebida', desc: '', grano: false },
+        { id: 'beb_bilz', nombre: 'Bilz', precio: 0, activo: true, cat: 'bebida', desc: '', grano: false },
+        { id: 'beb_pap', nombre: 'Pap', precio: 0, activo: true, cat: 'bebida', desc: '', grano: false },
+        { id: 'beb_fanta', nombre: 'Fanta', precio: 0, activo: true, cat: 'bebida', desc: '', grano: false },
+        { id: 'beb_sprite', nombre: 'Sprite', precio: 0, activo: true, cat: 'bebida', desc: '', grano: false },
+        { id: 'agua_gas', nombre: 'Agua con gas', precio: 0, activo: true, cat: 'agua', desc: '', grano: false },
+        { id: 'agua_sin_gas', nombre: 'Agua sin gas', precio: 0, activo: true, cat: 'agua', desc: '', grano: false },
+    ];
+
+    let productos = [];
+
+    async function cargarCatalogoCafe() {
+        try {
+            const raw = await window.orbitaProductos.fetchJson(window.orbitaProductos.SITIO_CAFE);
+            if (Array.isArray(raw) && raw.length > 0) {
+                productos = window.orbitaProductos.mergeById(PRODUCTOS_DEF, raw);
+            } else {
+                productos = PRODUCTOS_DEF.map(p => ({ ...p }));
+            }
+        } catch (e) {
+            productos = PRODUCTOS_DEF.map(p => ({ ...p }));
+        }
+    }
+
+    async function persistirCatalogoCafe() {
+        const slim = productos.map(p => ({ id: p.id, nombre: p.nombre, precio: p.precio, activo: p.activo, cat: p.cat, desc: p.desc, grano: p.grano, costo: Number(p.costo)||0 }));
+        const r = await window.orbitaProductos.upsert(window.orbitaProductos.SITIO_CAFE, slim);
+        if (!r.ok) alert('No se pudo guardar el catálogo. Ejecuta orbita-productos.sql en Supabase.');
+    }
+
+    let pedido = {};
+    // Cafés con grano: lista de unidades. Cada café se agrega con un grano específico.
+    // [{ uid, baseId, nombre, precio, grano }]  grano = 'Armonia' | 'Napoli'
+    let cafesEnPedido = [];
+    let granoSel = {}; // { [baseId]: 'Armonia'|'Napoli' }  (selección actual para el próximo +)
+    function _qtyCafe(baseId) { return cafesEnPedido.filter(c => c.baseId === baseId).length; }
+    function setGranoCafe(baseId, granoId) {
+        granoSel[baseId] = granoId;
+        renderMenu();
+    }
+    function agregarCafe(baseId) {
+        const prod = productos.find(p => p.id === baseId);
+        if (!prod || !prod.activo) return;
+        const grano = granoSel[baseId];
+        if (!grano) {
+            const card = document.getElementById('card-' + baseId);
+            if (window.orbitaPagoFlow && window.orbitaPagoFlow.flashError) {
+                window.orbitaPagoFlow.flashError(card, 'Elige un grano para tu ' + prod.nombre);
+            } else {
+                alert('Elige un grano antes de agregar tu ' + prod.nombre);
+            }
+            return;
+        }
+        _pushCafe(baseId, grano);
+        // Reiniciar selección de grano: el cliente debe volver a elegir si quiere otro café.
+        delete granoSel[baseId];
+        renderMenu();
+        actualizarResumen();
+        if (window.orbitaPagoFlow && window.orbitaPagoFlow.toast) {
+            window.orbitaPagoFlow.toast(`${prod.nombre} con ${grano} ✓`, 'success');
+        }
+    }
+    // Agrega un café de un grano específico sin necesidad de seleccionarlo en los chips.
+    // Lo usan los botones "+" por grano en la tarjeta cuando ya hay cafés de ese grano en el pedido.
+    function agregarCafeDeGrano(baseId, granoId) {
+        const prod = productos.find(p => p.id === baseId);
+        if (!prod || !prod.activo) return;
+        _pushCafe(baseId, granoId);
+        renderMenu();
+        actualizarResumen();
+        if (window.orbitaPagoFlow && window.orbitaPagoFlow.toast) {
+            window.orbitaPagoFlow.toast(`${prod.nombre} con ${granoId} ✓`, 'success');
+        }
+    }
+    function _pushCafe(baseId, granoId) {
+        const prod = productos.find(p => p.id === baseId);
+        if (!prod) return;
+        cafesEnPedido.push({
+            uid: 'cf_' + Date.now() + '_' + Math.random().toString(36).slice(2, 6),
+            baseId,
+            nombre: prod.nombre,
+            precio: Number(prod.precio) || 0,
+            grano: granoId,
+        });
+    }
+    function quitarUltimoCafe(baseId) {
+        for (let i = cafesEnPedido.length - 1; i >= 0; i--) {
+            if (cafesEnPedido[i].baseId === baseId) {
+                cafesEnPedido.splice(i, 1);
+                break;
+            }
+        }
+        renderMenu();
+        actualizarResumen();
+    }
+    function quitarUltimoCafeGrano(baseId, grano) {
+        for (let i = cafesEnPedido.length - 1; i >= 0; i--) {
+            if (cafesEnPedido[i].baseId === baseId && cafesEnPedido[i].grano === grano) {
+                cafesEnPedido.splice(i, 1);
+                break;
+            }
+        }
+        renderMenu();
+        actualizarResumen();
+    }
+    function abrirModalGranos() {
+        const overlay = document.getElementById('modal-granos-overlay');
+        if (overlay) overlay.classList.add('open');
+    }
+    function cerrarModalGranos() {
+        const overlay = document.getElementById('modal-granos-overlay');
+        if (overlay) overlay.classList.remove('open');
+    }
+    window.abrirModalGranos = abrirModalGranos;
+    window.cerrarModalGranos = cerrarModalGranos;
+    let adminDesbloqueado = false;
+    const ADMIN_URL_FLAG = 'orbita_back';
+    const ADMIN_PRIVATE_KEY = 'k';
+    const ADMIN_PRIVATE_SECRET = 'orbita_8h3k2p_2026';
+    const qs = new URLSearchParams(window.location.search);
+    const tieneClavePrivada = qs.get(ADMIN_PRIVATE_KEY) === ADMIN_PRIVATE_SECRET;
+    const esAdmin = tieneClavePrivada;
+
+    function mostrarAdminModoBanner() {
+        const banner = document.createElement('div');
+        banner.id = 'admin-mode-banner';
+        banner.style.cssText = 'position:fixed;top:0;left:0;right:0;z-index:9999;padding:12px 14px;font-family:DM Sans, sans-serif;font-size:0.95rem;text-align:center;background:rgba(17,17,17,0.96);color:#fff;border-bottom:2px solid #8B1A1A;';
+        banner.innerHTML = 'Modo admin privado activo: ingresa email y contraseña para ver pedidos y acceder al panel central. <button id="btn-admin-banner" type="button" class="btn-modal btn-fire" style="margin-left:10px;font-size:0.85rem;padding:6px 10px;vertical-align:middle;" onclick="abrirAdmin()">Ingresar credenciales</button>';
+        document.body.insertBefore(banner, document.body.firstChild);
+        document.body.style.paddingTop = '54px';
+    }
+
+    function setSeccionCafe(sec) {
+        const map = { cafe: 'cafe', pastel: 'pastel', refrescos: 'refrescos' };
+        const s = map[sec] || 'cafe';
+        document.getElementById('btn-sec-cafe').classList.toggle('active', s === 'cafe');
+        document.getElementById('btn-sec-pastel').classList.toggle('active', s === 'pastel');
+        document.getElementById('btn-sec-refrescos').classList.toggle('active', s === 'refrescos');
+        document.getElementById('panel-sec-cafe').classList.toggle('active', s === 'cafe');
+        document.getElementById('panel-sec-pastel').classList.toggle('active', s === 'pastel');
+        document.getElementById('panel-sec-refrescos').classList.toggle('active', s === 'refrescos');
+    }
+
+    function toggleCafeSec(seccion) {
+        const map = { jugos: 'jugos', bebidas: 'bebidas', aguas: 'aguas' };
+        const key = map[seccion];
+        if (!key) return;
+        const box = document.getElementById('box-' + key);
+        const head = document.getElementById('head-' + key);
+        if (!box || !head) return;
+        box.classList.toggle('open');
+        const abierto = box.classList.contains('open');
+        head.setAttribute('aria-expanded', abierto ? 'true' : 'false');
+    }
+
+    // ── RENDER ──
+    function renderMenu() {
+        const cafes   = productos.filter(p => p.cat === 'cafe');
+        const pasteles = productos.filter(p => p.cat === 'pastel');
+        const jugos   = productos.filter(p => p.cat === 'jugo');
+        const bebidas = productos.filter(p => p.cat === 'bebida');
+        const aguas   = productos.filter(p => p.cat === 'agua');
+        document.getElementById('menu-cafes').innerHTML   = cafes.map(renderCard).join('');
+        document.getElementById('menu-pasteles').innerHTML = pasteles.map(renderCard).join('');
+        document.getElementById('menu-jugos').innerHTML   = jugos.map(renderFilaBebida).join('');
+        document.getElementById('menu-bebidas').innerHTML = bebidas.map(renderFilaBebida).join('');
+        document.getElementById('menu-aguas').innerHTML   = aguas.map(renderFilaBebida).join('');
+        productos.forEach(p => { if (pedido[p.id] === undefined) pedido[p.id] = 0; });
+        actualizarResumen();
+    }
+
+    function renderCard(p) {
+        if (p.cat === 'cafe' && p.grano) return renderCardCafeGrano(p);
+        return `<div class="cafe-card ${p.activo ? '' : 'disabled'}" id="card-${p.id}">
+            <div class="cafe-card-header">
+                <div>
+                    <h3>${escHtml(p.nombre)}${!p.activo ? ' <span style="color:var(--primary);font-size:0.72rem;">(No disponible)</span>' : ''}${p.cat==='pastel' ? '<span class="badge-casero">Casero</span>' : ''}</h3>
+                    <div class="desc">${escHtml(p.desc||'')}</div>
+                </div>
+                <span class="price">$${p.precio.toLocaleString('es-CL')}</span>
+            </div>
+            <div class="qty-control" style="margin-top:10px;">
+                <button class="qty-btn" onclick="cambiar('${p.id}',-1)">−</button>
+                <span class="qty-num" id="qty-${p.id}">0</span>
+                <button class="qty-btn plus" onclick="cambiar('${p.id}',1)">+</button>
+            </div>
+        </div>`;
+    }
+
+    function renderCardCafeGrano(p) {
+        const sel = granoSel[p.id] || null;
+        const chips = GRANOS_INFO.map(g => {
+            const activo = sel === g.id;
+            return `<button type="button" onclick="setGranoCafe('${p.id}','${g.id}')" style="flex:1;padding:8px 10px;font-size:0.78rem;border:1px solid ${activo ? 'var(--primary)' : 'var(--border)'};border-radius:8px;background:${activo ? 'var(--primary)' : 'var(--surface)'};color:${activo ? '#FAF3E0' : 'var(--text)'};cursor:pointer;font-weight:700;display:flex;flex-direction:column;align-items:flex-start;gap:2px;line-height:1.2;text-align:left;">
+                <span>${escHtml(g.label)}</span>
+                <span style="font-size:0.66rem;font-weight:500;color:${activo ? '#FAF3E0' : 'var(--muted)'};text-transform:none;letter-spacing:0;">${escHtml(g.tagline)}</span>
+            </button>`;
+        }).join('');
+
+        // Contadores por grano: cada grano agregado al pedido tiene su propia
+        // fila con +/− independiente para que restar uno no afecte al otro.
+        const counts = {};
+        GRANOS_INFO.forEach(g => { counts[g.id] = 0; });
+        cafesEnPedido.forEach(c => { if (c.baseId === p.id) counts[c.grano] = (counts[c.grano] || 0) + 1; });
+        const filasGrano = GRANOS_INFO.filter(g => counts[g.id] > 0).map(g => `
+            <div style="display:flex;justify-content:space-between;align-items:center;margin-top:8px;padding:8px 10px;background:rgba(139,26,26,0.08);border:1px solid var(--border);border-radius:10px;">
+                <span style="font-size:0.85rem;font-weight:700;color:var(--text);">${escHtml(g.label)}</span>
+                <div class="qty-control" style="${!p.activo ? 'opacity:0.4;pointer-events:none;' : ''}">
+                    <button class="qty-btn" type="button" onclick="quitarUltimoCafeGrano('${p.id}','${g.id}')">−</button>
+                    <span class="qty-num">${counts[g.id]}</span>
+                    <button class="qty-btn plus" type="button" onclick="agregarCafeDeGrano('${p.id}','${g.id}')">+</button>
+                </div>
+            </div>
+        `).join('');
+
+        return `<div class="cafe-card ${p.activo ? '' : 'disabled'}" id="card-${p.id}">
+            <div class="cafe-card-header">
+                <div>
+                    <h3>${escHtml(p.nombre)}${!p.activo ? ' <span style="color:var(--primary);font-size:0.72rem;">(No disponible)</span>' : ''}</h3>
+                    <div class="desc">${escHtml(p.desc||'')}</div>
+                </div>
+                <span class="price">$${p.precio.toLocaleString('es-CL')}</span>
+            </div>
+            <div style="margin-top:10px;">
+                <div style="font-size:0.7rem;color:var(--muted);text-transform:uppercase;letter-spacing:1px;margin-bottom:6px;">Elige grano</div>
+                <div style="display:flex;gap:8px;">${chips}</div>
+                <button type="button" onclick="abrirModalGranos()" style="background:none;border:none;color:var(--primary);font-size:0.78rem;font-weight:600;cursor:pointer;text-decoration:underline;padding:8px 0 0;">¿No sabes cuál elegir? Haz clic aquí ☕😊</button>
+            </div>
+            <button type="button" onclick="agregarCafe('${p.id}')" ${!sel ? 'disabled' : ''} style="width:100%;margin-top:10px;padding:12px;border:none;border-radius:10px;background:${sel?'var(--primary)':'var(--border)'};color:#FAF3E0;font-family:'Bebas Neue',sans-serif;font-size:1rem;letter-spacing:1.6px;cursor:${sel?'pointer':'not-allowed'};${!sel?'opacity:0.55;':''}">+ AGREGAR ${sel ? sel.toUpperCase() : ''}</button>
+            ${filasGrano}
+        </div>`;
+    }
+
+    function renderFilaBebida(p) {
+        const esJugo = p.cat === 'jugo';
+        const opcionSel = (window.jugoOpciones && window.jugoOpciones[p.id]) || 'con';
+        const azucarHtml = esJugo ? `
+            <div style="display:flex;gap:4px;margin-top:6px;">
+                ${['con','sin','endulzante'].map(op => `
+                    <button type="button" onclick="setAzucar('${p.id}','${op}')" style="flex:1;padding:5px 6px;font-size:0.68rem;border:1px solid var(--border);border-radius:8px;background:${opcionSel === op ? 'var(--primary)' : 'var(--surface)'};color:${opcionSel === op ? '#FAF3E0' : 'var(--muted)'};cursor:pointer;text-transform:uppercase;letter-spacing:0.5px;font-weight:600;">${op === 'con' ? 'Con azúcar' : op === 'sin' ? 'Sin azúcar' : 'Endulzante'}</button>
+                `).join('')}
+            </div>` : '';
+        return `
+            <div class="jugo-item">
+                <div style="flex:1;">
+                    <div class="jugo-info">
+                        <span class="jugo-nombre">${escHtml(p.nombre)}${!p.activo ? ' <span style="color:var(--primary);font-size:0.7rem;">(No disponible)</span>' : ''}</span>
+                        <span class="jugo-precio">$${p.precio.toLocaleString('es-CL')}</span>
+                    </div>
+                    ${azucarHtml}
+                </div>
+                <div class="qty-control" style="${!p.activo ? 'opacity:0.4;pointer-events:none;' : ''}">
+                    <button class="qty-btn" onclick="cambiar('${p.id}',-1)">−</button>
+                    <span class="qty-num" id="qty-${p.id}">0</span>
+                    <button class="qty-btn plus" onclick="cambiar('${p.id}',1)">+</button>
+                </div>
+            </div>`;
+    }
+
+    function setAzucar(id, opcion) {
+        if (!window.jugoOpciones) window.jugoOpciones = {};
+        window.jugoOpciones[id] = opcion;
+        renderMenu();
+        if (typeof actualizarResumen === 'function') actualizarResumen();
+    }
+
+    function nombreConAzucar(p) {
+        let nom = p.nombre;
+        if (p.cat === 'jugo') {
+            const op = (window.jugoOpciones && window.jugoOpciones[p.id]) || 'con';
+            const label = op === 'con' ? 'con azúcar' : op === 'sin' ? 'sin azúcar' : 'con endulzante';
+            nom += ' (' + label + ')';
+        }
+        return nom;
+    }
+
+    function cambiar(id, delta) {
+        const prod = productos.find(p => p.id === id);
+        if (!prod || !prod.activo) return;
+        // Cafés con grano usan agregarCafe/quitarUltimoCafe
+        if (prod.cat === 'cafe' && prod.grano) {
+            if (delta > 0) agregarCafe(id);
+            else quitarUltimoCafe(id);
+            return;
+        }
+        pedido[id] = Math.max(0, (pedido[id] || 0) + delta);
+        const qtyEl = document.getElementById('qty-' + id);
+        if (qtyEl) qtyEl.textContent = pedido[id];
+        actualizarResumen();
+    }
+
+    function actualizarResumen() {
+        const res = document.getElementById('resumen');
+        const delivery = tipoEntrega === 'delivery' ? (window.COSTO_DELIVERY || 2000) : 0;
+        const totalCafes = cafesEnPedido.reduce((a, c) => a + c.precio, 0);
+        const totalResto = productos.reduce((a, p) => {
+            if (p.cat === 'cafe' && p.grano) return a;
+            return a + (pedido[p.id] || 0) * p.precio;
+        }, 0);
+        const total = totalCafes + totalResto + delivery;
+        const row = (label, precio, onClickFn) => `
+            <div style="display:flex;justify-content:space-between;align-items:center;gap:8px;padding:7px 11px;background:rgba(139,26,26,0.08);border-radius:8px;margin-top:4px;font-size:0.85rem;text-align:left;">
+                <span>${escHtml(label)}${precio > 0 ? ` — $${Number(precio).toLocaleString('es-CL')}` : ''}</span>
+                <button type="button" onclick="${onClickFn}" style="background:transparent;border:none;color:#c1121f;font-size:1.1rem;cursor:pointer;padding:2px 6px;line-height:1;">×</button>
+            </div>`;
+        // Cafés agrupados por (baseId, grano)
+        const conteoCafes = {};
+        cafesEnPedido.forEach(c => {
+            const k = c.baseId + '||' + c.grano;
+            if (!conteoCafes[k]) conteoCafes[k] = { baseId: c.baseId, grano: c.grano, nombre: c.nombre, precio: c.precio, cantidad: 0 };
+            conteoCafes[k].cantidad++;
+        });
+        const cafesHtml = Object.values(conteoCafes).map(g => {
+            const label = (g.cantidad > 1 ? g.cantidad + 'x ' : '1 ') + g.nombre + ' (' + g.grano + ')';
+            return row(label, g.cantidad * g.precio, `quitarUltimoCafeGrano('${g.baseId}','${g.grano}')`);
+        }).join('');
+        const restoHtml = productos.filter(p => !(p.cat === 'cafe' && p.grano) && (pedido[p.id]||0) > 0).map(p => {
+            const c = pedido[p.id];
+            const label = (c > 1 ? c + 'x ' : '1 ') + nombreConAzucar(p);
+            return row(label, c * p.precio, `cambiar('${p.id}', -${c})`);
+        }).join('');
+        if (cafesHtml || restoHtml) {
+            res.innerHTML = cafesHtml + restoHtml + `<div style="margin-top:10px;font-family:'Bebas Neue',sans-serif;font-size:1.3rem;color:var(--text);text-align:center;">Total: $${total.toLocaleString('es-CL')}</div>`;
+        } else {
+            res.innerHTML = `<span style="color:var(--muted)">Tu pedido está vacío</span>`;
+        }
+    }
+
+    var ubicacionCliente = null; // { url } — GPS opcional
+    var tipoEntrega = null; // 'retiro' | 'delivery'
+
+    function _renderDirsDelivery() {
+        const cont = document.getElementById('dirs-guardadas-delivery');
+        if (!cont) return;
+        const dirs = window.OrbitaPagoRapido?.getDireccionesCliente?.() || [];
+        if (!dirs.length) { cont.innerHTML = ''; return; }
+        cont.innerHTML = '<div style="font-size:0.78rem;color:var(--muted);margin-bottom:5px;">Mis direcciones guardadas:</div>' +
+            dirs.map(d => `<button type="button" onclick="document.getElementById('input-direccion-delivery').value=${JSON.stringify(d)}" style="display:block;width:100%;text-align:left;padding:8px 12px;margin-bottom:4px;background:var(--surface);border:1px solid var(--border);border-radius:10px;color:var(--text);cursor:pointer;font-size:0.85rem;">📍 ${escHtml(d)}</button>`).join('');
+    }
+
+    function compartirUbicacion() {
+        const btn    = document.getElementById('btn-compartir-ubi');
+        const estado = document.getElementById('ubi-estado');
+        btn.textContent = '⏳ Obteniendo ubicación...';
+        btn.disabled = true;
+        navigator.geolocation.getCurrentPosition(
+            pos => {
+                const lat = pos.coords.latitude;
+                const lng = pos.coords.longitude;
+                if (window.orbitaDelivery && !window.orbitaDelivery.dentroDeFrutillar(lat, lng)) {
+                    ubicacionCliente = null;
+                    btn.textContent = '📍 GPS fuera de zona';
+                    btn.disabled = false;
+                    estado.textContent = window.orbitaDelivery.mensajeFueraZona;
+                    estado.style.color = '#ff6b6b';
+                    return;
+                }
+                const url = `https://maps.google.com/?q=${lat},${lng}`;
+                ubicacionCliente = { url };
+                const inputDir = document.getElementById('input-direccion-delivery');
+                if (inputDir && !inputDir.value.trim()) inputDir.value = url;
+                btn.textContent = '✅ GPS obtenido';
+                btn.classList.add('obtenida');
+                btn.disabled = false;
+                estado.textContent = '📍 Enlace GPS adjuntado al pedido.';
+                estado.style.color = 'var(--green)';
+            },
+            () => {
+                btn.textContent = '📍 Usar GPS para autocompletar (opcional)';
+                btn.disabled = false;
+                estado.textContent = 'No se pudo obtener GPS. Escribe tu dirección manualmente.';
+                estado.style.color = 'var(--primary)';
+            },
+            { enableHighAccuracy: true, timeout: 10000 }
+        );
+    }
+
+    async function seleccionarEntrega(tipo) {
+        if (tipo === 'delivery' && window.orbitaDelivery) {
+            const r = await window.orbitaDelivery.puedeHacerDeliveryAhora('cafe');
+            if (!r.ok) {
+                const btn = document.getElementById('btn-delivery');
+                if (window.orbitaPagoFlow && window.orbitaPagoFlow.flashError) {
+                    window.orbitaPagoFlow.flashError(btn, window.orbitaDelivery.mensajeFueraHorario(r.horario));
+                }
+                return;
+            }
+        }
+        tipoEntrega = tipo;
+        document.getElementById('btn-retiro').classList.toggle('active', tipo === 'retiro');
+        document.getElementById('btn-delivery').classList.toggle('active', tipo === 'delivery');
+        document.getElementById('campo-hora').style.display      = tipo === 'retiro'   ? '' : 'none';
+        document.getElementById('campo-direccion').style.display = tipo === 'delivery' ? '' : 'none';
+        if (tipo === 'delivery') _renderDirsDelivery();
+        actualizarResumen();
+    }
+
+    // ── ENVIAR PEDIDO ──
+    async function enviarPedido() {
+        const totalUnidades = cafesEnPedido.length + productos.reduce((a, p) => a + ((p.cat === 'cafe' && p.grano) ? 0 : (pedido[p.id] || 0)), 0);
+        if (totalUnidades === 0) { alert("Primero agrega algo al pedido ☕"); return; }
+        if (!tipoEntrega) { alert("Por favor elige Retiro en local o Delivery 👆"); return; }
+        const nombreInput = document.getElementById('input-nombre');
+        const horaInput   = document.getElementById('input-hora');
+        const nombre = nombreInput.value.trim();
+        const hora   = horaInput.value.trim();
+        const _dirTexto = (document.getElementById('input-direccion-delivery')?.value || '').trim();
+        let error = false;
+        nombreInput.classList.remove('input-error');
+        horaInput.classList.remove('input-error');
+        if (!nombre) { nombreInput.classList.add('input-error'); nombreInput.focus(); error = true; }
+        if (tipoEntrega === 'retiro' && !hora) { horaInput.classList.add('input-error'); if (!error) horaInput.focus(); error = true; }
+        if (tipoEntrega === 'delivery' && !_dirTexto) { alert("Por favor ingresa tu dirección de entrega 📍"); document.getElementById('input-direccion-delivery')?.focus(); return; }
+        if (error)   { alert("Por favor completa todos los campos 👆"); return; }
+
+        const delivery = tipoEntrega === 'delivery' ? (window.COSTO_DELIVERY || 2000) : 0;
+        const totalCafes = cafesEnPedido.reduce((a, c) => a + c.precio, 0);
+        const totalResto = productos.reduce((a, p) => ((p.cat === 'cafe' && p.grano) ? a : (a + (pedido[p.id] || 0) * p.precio)), 0);
+        const total = totalCafes + totalResto + delivery;
+
+        // Cafés agrupados por (baseId, grano)
+        const conteoCafes = {};
+        cafesEnPedido.forEach(c => {
+            const k = c.baseId + '||' + c.grano;
+            if (!conteoCafes[k]) conteoCafes[k] = { baseId: c.baseId, grano: c.grano, nombre: c.nombre, precio: c.precio, cantidad: 0 };
+            conteoCafes[k].cantidad++;
+        });
+
+        let msg = `CAFÉ ÓRBITA\n--------------------\n`;
+        Object.values(conteoCafes).forEach(g => { msg += `  • ${g.cantidad}x ${g.nombre} (${g.grano})\n`; });
+        productos.filter(p => !(p.cat === 'cafe' && p.grano) && pedido[p.id] > 0).forEach(p => {
+            msg += `  • ${pedido[p.id]}x ${nombreConAzucar(p)}\n`;
+        });
+        msg += `--------------------\n`;
+        if (tipoEntrega === 'retiro') msg += `📦 Retiro en local\nHora de retiro: ${hora}\n`;
+        else msg += `🛵 Delivery (+$${(window.COSTO_DELIVERY || 2000).toLocaleString('es-CL')})\nDirección: ${_dirTexto}${ubicacionCliente?.url ? '\nGPS: ' + ubicacionCliente.url : ''}\n`;
+        msg += `Nombre: ${nombre}\nTotal: $${total.toLocaleString('es-CL')}\n--------------------`;
+
+        const items_json = [];
+        Object.values(conteoCafes).forEach(g => {
+            items_json.push({ id: g.baseId, nombre: g.nombre + ' (' + g.grano + ')', cantidad: g.cantidad, precio: g.precio, grano: g.grano });
+        });
+        productos.filter(p => !(p.cat === 'cafe' && p.grano) && pedido[p.id] > 0).forEach(p => {
+            items_json.push({ id: p.id, nombre: nombreConAzucar(p), cantidad: pedido[p.id], precio: p.precio });
+        });
+        if (tipoEntrega === 'delivery') items_json.push({ id: 'delivery', nombre: 'Delivery', cantidad: 1, precio: (window.COSTO_DELIVERY || 2000) });
+
+        const pedidoBody = {
+            nombre, total,
+            hora_retiro: tipoEntrega === 'retiro' ? hora : null,
+            tipo_entrega: tipoEntrega,
+            items_json,
+            direccion_entrega: tipoEntrega === 'delivery' ? (_dirTexto + (ubicacionCliente?.url ? ' | GPS: ' + ubicacionCliente.url : '')) : null,
+            telefono: (window.OrbitaPagoRapido?.estado?.cliente?.telefono) || null,
+        };
+
+        cafesEnPedido = [];
+        granoSel = {};
+        productos.forEach(p => { pedido[p.id] = 0; });
+        document.querySelectorAll('.qty-num').forEach(el => el.textContent = '0');
+        document.getElementById('input-nombre').value = '';
+        document.getElementById('input-hora').value = '';
+        ubicacionCliente = null;
+        const bU = document.getElementById('btn-compartir-ubi'); if (bU) { bU.textContent = '📍 Compartir mi ubicación'; bU.classList.remove('obtenida'); bU.disabled = false; }
+        const st = document.getElementById('ubi-estado'); if (st) st.textContent = '';
+        renderMenu();
+        actualizarResumen();
+        window.scrollTo({ top: 0, behavior: 'smooth' });
+
+        if (window.orbitaPagoFlow) {
+            await window.orbitaPagoFlow.registrarWhatsapp({
+                sitio: 'cafe', pedidoBody, wspNumber: WSP_NUMBER, mensaje: msg
+            });
+        } else {
+            setTimeout(() => { window.open("https://wa.me/" + WSP_NUMBER + "?text=" + encodeURIComponent(msg), '_blank'); }, 400);
+        }
+    }
+
+    // ── MERCADO PAGO ──
+    async function pagarConMP() {
+        const totalUnidades = cafesEnPedido.length + productos.reduce((a, p) => a + ((p.cat === 'cafe' && p.grano) ? 0 : (pedido[p.id] || 0)), 0);
+        if (totalUnidades === 0) { alert("Primero agrega algo al pedido ☕"); return; }
+        if (!tipoEntrega) { alert("Por favor elige Retiro en local o Delivery 👆"); return; }
+        const nombreInput = document.getElementById('input-nombre');
+        const horaInput   = document.getElementById('input-hora');
+        const nombre = nombreInput.value.trim();
+        const hora   = horaInput.value.trim();
+        let error = false;
+        nombreInput.classList.remove('input-error');
+        horaInput.classList.remove('input-error');
+        if (!nombre) { nombreInput.classList.add('input-error'); nombreInput.focus(); error = true; }
+        if (tipoEntrega === 'retiro' && !hora) { horaInput.classList.add('input-error'); if (!error) horaInput.focus(); error = true; }
+        if (tipoEntrega === 'delivery' && !ubicacionCliente) { alert("Por favor comparte tu ubicación para el delivery 📍"); return; }
+        if (error) { alert("Por favor completa todos los campos 👆"); return; }
+        const btn = document.getElementById('btn-mp');
+        btn.disabled = true; btn.textContent = '⏳ Generando pago...';
+        const items = [];
+        // Cafés agrupados por (baseId, grano)
+        const conteoCafes = {};
+        cafesEnPedido.forEach(c => {
+            const k = c.baseId + '||' + c.grano;
+            if (!conteoCafes[k]) conteoCafes[k] = { nombre: c.nombre, grano: c.grano, precio: c.precio, cantidad: 0 };
+            conteoCafes[k].cantidad++;
+        });
+        Object.values(conteoCafes).forEach(g => {
+            if (!g.precio) return;
+            items.push({ title: (g.nombre + ' (' + g.grano + ')').slice(0, 255), quantity: g.cantidad, unit_price: g.precio, currency_id: 'CLP' });
+        });
+        productos.filter(p => !(p.cat === 'cafe' && p.grano) && pedido[p.id] > 0 && p.precio > 0).forEach(p => items.push({ title: p.nombre, quantity: pedido[p.id], unit_price: p.precio, currency_id: 'CLP' }));
+        if (tipoEntrega === 'delivery') items.push({ title: 'Delivery', quantity: 1, unit_price: (window.COSTO_DELIVERY || 2000), currency_id: 'CLP' });
+        if (items.length === 0) { alert('Los productos seleccionados aún no tienen precio configurado. Por favor pide por WhatsApp por ahora.'); btn.disabled = false; btn.textContent = '💳 PAGAR EN LÍNEA'; return; }
+
+        const items_json = items.map(i => ({ nombre: i.title, cantidad: i.quantity, precio: i.unit_price }));
+        const total = items_json.reduce((a, i) => a + i.cantidad * i.precio, 0);
+        const pedidoBody = {
+            nombre, total,
+            hora_retiro: tipoEntrega === 'retiro' ? hora : null,
+            tipo_entrega: tipoEntrega,
+            items_json,
+            direccion_entrega: tipoEntrega === 'delivery' ? (_dirTexto + (ubicacionCliente?.url ? ' | GPS: ' + ubicacionCliente.url : '')) : null,
+            telefono: (window.OrbitaPagoRapido?.estado?.cliente?.telefono) || null,
+        };
+
+        if (!window.orbitaPagoFlow) {
+            alert('Error: el módulo de pago no cargó. Recargá la página.');
+            btn.disabled = false; btn.textContent = '💳 PAGAR EN LÍNEA';
+            return;
+        }
+
+        await window.orbitaPagoFlow.iniciarPagoMP({
+            sitio: 'cafe',
+            items,
+            pedidoBody,
+            wspNumber: WSP_NUMBER,
+            onError: () => {
+                alert('No se pudo generar el pago. Intenta por WhatsApp.');
+                btn.disabled = false; btn.textContent = '💳 PAGAR EN LÍNEA';
+            }
+        });
+    }
+
+    // ── ADMIN (Supabase Auth) ──
+    async function abrirAdmin() {
+        document.getElementById('modal-overlay').classList.add('open');
+        actualizarBotonIngresoAdmin();
+        const { data: { session } } = await window.orbitaAuth.getSession();
+        if (session) {
+            adminDesbloqueado = true;
+            mostrarPanelAdmin();
+            return;
+        }
+        adminDesbloqueado = false;
+        document.getElementById('login-section').style.display = '';
+        document.getElementById('admin-panel').style.display = 'none';
+        document.getElementById('modal-error').style.display = 'none';
+        setTimeout(() => document.getElementById('admin-email').focus(), 100);
+    }
+    function cerrarAdmin() {
+        document.getElementById('modal-overlay').classList.remove('open');
+        document.getElementById('admin-email').value = '';
+        document.getElementById('admin-pass').value = '';
+        adminDesbloqueado = false;
+        cambiarBannerAdminAVolver();
+    }
+    function actualizarBotonIngresoAdmin() {
+        const overlay = document.getElementById('modal-overlay');
+        const panelOpen = overlay && overlay.classList.contains('open');
+        const banner = document.getElementById('admin-mode-banner');
+        if (banner) banner.style.display = panelOpen ? 'none' : 'block';
+        document.body.style.paddingTop = panelOpen ? '0' : '54px';
+        const btnReopen = document.getElementById('btn-admin-reopen');
+        if (btnReopen) btnReopen.style.display = panelOpen ? 'none' : 'inline-block';
+    }
+    async function verificarPass() {
+        const email = document.getElementById('admin-email').value.trim();
+        const password = document.getElementById('admin-pass').value;
+        const modalError = document.getElementById('modal-error');
+        modalError.style.display = 'none';
+        if (!email || !password) {
+            modalError.textContent = 'Ingresa email y contraseña para iniciar sesión.';
+            modalError.style.display = 'block';
+            return;
+        }
+        try {
+            const result = await window.orbitaAuth.signIn(email, password);
+            if (!result || result.error) {
+                modalError.textContent = result && result.error && result.error.message ? result.error.message : 'No se pudo iniciar sesión';
+                modalError.style.display = 'block';
+                document.getElementById('admin-pass').value = '';
+                return;
+            }
+            adminDesbloqueado = true;
+            mostrarPanelAdmin();
+        } catch (e) {
+            modalError.textContent = e.message || 'Error al iniciar sesión. Revisa la consola.';
+            modalError.style.display = 'block';
+            document.getElementById('admin-pass').value = '';
+        }
+    }
+    async function resetContrasena() {
+        const email = document.getElementById('admin-email').value.trim();
+        if (!email) {
+            alert('Ingresa tu email para resetear la contraseña.');
+            return;
+        }
+        try {
+            const result = await window.orbitaAuth.resetPassword(email);
+            if (result.error) {
+                alert('Error al enviar email de reset: ' + result.error.message);
+            } else {
+                alert('Email de reset enviado. Revisa tu bandeja de entrada.');
+            }
+        } catch (e) {
+            alert('Error: ' + e.message);
+        }
+    }
+    async function mostrarPanelAdmin() {
+        document.getElementById('login-section').style.display = 'none';
+        document.getElementById('admin-panel').style.display = '';
+        cambiarBannerAdminAVolver();
+        cargarPedidosAdmin();
+        // Asegurar catálogo cargado antes de renderizar (evita lista vacía en primer abrir)
+        const lista = document.getElementById('admin-productos-list');
+        if (lista) lista.innerHTML = '<p style="color:var(--muted);font-size:0.9rem;">Cargando productos...</p>';
+        if (!productos || productos.length === 0) {
+            try { await cargarCatalogoCafe(); } catch (e) {}
+        }
+        renderProductosAdmin();
+        if (window.orbitaInventario) window.orbitaInventario.init('cafe', 'cafe');
+    }
+
+    function cambiarBannerAdminAVolver() {
+        const banner = document.getElementById('admin-mode-banner');
+        if (!banner) return;
+        banner.innerHTML = 'Modo admin activo. Si cerraste el panel, puedes volver a abrirlo aquí. <button id="btn-admin-banner" type="button" class="btn-modal btn-fire" style="margin-left:10px;font-size:0.85rem;padding:6px 10px;vertical-align:middle;" onclick="abrirAdmin()">Volver al panel admin</button>';
+        actualizarBotonIngresoAdmin();
+    }
+    function showTab(tabId, btn) {
+        document.querySelectorAll('.tab-content').forEach(t => t.classList.remove('active'));
+        document.querySelectorAll('.tab-btn').forEach(b => b.classList.remove('active'));
+        document.getElementById(tabId).classList.add('active'); btn.classList.add('active');
+        if (tabId === 'tab-resenas') cargarResenasAdmin();
+        else if (tabId === 'tab-inventario' && window.orbitaInventario) window.orbitaInventario.render('cafe', 'cafe');
+    }
+    async function guardarCostoFijoCafe() {
+        const v = parseInt(document.getElementById('input-cf-cafe').value, 10) || 0;
+        const r = await window.orbitaCostosFijos.guardar(window.orbitaCostosFijos.claveCafe, v);
+        if (r.ok) alert('Costo fijo guardado y sincronizado.');
+        else alert(r.error || 'No se pudo guardar.');
+        cargarRendimientoCafe();
+    }
+    async function enviarResetPassAdmin() {
+        try {
+            const { data: { user } } = await window.orbitaAuth.getUser();
+            if (!user || !user.email) { alert('No se pudo obtener el correo. Inicia sesión nuevamente.'); return; }
+            if (!confirm('¿Enviar link de restablecimiento de contraseña a ' + user.email + '?')) return;
+            const r = await window.orbitaAuth.resetPassword(user.email);
+            if (r.error) alert('No se pudo enviar el correo: ' + r.error.message);
+            else alert('Listo, revisa tu bandeja de entrada (y carpeta de spam).');
+        } catch (e) { alert('Error: ' + e.message); }
+    }
+
+    async function cambiarContrasena() {
+        const nuevaPass = document.getElementById('input-nueva-pass')?.value.trim() || '';
+        if (!nuevaPass || nuevaPass.length < 6) {
+            alert('La nueva contraseña debe tener al menos 6 caracteres.');
+            return;
+        }
+        try {
+            const result = await window.orbitaAuth.updatePassword(nuevaPass);
+            if (result.error) {
+                alert('Error al cambiar contraseña: ' + result.error.message);
+            } else {
+                alert('Contraseña cambiada exitosamente.');
+                document.getElementById('input-nueva-pass').value = '';
+            }
+        } catch (e) {
+            alert('Error: ' + e.message);
+        }
+    }
+    async function fetchVentasDesdeCafe(desdeISO) {
+        const res = await window.orbitaAuth.adminFetch(
+            `${SUPABASE_URL}/rest/v1/pedidos?select=total,creado_at,estado&sitio=eq.cafe&creado_at=gte.${desdeISO}&order=creado_at.asc`
+        );
+        if (!res.ok) return [];
+        const data = await res.json();
+        if (!Array.isArray(data)) return [];
+        return data.filter(r => r.estado !== 'anulado' && r.estado !== 'rechazado');
+    }
+    function sumarVentasMesCafe(rows, y, m0) {
+        return rows.reduce((a, r) => {
+            const d = new Date(r.creado_at);
+            if (d.getFullYear() === y && d.getMonth() === m0) return a + (Number(r.total) || 0);
+            return a;
+        }, 0);
+    }
+    function sumarVentasAnioCafe(rows, y) {
+        return rows.reduce((a, r) => {
+            const d = new Date(r.creado_at);
+            if (d.getFullYear() === y) return a + (Number(r.total) || 0);
+            return a;
+        }, 0);
+    }
+    async function cargarRendimientoCafe() {
+        const box = document.getElementById('rendimiento-cafe-body');
+        const inp = document.getElementById('input-cf-cafe');
+        if (!box) return;
+        box.innerHTML = '<p style="color:var(--muted);font-size:0.9rem;">Cargando...</p>';
+        let costos;
+        try {
+            costos = await window.orbitaCostosFijos.leer();
+        } catch (e) {
+            costos = { costo_fijo_handroll: 0, costo_fijo_cafe: 0, costo_fijo_fuente: 0, _sinTabla: true };
+        }
+        const cf = Number(costos.costo_fijo_cafe) || 0;
+        if (inp) inp.value = cf || '';
+        const now = new Date();
+        const y = now.getFullYear();
+        const m = now.getMonth();
+        const desde = `${y}-01-01T00:00:00`;
+        try {
+            const rows = await fetchVentasDesdeCafe(desde);
+            const vm = sumarVentasMesCafe(rows, y, m);
+            const va = sumarVentasAnioCafe(rows, y);
+            const netM = vm - cf;
+            const netA = va - cf * 12;
+            const aviso = costos._necesitaLogin ? '<p style="color:var(--primary);font-size:0.78rem;margin-bottom:10px;text-align:left;">Inicia sesión en este panel para ver costos y ventas con RLS.</p>' : (costos._sinTabla ? '<p style="color:var(--primary);font-size:0.78rem;margin-bottom:10px;text-align:left;">No se pudo leer orbita_config. Revisa SQL y sesión.</p>' : '');
+            box.innerHTML = aviso + `
+                <div class="admin-item">
+                    <div style="font-size:0.88rem;margin-bottom:6px;">Ventas <strong>mes actual</strong></div>
+                    <div style="font-family:'Bebas Neue',sans-serif;font-size:1.25rem;color:var(--green);">$${vm.toLocaleString('es-CL')}</div>
+                    <div style="font-size:0.78rem;color:var(--muted);margin-top:8px;">− Costo fijo mes <strong>$${cf.toLocaleString('es-CL')}</strong></div>
+                    <div style="font-size:0.85rem;margin-top:6px;">Resultado aprox. mes: <strong style="color:${netM>=0?'#2a7a4f':'var(--primary)'}">$${netM.toLocaleString('es-CL')}</strong></div>
+                </div>
+                <div class="admin-item" style="margin-top:10px;">
+                    <div style="font-size:0.88rem;margin-bottom:6px;">Ventas <strong>año ${y}</strong></div>
+                    <div style="font-family:'Bebas Neue',sans-serif;font-size:1.25rem;color:var(--text);">$${va.toLocaleString('es-CL')}</div>
+                    <div style="font-size:0.78rem;color:var(--muted);margin-top:8px;">− Costos fijos 12 meses <strong>$${(cf*12).toLocaleString('es-CL')}</strong></div>
+                    <div style="font-size:0.85rem;margin-top:6px;">Resultado aprox. año: <strong style="color:${netA>=0?'#2a7a4f':'var(--primary)'}">$${netA.toLocaleString('es-CL')}</strong></div>
+                </div>`;
+        } catch (e) {
+            box.innerHTML = '<p style="color:var(--primary);font-size:0.85rem;">No se pudieron cargar las ventas.</p>';
+        }
+    }
+    function _badgeEstado(estado) {
+        const map = {
+            pagado:     { txt: '✓ Pagado',    bg: 'rgba(37,211,102,0.15)', color: 'var(--green)' },
+            pendiente:  { txt: '⏳ Pendiente', bg: 'rgba(255,193,7,0.15)',  color: '#ffc107' },
+            rechazado:  { txt: '✗ Rechazado', bg: 'rgba(255,68,68,0.15)',  color: '#ff4444' },
+            anulado:    { txt: '🚫 Anulado',   bg: 'rgba(120,120,120,0.2)', color: '#aaa' },
+            whatsapp:   { txt: '💬 WhatsApp', bg: 'rgba(37,211,102,0.12)', color: 'var(--green)' }
+        };
+        const m = map[estado] || { txt: estado || '—', bg: 'rgba(120,120,120,0.15)', color: '#aaa' };
+        return `<span style="background:${m.bg};color:${m.color};padding:2px 8px;border-radius:10px;font-size:0.7rem;font-weight:700;">${m.txt}</span>`;
+    }
+    // Devuelve HTML vertical (cada ítem en su línea). Items ya escapados.
+    function _itemsResumen(p) {
+        const escItem = s => String(s==null?'':s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');
+        let labels = [];
+        if (Array.isArray(p.items_json) && p.items_json.length) {
+            labels = p.items_json.map(i => `${i.cantidad || 1}x ${escItem(i.nombre)}`);
+        } else {
+            (typeof productos !== 'undefined' ? productos : []).forEach(pr => {
+                if (p[pr.id] > 0) labels.push(`${p[pr.id]}x ${escItem(pr.nombre)}`);
+            });
+        }
+        if (!labels.length) return '—';
+        return labels.map(l => `<div style="line-height:1.4;">• ${l}</div>`).join('');
+    }
+    async function anularPedido(id) {
+        if (!confirm('¿Anular este pedido?')) return;
+        try {
+            const res = await window.orbitaAuth.adminFetch(`${SUPABASE_URL}/rest/v1/pedidos?id=eq.${id}`, {
+                method: 'PATCH',
+                headers: { 'Content-Type': 'application/json', Prefer: 'return=minimal' },
+                body: JSON.stringify({ estado: 'anulado' })
+            });
+            if (res.ok) cargarPedidosAdmin();
+            else alert('No se pudo anular.');
+        } catch(e) { alert('Error al anular.'); }
+    }
+    window.anularPedido = anularPedido;
+
+    async function cargarPedidosAdmin() {
+        const lista = document.getElementById('admin-pedidos-list');
+        lista.innerHTML = '<p style="color:var(--muted);font-size:0.9rem;">Cargando...</p>';
+        try {
+            const hoy = new Date().toISOString().split('T')[0];
+            const res = await window.orbitaAuth.adminFetch(`${SUPABASE_URL}/rest/v1/pedidos?select=*&sitio=eq.cafe&creado_at=gte.${hoy}T00:00:00&order=creado_at.desc`);
+            const data = await res.json();
+            if (!Array.isArray(data) || data.length === 0) { lista.innerHTML = '<p style="color:var(--muted);font-size:0.9rem;">Sin pedidos hoy aún.</p>'; return; }
+            const totalDia = data.filter(p => p.estado !== 'anulado' && p.estado !== 'rechazado').reduce((a, p) => a + (p.total || 0), 0);
+            lista.innerHTML = `<p style="color:var(--green);font-size:0.85rem;margin-bottom:12px;">💰 Total del día: $${totalDia.toLocaleString('es-CL')} · ${data.length} pedido${data.length !== 1 ? 's' : ''}</p>` +
+                data.map(p => {
+                    const hora = new Date(p.creado_at).toLocaleTimeString('es-CL', {hour:'2-digit', minute:'2-digit'});
+                    const items = _itemsResumen(p);
+                    const puedeAnular = p.estado === 'pendiente' || p.estado === 'whatsapp';
+                    return `<div class="pedido-item">
+                        <div style="display:flex;justify-content:space-between;align-items:center;gap:8px;margin-bottom:4px;">
+                            <div style="font-weight:700;font-size:0.92rem;flex:1;">${items}</div>
+                            ${_badgeEstado(p.estado)}
+                        </div>
+                        ${p.nombre ? `<div style="font-size:0.8rem;color:#aaa;">👤 ${escHtml(p.nombre)}</div>` : ''}
+                        ${p.telefono ? `<div style="font-size:0.8rem;color:#aaa;margin-top:2px;">📞 <a href="tel:${escHtml(p.telefono)}" style="color:var(--primary);text-decoration:none;">${escHtml(p.telefono)}</a></div>` : ''}
+                        ${p.direccion_entrega ? (()=>{ const _gps = p.direccion_entrega.match(/GPS: (https?:\/\/\S+)/); const _txt = p.direccion_entrega.replace(/ \| GPS:.*$/, ''); return `<div style="font-size:0.8rem;color:#aaa;margin-top:2px;">📍 ${escHtml(_txt)}${_gps ? ' <a href="' + escHtml(_gps[1]) + '" target="_blank" style="color:var(--primary);text-decoration:none;">[GPS]</a>' : ''}</div>`; })() : ''}
+                        <div style="display:flex;justify-content:space-between;align-items:center;margin-top:8px;gap:8px;">
+                            <span style="font-size:0.75rem;color:var(--muted);">⏰ ${hora}</span>
+                            <span class="pedido-total">$${(p.total||0).toLocaleString('es-CL')}</span>
+                        </div>
+                        ${puedeAnular ? `<button class="btn-sm btn-red" style="margin-top:8px;width:100%;" onclick="anularPedido(${p.id})">Anular pedido</button>` : ''}
+                    </div>`;
+                }).join('');
+        } catch(e) { lista.innerHTML = '<p style="color:var(--primary);font-size:0.85rem;">Error al cargar.</p>'; }
+    }
+
+    async function cargarResenasAdmin() {
+        const lista = document.getElementById('admin-reviews-list');
+        if (!lista) return;
+        lista.innerHTML = '<p style="color:var(--muted);font-size:0.9rem;">Cargando...</p>';
+        try {
+            const res = await window.orbitaAuth.adminFetch(`${SUPABASE_URL}/rest/v1/resenas?sitio=eq.cafe&select=*&order=creado_at.desc`);
+            const data = await res.json();
+            if (!Array.isArray(data) || data.length === 0) {
+                lista.innerHTML = '<p style="color:var(--muted);font-size:0.9rem;">Sin reseñas aún.</p>'; return;
+            }
+            lista.innerHTML = data.map(r => `
+                <div id="ar-${r.id}" class="admin-item" style="margin-bottom:10px;">
+                    <div style="display:flex;justify-content:space-between;align-items:center;">
+                        <strong>${escHtml(r.nombre)}</strong>
+                        <span>${'⭐'.repeat(r.estrellas)}</span>
+                    </div>
+                    <p style="color:#ccc;font-size:0.88rem;margin:6px 0;">"${escHtml(r.comentario)}"</p>
+                    <div style="display:flex;justify-content:space-between;align-items:center;">
+                        <span style="font-size:0.72rem;color:var(--muted);">${new Date(r.creado_at).toLocaleDateString('es-CL')}</span>
+                        <button class="btn-sm btn-red" onclick="borrarResena(${r.id})">🗑️ Borrar</button>
+                    </div>
+                </div>`).join('');
+        } catch(e) { lista.innerHTML = '<p style="color:var(--primary);font-size:0.85rem;">Error al cargar.</p>'; }
+    }
+    async function borrarResena(id) {
+        if (!confirm('¿Borrar esta reseña?')) return;
+        try {
+            const res = await window.orbitaAuth.adminFetch(`${SUPABASE_URL}/rest/v1/resenas?id=eq.${id}`, { method: 'DELETE' });
+            if (res.ok) document.getElementById('ar-' + id)?.remove();
+        } catch(e) { alert('Error al borrar.'); }
+    }
+    window.borrarResena = borrarResena;
+    let adminProductoQuery = '';
+    function setAdminProductoSearch(value) {
+        adminProductoQuery = value.trim().toLowerCase();
+        renderProductosAdmin();
+    }
+    function matchesAdminSearch(product) {
+        if (!adminProductoQuery) return true;
+        var nombre = String(product.nombre || '').toLowerCase();
+        var categoria = String(product.categoria || product.cat || '').toLowerCase();
+        return nombre.includes(adminProductoQuery) || categoria.includes(adminProductoQuery);
+    }
+    function renderProductosAdmin() {
+        const lista = document.getElementById('admin-productos-list');
+        const sections = [
+            { title: 'Cafés', items: productos.filter(p => p.cat === 'cafe' && matchesAdminSearch(p)) },
+            { title: 'Pastelería', items: productos.filter(p => p.cat === 'pastel' && matchesAdminSearch(p)) },
+            { title: 'Jugos naturales', items: productos.filter(p => p.cat === 'jugo' && matchesAdminSearch(p)) },
+            { title: 'Bebidas', items: productos.filter(p => p.cat === 'bebida' && matchesAdminSearch(p)) },
+            { title: 'Aguas', items: productos.filter(p => p.cat === 'agua' && matchesAdminSearch(p)) }
+        ];
+        const html = sections.map(section => {
+            if (!section.items.length) return '';
+            return `
+                <div class="admin-section">
+                    <h4 style="margin:0 0 12px;color:var(--cafe);letter-spacing:1px;font-size:0.92rem;">${section.title}</h4>
+                    ${section.items.map(p => {
+                        const idx = productos.findIndex(pp => pp.id === p.id);
+                        return `
+                        <div class="admin-item">
+                            <div class="admin-item-top">
+                                <div><div style="font-weight:700;font-size:0.95rem;">${escHtml(p.nombre)}</div><div style="font-size:0.85rem;color:var(--muted);">$${p.precio.toLocaleString('es-CL')}</div></div>
+                                <div style="display:flex;gap:6px;flex-wrap:wrap;justify-content:flex-end;">
+                                    <button class="btn-sm ${p.activo ? 'btn-toggle-on' : 'btn-toggle-off'}" onclick="toggleProducto(${idx})">${p.activo ? '✅ Activo' : '❌ Pausado'}</button>
+                                    <button class="btn-sm btn-orange" onclick="abrirEditProducto('${p.id}')">✏️ Editar</button>
+                                    <button class="btn-sm" style="background:#c1121f;color:#fff;" onclick="eliminarProductoCafe(${idx})">🗑️ Eliminar</button>
+                                </div>
+                            </div>
+                            <div class="edit-form" id="edit-${p.id}">
+                                <div class="edit-row"><label>Nombre</label><input type="text" id="edit-nombre-${p.id}" value="${escHtml(p.nombre)}"></div>
+                                <div class="edit-row"><label>Precio venta</label><input type="number" id="edit-precio-${p.id}" value="${p.precio}" step="100"></div>
+                                <div class="edit-row"><label>Costo unitario</label><input type="number" id="edit-costo-${p.id}" value="${Number(p.costo)||0}" step="100" min="0"></div>
+                                <button class="btn-sm btn-fire" style="width:100%;padding:9px;margin-top:4px;" onclick="guardarProducto(${idx})">💾 GUARDAR</button>
+                            </div>
+                        </div>
+                    `;}).join('')}
+                </div>`;
+        }).join('');
+        lista.innerHTML = html.trim() ? html : '<p style="color:var(--muted);font-size:0.9rem;">No se encontraron productos.</p>';
+    }
+    function toggleProducto(i) { productos[i].activo = !productos[i].activo; renderMenu(); renderProductosAdmin(); persistirCatalogoCafe(); }
+    function abrirEditProducto(id) { document.getElementById('edit-' + id).classList.toggle('open'); }
+    function guardarProducto(i) {
+        const p = productos[i];
+        const n = document.getElementById('edit-nombre-' + p.id).value.trim();
+        const pr = parseInt(document.getElementById('edit-precio-' + p.id).value);
+        const co = parseInt(document.getElementById('edit-costo-' + p.id).value) || 0;
+        if (!n || isNaN(pr) || pr < 0 || co < 0) { alert('Datos inválidos'); return; }
+        productos[i].nombre = n; productos[i].precio = pr; productos[i].costo = co;
+        renderMenu(); renderProductosAdmin();
+        persistirCatalogoCafe();
+    }
+
+    function eliminarProductoCafe(i) {
+        const p = productos[i];
+        if (!p) return;
+        if (!confirm('¿Eliminar "' + p.nombre + '"? Esta acción no se puede deshacer.')) return;
+        productos.splice(i, 1);
+        renderMenu(); renderProductosAdmin();
+        persistirCatalogoCafe();
+    }
+
+    function abrirAgregarProductoCafe() {
+        const nombre = prompt('Nombre del producto:');
+        if (!nombre || !nombre.trim()) return;
+        const precioStr = prompt('Precio (CLP, sin puntos):', '0');
+        const precio = parseInt(precioStr, 10);
+        if (isNaN(precio) || precio < 0) { alert('Precio inválido.'); return; }
+        const cat = prompt('Categoría (cafe, pastel, jugo, bebida, agua):', 'cafe') || 'cafe';
+        const id = 'p_' + Date.now();
+        productos.push({ id, nombre: nombre.trim(), precio, activo: true, cat, desc: '', grano: cat === 'cafe' });
+        renderMenu(); renderProductosAdmin();
+        persistirCatalogoCafe();
+    }
+    function escHtml(s) { return String(s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;'); }
+
+    // ── BUSCADOR PÚBLICO ──
+    function buscarProductos(query) {
+        const results = document.getElementById('search-results');
+        const clear = document.getElementById('search-clear');
+        const q = (query || '').trim().toLowerCase();
+        if (!q) {
+            results.style.display = 'none';
+            clear.style.display = 'none';
+            return;
+        }
+        clear.style.display = 'block';
+        const found = productos.filter(p => p.activo && (
+            (p.nombre || '').toLowerCase().includes(q) ||
+            (p.desc || '').toLowerCase().includes(q) ||
+            (p.cat || '').toLowerCase().includes(q)
+        ));
+        if (found.length === 0) {
+            results.innerHTML = '<div class="search-no-results">No se encontraron productos</div>';
+        } else {
+            results.innerHTML = found.map(p => `
+                <div class="search-result-item" onclick="agregarDesdeBusqueda('${p.id}')">
+                    <div class="search-result-info">
+                        <div class="search-result-name">${escHtml(p.nombre)}</div>
+                        ${p.desc ? `<div class="search-result-desc">${escHtml(p.desc)}</div>` : ''}
+                    </div>
+                    <div class="search-result-price">$${(Number(p.precio)||0).toLocaleString('es-CL')}</div>
+                </div>
+            `).join('');
+        }
+        results.style.display = 'block';
+    }
+    function limpiarBusqueda() {
+        document.getElementById('search-input').value = '';
+        document.getElementById('search-results').style.display = 'none';
+        document.getElementById('search-clear').style.display = 'none';
+    }
+    function agregarDesdeBusqueda(id) {
+        const p = productos.find(x => x.id === id);
+        if (!p) return;
+        limpiarBusqueda();
+        // Cambiar a la sección correcta (Café / Pastelería / Refrescos)
+        if (p.cat === 'cafe' || p.cat === 'pastel') {
+            setSeccionCafe(p.cat);
+        } else if (p.cat === 'jugo' || p.cat === 'bebida' || p.cat === 'agua') {
+            setSeccionCafe('refrescos');
+        }
+        // Buscar elemento destino
+        let target = document.getElementById('card-' + id);
+        if (!target) {
+            const qty = document.getElementById('qty-' + id);
+            if (qty) target = qty.closest('.cafe-card') || qty.closest('.jugo-item') || qty.parentElement;
+        }
+        if (!target) return;
+        const acc = target.closest('.drinks-box');
+        if (acc && !acc.classList.contains('open')) acc.classList.add('open');
+        setTimeout(() => {
+            target.scrollIntoView({ behavior: 'smooth', block: 'center' });
+            target.classList.add('orbita-pulse');
+            setTimeout(() => target.classList.remove('orbita-pulse'), 1800);
+        }, 50);
+    }
+
+    // Click fuera del panel NO cierra el admin (se cierra solo con el botón CERRAR).
+
+    async function cargarCostoDeliveryCafe() {
+        try {
+            if (window.orbitaCostosFijos && window.orbitaCostosFijos.leerCostoDelivery) {
+                window.COSTO_DELIVERY = await window.orbitaCostosFijos.leerCostoDelivery('cafe');
+            } else {
+                window.COSTO_DELIVERY = 2000;
+            }
+        } catch (e) { window.COSTO_DELIVERY = 2000; }
+        const lbl = document.getElementById('label-delivery-cost');
+        if (lbl) lbl.textContent = '+$' + (window.COSTO_DELIVERY || 2000).toLocaleString('es-CL');
+        const inp = document.getElementById('input-costo-delivery-cafe');
+        if (inp) inp.value = window.COSTO_DELIVERY || 2000;
+        if (typeof actualizarResumen === 'function') actualizarResumen();
+    }
+
+    async function guardarCostoDeliveryCafe() {
+        const v = parseInt(document.getElementById('input-costo-delivery-cafe').value, 10);
+        if (isNaN(v) || v < 0) { alert('Ingresa un monto válido.'); return; }
+        const r = await window.orbitaCostosFijos.guardar('costo_delivery_cafe', v);
+        if (r.ok) {
+            window.COSTO_DELIVERY = v;
+            alert('Costo de delivery actualizado: $' + v.toLocaleString('es-CL'));
+            const lbl = document.getElementById('label-delivery-cost');
+            if (lbl) lbl.textContent = '+$' + v.toLocaleString('es-CL');
+            if (typeof actualizarResumen === 'function') actualizarResumen();
+        } else alert(r.error || 'No se pudo guardar.');
+    }
+
+    async function cargarHorarioDeliveryCafe() {
+        try {
+            const h = await window.orbitaCostosFijos.leerHorarioDelivery('cafe');
+            window.DELIVERY_HORARIO = h;
+            const fmt = window.orbitaHorario.formatHHMM;
+            const iIni = document.getElementById('input-hora-ini-cafe');
+            const iFin = document.getElementById('input-hora-fin-cafe');
+            if (iIni) iIni.value = fmt(h.inicio);
+            if (iFin) iFin.value = fmt(h.fin);
+        } catch (e) {}
+    }
+
+    async function guardarHorarioDeliveryCafe() {
+        const ini = window.orbitaHorario.parseHHMM(document.getElementById('input-hora-ini-cafe').value);
+        const fin = window.orbitaHorario.parseHHMM(document.getElementById('input-hora-fin-cafe').value);
+        if (ini == null || fin == null) { alert('Horarios inválidos.'); return; }
+        if (ini >= fin) { alert('La hora de inicio debe ser menor que la de fin.'); return; }
+        const r1 = await window.orbitaCostosFijos.guardar('delivery_hora_inicio_cafe', ini);
+        const r2 = await window.orbitaCostosFijos.guardar('delivery_hora_fin_cafe', fin);
+        if (r1.ok && r2.ok) {
+            window.DELIVERY_HORARIO = { inicio: ini, fin: fin };
+            alert('Horario actualizado: ' + window.orbitaHorario.formatHHMM(ini) + ' a ' + window.orbitaHorario.formatHHMM(fin));
+        } else alert((r1.error || r2.error) || 'No se pudo guardar.');
+    }
+
+    async function cargarResenasPublicas() {
+        const lista = document.getElementById('reviews-list');
+        const avgEl = document.getElementById('avg-display');
+        if (!lista) return;
+        try {
+            const res = await fetch(SUPABASE_URL + '/rest/v1/resenas?sitio=eq.cafe&select=*&order=creado_at.desc',
+                { headers: { apikey: SUPABASE_KEY, Authorization: 'Bearer ' + SUPABASE_KEY } });
+            const data = await res.json();
+            if (!Array.isArray(data) || data.length === 0) {
+                lista.innerHTML = '<p class="no-reviews">Aún no hay reseñas. ¡Sé el primero!</p>';
+                if (avgEl) avgEl.textContent = '';
+                return;
+            }
+            const prom = (data.reduce((a,r) => a + r.estrellas, 0) / data.length).toFixed(1);
+            if (avgEl) avgEl.textContent = prom + ' ⭐ (' + data.length + ')';
+            lista.innerHTML = data.map(r => `
+                <div class="review-card">
+                    <div class="review-top">
+                        <span class="review-name">${escHtml(r.nombre)}</span>
+                        <span class="review-stars">${'⭐'.repeat(r.estrellas)}</span>
+                    </div>
+                    <p class="review-comment">"${escHtml(r.comentario)}"</p>
+                    <p class="review-date">${new Date(r.creado_at).toLocaleDateString('es-CL',{day:'numeric',month:'long',year:'numeric'})}</p>
+                </div>`).join('');
+        } catch(e) {
+            lista.innerHTML = '<p class="no-reviews">No se pudieron cargar las reseñas.</p>';
+        }
+    }
+
+    (async function init() {
+        await cargarCatalogoCafe();
+        cargarCostoDeliveryCafe();
+        cargarHorarioDeliveryCafe();
+        renderMenu();
+        cargarResenasPublicas();
+        if (window.orbitaPagoFlow) window.orbitaPagoFlow.detectarRetorno();
+    })();
+    if (esAdmin) window.addEventListener('load', () => {
+        mostrarAdminModoBanner();
+        setTimeout(abrirAdmin, 300);
+    });
+    
+    // Inicializar Pago Rápido Órbita
+    window.addEventListener('load', () => {
+        if (window.OrbitaPagoRapido) {
+            window.OrbitaPagoRapido.init({
+                local: 'cafe',
+                wspNumber: WSP_NUMBER,
+                mpEdgeUrl: MP_EDGE_URL
+            });
+            
+            // Actualizar total cuando cambie el pedido
+            const originalActualizarResumen = window.actualizarResumen;
+            if (originalActualizarResumen) {
+                window.actualizarResumen = function() {
+                    originalActualizarResumen();
+
+                    const delivery = tipoEntrega === 'delivery' ? (window.COSTO_DELIVERY || 2000) : 0;
+                    const totalCafes = cafesEnPedido.reduce((a, c) => a + c.precio, 0);
+                    const totalResto = productos.reduce((a, p) => ((p.cat === 'cafe' && p.grano) ? a : (a + (pedido[p.id] || 0) * p.precio)), 0);
+                    const total = totalCafes + totalResto + delivery;
+
+                    const items = [];
+                    const conteoCafes = {};
+                    cafesEnPedido.forEach(c => {
+                        const k = c.baseId + '||' + c.grano;
+                        if (!conteoCafes[k]) conteoCafes[k] = { nombre: c.nombre, grano: c.grano, cantidad: 0 };
+                        conteoCafes[k].cantidad++;
+                    });
+                    Object.values(conteoCafes).forEach(g => items.push(`${g.cantidad}x ${g.nombre} (${g.grano})`));
+                    productos.forEach(p => {
+                        if (!(p.cat === 'cafe' && p.grano) && pedido[p.id] > 0) items.push(`${pedido[p.id]}x ${p.nombre}`);
+                    });
+
+                    window.OrbitaPagoRapido.actualizarTotal(total, items);
+                };
+            }
+        }
+    });
+</script>
+<!-- MODAL: comparativa de granos de café (bug 13) -->
+<div class="modal-overlay" id="modal-granos-overlay" onclick="if(event.target===this) cerrarModalGranos()">
+    <div class="modal" style="max-width:520px;position:relative;">
+        <button type="button" onclick="cerrarModalGranos()" title="Cerrar"
+            style="position:absolute;top:8px;right:8px;width:32px;height:32px;border-radius:50%;border:1px solid var(--border);background:var(--surface);color:var(--text);font-size:1.1rem;line-height:1;cursor:pointer;">✕</button>
+        <h3 style="margin-top:4px;color:var(--primary);">☕ ¿Qué grano elegir?</h3>
+        <p style="font-size:0.85rem;color:var(--muted);margin:6px 0 16px;">Café Kimbo · il Caffè di Napoli</p>
+        <div style="display:flex;flex-direction:column;gap:12px;">
+            <div style="background:var(--surface);border:1px solid var(--border);border-radius:12px;padding:14px 16px;text-align:left;">
+                <h4 style="font-size:1rem;font-weight:700;color:var(--primary);margin-bottom:4px;">Armonia</h4>
+                <div style="font-size:0.8rem;color:var(--muted);text-transform:uppercase;letter-spacing:1px;margin-bottom:6px;">Arábica suave</div>
+                <p style="font-size:0.86rem;line-height:1.5;color:var(--text);">100% Arábica. Sabor dulce y suave, notas a frutos secos. Para quien prefiere un café delicado.</p>
+            </div>
+            <div style="background:var(--surface);border:1px solid var(--border);border-radius:12px;padding:14px 16px;text-align:left;">
+                <h4 style="font-size:1rem;font-weight:700;color:var(--primary);margin-bottom:4px;">Napoli</h4>
+                <div style="font-size:0.8rem;color:var(--muted);text-transform:uppercase;letter-spacing:1px;margin-bottom:6px;">Robusta intenso</div>
+                <p style="font-size:0.86rem;line-height:1.5;color:var(--text);">Grano Robusta. Cuerpo intenso, regusto amargo y persistente. Para amantes del café fuerte.</p>
+            </div>
+        </div>
+    </div>
+</div>
+<script src="./orbita-pago-flow.js"></script>
+<script src="./orbita-pago-rapido.js"></script>
+</body>
+</html>

@@ -1,0 +1,611 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Panel central Órbita | 3 locales</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link href="https://fonts.googleapis.com/css2?family=Bebas+Neue&family=DM+Sans:wght@400;500;600;700&display=swap" rel="stylesheet">
+    <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.1/dist/chart.umd.min.js"></script>
+    <style>
+        :root {
+            --bg: #0d0d0f;
+            --card: #16161a;
+            --border: #2a2a30;
+            --text: #ececf1;
+            --muted: #8b8b9a;
+            --hand: #ff4d00;
+            --cafe: #8B1A1A;
+            --fuente: #D4872A;
+            --green: #25d366;
+        }
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        body { font-family: 'DM Sans', sans-serif; background: var(--bg); color: var(--text); min-height: 100vh; line-height: 1.5; }
+        .wrap { max-width: 920px; margin: 0 auto; padding: 24px 18px 48px; }
+        h1 { font-family: 'Bebas Neue', sans-serif; font-size: 2rem; letter-spacing: 3px; text-align: center; margin-bottom: 6px; }
+        .sub { text-align: center; color: var(--muted); font-size: 0.88rem; margin-bottom: 24px; }
+        .login-card {
+            max-width: 400px; margin: 40px auto; background: var(--card); border: 1px solid var(--border);
+            border-radius: 18px; padding: 28px 22px;
+        }
+        .login-card h2 { font-family: 'Bebas Neue', sans-serif; font-size: 1.4rem; letter-spacing: 2px; margin-bottom: 16px; color: var(--text); }
+        .login-card input[type=email], .login-card input[type=password] {
+            width: 100%; padding: 12px 14px; border-radius: 10px; border: 1px solid var(--border);
+            background: #0a0a0c; color: var(--text); font-size: 1rem; margin-bottom: 12px;
+        }
+        .btn {
+            width: 100%; padding: 12px; border: none; border-radius: 10px; font-family: 'Bebas Neue', sans-serif;
+            font-size: 1.05rem; letter-spacing: 2px; cursor: pointer; transition: opacity 0.2s;
+        }
+        .btn-primary { background: linear-gradient(135deg, var(--hand), #cc3d00); color: #fff; }
+        .btn-primary:hover { opacity: 0.92; }
+        .err { color: #ff6b6b; font-size: 0.85rem; margin-bottom: 10px; display: none; }
+        #dashboard { display: none; }
+        .toggle-row { display: flex; gap: 8px; justify-content: center; margin-bottom: 16px; flex-wrap: wrap; }
+        .toggle-row button { padding: 8px 14px; border-radius: 10px; border: 1px solid var(--border); background: var(--card); color: var(--muted); font-weight: 600; font-size: 0.82rem; cursor: pointer; }
+        .toggle-row button.active { border-color: var(--hand); color: var(--text); background: #221108; }
+        .chart-box {
+            background: var(--card); border: 1px solid var(--border); border-radius: 16px; padding: 18px 14px 8px;
+            margin-bottom: 22px; min-height: 280px;
+        }
+        .chart-box h3 { font-size: 0.72rem; text-transform: uppercase; letter-spacing: 2px; color: var(--muted); margin-bottom: 12px; text-align: center; }
+        .tab-nav { display: flex; flex-wrap: wrap; gap: 8px; justify-content: center; margin-bottom: 20px; }
+        .tab-nav button { padding: 10px 18px; border-radius: 10px; border: 1px solid var(--border); background: var(--card); color: var(--muted); font-weight: 600; font-size: 0.85rem; cursor: pointer; }
+        .tab-nav button.active { border-color: var(--hand); color: var(--text); background: #221108; }
+        .tab-panel { display: none; }
+        .tab-panel.active { display: block; }
+        .grid-3 { display: grid; grid-template-columns: repeat(auto-fit, minmax(240px, 1fr)); gap: 12px; margin-bottom: 20px; }
+        .loc-card {
+            border-radius: 14px; padding: 16px; text-align: left; border: 1px solid var(--border);
+        }
+        .loc-card.hand { background: linear-gradient(160deg, #1a1008 0%, var(--card) 40%); border-color: #3d2818; }
+        .loc-card.cafe { background: linear-gradient(160deg, #1f1214 0%, var(--card) 40%); border-color: #4a2528; }
+        .loc-card.fuente { background: linear-gradient(160deg, #1a140a 0%, var(--card) 40%); border-color: #3d3018; }
+        .loc-card h4 { font-family: 'Bebas Neue', sans-serif; font-size: 1.15rem; letter-spacing: 2px; margin-bottom: 10px; }
+        .loc-card.hand h4 { color: var(--hand); }
+        .loc-card.cafe h4 { color: #e8b4b4; }
+        .loc-card.fuente h4 { color: var(--fuente); }
+        .stat-row { display: flex; justify-content: space-between; font-size: 0.82rem; margin: 6px 0; color: var(--muted); }
+        .stat-row strong { color: var(--text); font-weight: 600; }
+        .consolidado {
+            background: linear-gradient(135deg, #12121a, var(--card)); border: 1px solid var(--border);
+            border-radius: 16px; padding: 20px; margin-top: 8px;
+        }
+        .consolidado h3 { font-family: 'Bebas Neue', sans-serif; font-size: 1.3rem; letter-spacing: 2px; margin-bottom: 14px; text-align: center; }
+        .inventory-card { background: var(--card); border: 1px solid var(--border); border-radius: 14px; padding: 16px; margin-bottom: 12px; }
+        .inventory-card h4 { font-family: 'Bebas Neue', sans-serif; font-size: 1rem; letter-spacing: 2px; margin-bottom: 10px; }
+        .inv-row { display: flex; gap: 8px; align-items: center; margin-bottom: 8px; }
+        .inv-row label { flex: 0 0 110px; font-size: 0.85rem; color: var(--muted); }
+        .inv-row input { flex: 1; padding: 10px 12px; border-radius: 10px; border: 1px solid var(--border); background: #0a0a0c; color: var(--text); font-size: 0.95rem; }
+        .inv-row button { padding: 10px 14px; border-radius: 10px; border: none; background: var(--hand); color: #fff; font-weight: 700; font-size: 0.85rem; cursor: pointer; }
+        .product-row { display: flex; justify-content: space-between; align-items: center; padding: 10px 0; border-bottom: 1px solid rgba(255,255,255,0.04); font-size: 0.88rem; gap: 10px; }
+        .product-row:last-child { border-bottom: none; }
+        .product-row .p-name { color: var(--text); font-weight: 500; flex: 1; }
+        .product-row .p-value { color: var(--text); font-weight: 700; text-align: right; min-width: 90px; }
+        .product-row .p-rank { display: inline-block; width: 22px; height: 22px; border-radius: 50%; background: rgba(255,77,0,0.15); color: var(--hand); text-align: center; font-size: 0.75rem; font-weight: 700; line-height: 22px; margin-right: 8px; }
+        .margin-section { background: var(--card); border: 1px solid var(--border); border-radius: 14px; padding: 16px; margin-bottom: 14px; }
+        .margin-section h4 { font-family: 'Bebas Neue', sans-serif; font-size: 1.1rem; letter-spacing: 2px; margin-bottom: 12px; padding-bottom: 8px; border-bottom: 1px solid var(--border); }
+        .margin-section.hand h4 { color: var(--hand); }
+        .margin-section.cafe h4 { color: #e8b4b4; }
+        .margin-section.fuente h4 { color: var(--fuente); }
+        .nav-foot { text-align: center; margin-top: 28px; font-size: 0.8rem; color: var(--muted); }
+        .nav-foot a { color: var(--fuente); margin: 0 8px; text-decoration: none; }
+        .nav-foot a:hover { text-decoration: underline; }
+        .logout { display: block; margin: 20px auto 0; max-width: 200px; padding: 8px; font-size: 0.8rem; background: transparent; border: 1px solid var(--border); color: var(--muted); border-radius: 8px; cursor: pointer; }
+        .logout:hover { color: var(--text); }
+    </style>
+</head>
+<body>
+    <div class="wrap">
+        <h1>ÓRBITA · PANEL CENTRAL</h1>
+        <p class="sub">Ventas consolidadas y rendimiento de los 3 locales</p>
+
+        <div id="login-section" class="login-card">
+            <h2>Acceso staff</h2>
+            <p class="err" id="login-err">Credenciales incorrectas</p>
+            <input type="email" id="admin-email" placeholder="Email" autocomplete="username">
+            <input type="password" id="admin-pass" placeholder="Contraseña" autocomplete="current-password" onkeydown="if(event.key==='Enter') entrar()">
+            <button type="button" class="btn btn-primary" onclick="entrar()">INGRESAR</button>
+        </div>
+
+        <div id="dashboard">
+            <p id="sync-warning" style="color:#ff9b6b;font-size:0.82rem;text-align:center;margin-bottom:14px;display:none;line-height:1.4;"></p>
+
+            <div style="background:var(--card);border:1px solid var(--border);border-radius:14px;padding:14px 16px;margin-bottom:18px;text-align:center;">
+                <p style="font-size:0.75rem;text-transform:uppercase;letter-spacing:2px;color:var(--muted);margin-bottom:10px;">Cartas y precios (admin en cada local)</p>
+                <div style="display:flex;flex-wrap:wrap;gap:8px;justify-content:center;">
+                    <a href="index.html?k=orbita_8h3k2p_2026&orbita_back" style="padding:8px 12px;border-radius:10px;background:#221108;border:1px solid var(--hand);color:var(--hand);font-size:0.82rem;font-weight:600;text-decoration:none;">Hand Roll · Productos</a>
+                    <a href="cafe.html?k=orbita_8h3k2p_2026&orbita_back" style="padding:8px 12px;border-radius:10px;background:#221018;border:1px solid var(--cafe);color:#e8b4b4;font-size:0.82rem;font-weight:600;text-decoration:none;">Café · Productos</a>
+                    <a href="fuente.html?k=orbita_8h3k2p_2026&orbita_back" style="padding:8px 12px;border-radius:10px;background:#1a1408;border:1px solid var(--fuente);color:var(--fuente);font-size:0.82rem;font-weight:600;text-decoration:none;">Fuente · Productos</a>
+                </div>
+            </div>
+
+            <div class="tab-nav">
+                <button type="button" class="active" onclick="showCentralTab('ventas', this)">Ventas</button>
+                <button type="button" onclick="showCentralTab('rendimiento', this)">Rendimiento</button>
+                <button type="button" onclick="showCentralTab('inventario', this)">Inventario</button>
+                <button type="button" onclick="showCentralTab('margenes', this)">Márgenes</button>
+            </div>
+
+            <!-- TAB VENTAS -->
+            <div class="tab-panel active" id="tab-ventas">
+                <div class="toggle-row">
+                    <button type="button" id="btn-vista-mes" class="active" onclick="setVista('mes')">Mensual</button>
+                    <button type="button" id="btn-vista-anio" onclick="setVista('anio')">Anual</button>
+                </div>
+                <div class="chart-box">
+                    <h3 id="chart-title">Comparativa ventas — mes actual (CLP)</h3>
+                    <canvas id="chart-main" height="220"></canvas>
+                </div>
+                <div class="consolidado">
+                    <h3>Negocio consolidado (3 locales)</h3>
+                    <div id="consolidado-body"></div>
+                </div>
+            </div>
+
+            <!-- TAB RENDIMIENTO -->
+            <div class="tab-panel" id="tab-rendimiento">
+                <h3 style="font-family:'Bebas Neue',sans-serif;font-size:1.1rem;letter-spacing:2px;color:var(--muted);margin-bottom:12px;text-align:center;">Rendimiento por local</h3>
+                <div class="grid-3" id="cards-rendimiento"></div>
+            </div>
+
+            <!-- TAB INVENTARIO -->
+            <div class="tab-panel" id="tab-inventario">
+                <h3 style="font-family:'Bebas Neue',sans-serif;font-size:1.1rem;letter-spacing:2px;color:var(--muted);margin-bottom:12px;text-align:center;">Costos fijos e inventario central</h3>
+                <p style="font-size:0.82rem;color:var(--muted);margin-bottom:14px;line-height:1.5;text-align:center;">Ingresa los costos fijos mensuales de cada local (arriendo, luz, sueldos). Se restan a las ventas líquidas para el neto.</p>
+
+                <div class="inventory-card">
+                    <h4 style="color:var(--hand);">Hand Roll</h4>
+                    <div class="inv-row">
+                        <label>Costo fijo/mes</label>
+                        <input type="number" id="cf-handroll" min="0" step="1000" placeholder="Ej: 500000">
+                        <button type="button" onclick="guardarCostoFijo('handroll')">Guardar</button>
+                    </div>
+                </div>
+
+                <div class="inventory-card">
+                    <h4 style="color:#e8b4b4;">Café Órbita</h4>
+                    <div class="inv-row">
+                        <label>Costo fijo/mes</label>
+                        <input type="number" id="cf-cafe" min="0" step="1000" placeholder="Ej: 400000">
+                        <button type="button" onclick="guardarCostoFijo('cafe')">Guardar</button>
+                    </div>
+                </div>
+
+                <div class="inventory-card">
+                    <h4 style="color:var(--fuente);">Fuente de soda</h4>
+                    <div class="inv-row">
+                        <label>Costo fijo/mes</label>
+                        <input type="number" id="cf-fuente" min="0" step="1000" placeholder="Ej: 450000">
+                        <button type="button" onclick="guardarCostoFijo('fuente')">Guardar</button>
+                    </div>
+                </div>
+
+                <div class="inventory-card" style="background:linear-gradient(135deg,#12121a,var(--card));">
+                    <h4>Total mensual (3 locales)</h4>
+                    <div class="stat-row" style="font-size:1.1rem;"><span>Suma de costos fijos</span><strong id="total-costos-fijos">—</strong></div>
+                </div>
+
+                <p style="font-size:0.75rem;color:var(--muted);margin-top:14px;line-height:1.4;text-align:center;">El inventario de insumos se administra desde el panel interno de cada local.</p>
+            </div>
+
+            <!-- TAB MÁRGENES -->
+            <div class="tab-panel" id="tab-margenes">
+                <h3 style="font-family:'Bebas Neue',sans-serif;font-size:1.1rem;letter-spacing:2px;color:var(--muted);margin-bottom:12px;text-align:center;">Rendimiento de productos por local</h3>
+                <div class="toggle-row">
+                    <button type="button" id="btn-orden-margen" class="active" onclick="setOrdenMargen('margenPct')">% margen</button>
+                    <button type="button" id="btn-orden-unidades" onclick="setOrdenMargen('unidades')">Unidades vendidas</button>
+                    <button type="button" id="btn-orden-neto" onclick="setOrdenMargen('margenNeto')">Margen neto $</button>
+                </div>
+                <div id="margenes-por-local"></div>
+            </div>
+
+            <button type="button" class="logout" onclick="salir()">Cerrar sesión</button>
+
+            <div class="nav-foot">
+                <a href="orbita.html">Inicio Órbita</a>
+                <a href="index.html?k=orbita_8h3k2p_2026&orbita_back">Hand Roll</a>
+                <a href="cafe.html?k=orbita_8h3k2p_2026&orbita_back">Café Órbita</a>
+                <a href="fuente.html?k=orbita_8h3k2p_2026&orbita_back">Fuente de soda</a>
+            </div>
+        </div>
+    </div>
+
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.45.4/dist/umd/supabase.min.js"></script>
+<script src="orbita-auth.js"></script>
+<script src="orbita-supabase-sync.js"></script>
+<script>
+    const MESES = ["Ene","Feb","Mar","Abr","May","Jun","Jul","Ago","Sep","Oct","Nov","Dic"];
+    const SITES = [
+        { key: 'handroll', label: 'Hand Roll', color: '#ff4d00', cssClass: 'hand' },
+        { key: 'cafe',     label: 'Café Órbita', color: '#c45c5c', cssClass: 'cafe' },
+        { key: 'fuente',   label: 'Fuente de soda', color: '#D4872A', cssClass: 'fuente' }
+    ];
+
+    let chartInst = null;
+    let datosCache = null;       // { rH, rC, rF } - pedidos por local del año
+    let costosCache = null;       // { costo_fijo_handroll, costo_fijo_cafe, costo_fijo_fuente }
+    let vistaActual = "mes";     // 'mes' | 'anio'
+    let ordenMargen = "margenPct"; // 'margenPct' | 'unidades' | 'margenNeto'
+    let catalogCache = {};
+    let margenesCache = null;    // Calculado 1 vez
+
+    function formatClp(value) {
+        return '$' + Math.round(Number(value) || 0).toLocaleString('es-CL');
+    }
+
+    function formatPct(value) {
+        if (!isFinite(value)) return '—';
+        return (value >= 0 ? '+' : '') + Math.round(value) + '%';
+    }
+
+    async function fetchCatalogo(sitio) {
+        if (catalogCache[sitio]) return catalogCache[sitio];
+        try {
+            const catalog = await window.orbitaProductos.fetchJson(sitio);
+            catalogCache[sitio] = Array.isArray(catalog) ? catalog : [];
+        } catch (e) {
+            catalogCache[sitio] = [];
+        }
+        return catalogCache[sitio];
+    }
+
+    function showCentralTab(tab, btn) {
+        document.querySelectorAll('.tab-nav button').forEach(b => b.classList.remove('active'));
+        document.querySelectorAll('.tab-panel').forEach(panel => panel.classList.remove('active'));
+        if (btn) btn.classList.add('active');
+        document.getElementById('tab-' + tab).classList.add('active');
+        if (tab === 'margenes') renderMargenes();
+    }
+
+    async function fetchPedidosAnio(sitio) {
+        const y = new Date().getFullYear();
+        const desde = `${y}-01-01T00:00:00`;
+        const res = await window.orbitaAuth.adminFetch(
+            `${window.orbitaAuth.url}/rest/v1/pedidos?sitio=eq.${sitio}&select=total,creado_at,estado,items_json&creado_at=gte.${desde}&order=creado_at.asc`
+        );
+        if (!res.ok) return [];
+        const data = await res.json();
+        if (!Array.isArray(data)) return [];
+        // Filtrar cancelados/rechazados para el cálculo de ventas reales
+        return data.filter(r => r.estado !== 'anulado' && r.estado !== 'rechazado');
+    }
+
+    function sumMes(rows, y, m0) {
+        return rows.reduce((a, r) => {
+            const d = new Date(r.creado_at);
+            if (d.getFullYear() === y && d.getMonth() === m0) return a + (Number(r.total) || 0);
+            return a;
+        }, 0);
+    }
+
+    function sumAnio(rows, y) {
+        return rows.reduce((a, r) => {
+            const d = new Date(r.creado_at);
+            if (d.getFullYear() === y) return a + (Number(r.total) || 0);
+            return a;
+        }, 0);
+    }
+
+    function porMes12(rows, y) {
+        const b = Array(12).fill(0);
+        rows.forEach(r => {
+            const d = new Date(r.creado_at);
+            if (d.getFullYear() === y) b[d.getMonth()] += Number(r.total) || 0;
+        });
+        return b;
+    }
+
+    async function entrar() {
+        const email = document.getElementById("admin-email").value.trim();
+        const password = document.getElementById("admin-pass").value;
+        const errEl = document.getElementById("login-err");
+        errEl.style.display = "none";
+        if (!email || !password) {
+            errEl.textContent = "Ingresa email y contraseña para iniciar sesión.";
+            errEl.style.display = "block";
+            return;
+        }
+        try {
+            const result = await window.orbitaAuth.signIn(email, password);
+            if (!result || result.error) {
+                errEl.textContent = result && result.error && result.error.message ? result.error.message : "No se pudo iniciar sesión";
+                errEl.style.display = "block";
+                document.getElementById("admin-pass").value = "";
+                return;
+            }
+            document.getElementById("login-section").style.display = "none";
+            document.getElementById("dashboard").style.display = "block";
+            cargarTodo();
+        } catch (e) {
+            errEl.textContent = e.message || "Error al iniciar sesión.";
+            errEl.style.display = "block";
+            document.getElementById("admin-pass").value = "";
+        }
+    }
+
+    async function salir() {
+        await window.orbitaAuth.signOut();
+        document.getElementById("admin-email").value = "";
+        document.getElementById("admin-pass").value = "";
+        document.getElementById("dashboard").style.display = "none";
+        document.getElementById("login-section").style.display = "block";
+        if (chartInst) { chartInst.destroy(); chartInst = null; }
+        datosCache = null;
+        costosCache = null;
+        margenesCache = null;
+    }
+
+    async function cargarTodo() {
+        const [rH, rC, rF, costos] = await Promise.all([
+            fetchPedidosAnio('handroll'),
+            fetchPedidosAnio('cafe'),
+            fetchPedidosAnio('fuente'),
+            window.orbitaCostosFijos.leer()
+        ]);
+        datosCache = { rH, rC, rF };
+        costosCache = costos;
+        margenesCache = null; // invalidar
+
+        const w = document.getElementById("sync-warning");
+        if (costos && costos._necesitaLogin) {
+            w.style.display = "block";
+            w.textContent = "Inicia sesión con un usuario de Supabase Auth para ver/editar costos.";
+        } else {
+            w.style.display = "none";
+        }
+
+        renderRendimiento();
+        renderConsolidado();
+        renderInventario();
+        pintarChart();
+    }
+
+    function renderRendimiento() {
+        if (!datosCache || !costosCache) return;
+        const { rH, rC, rF } = datosCache;
+        const now = new Date();
+        const y = now.getFullYear();
+        const m = now.getMonth();
+        const cfH = Number(costosCache.costo_fijo_handroll) || 0;
+        const cfC = Number(costosCache.costo_fijo_cafe) || 0;
+        const cfF = Number(costosCache.costo_fijo_fuente) || 0;
+        const vH_m = sumMes(rH, y, m), vC_m = sumMes(rC, y, m), vF_m = sumMes(rF, y, m);
+        const vH_a = sumAnio(rH, y), vC_a = sumAnio(rC, y), vF_a = sumAnio(rF, y);
+
+        const card = (cls, label, v_m, v_a, cf) => {
+            const netM = v_m - cf;
+            const netA = v_a - cf * 12;
+            return `
+            <div class="loc-card ${cls}">
+                <h4>${label}</h4>
+                <div class="stat-row">Ventas mes <strong>${formatClp(v_m)}</strong></div>
+                <div class="stat-row">Ventas año <strong>${formatClp(v_a)}</strong></div>
+                <div class="stat-row">Costo fijo / mes <strong>${formatClp(cf)}</strong></div>
+                <div class="stat-row">Aprox. neto mes <strong style="color:${netM >= 0 ? 'var(--green)' : '#ff6b6b'}">${formatClp(netM)}</strong></div>
+                <div class="stat-row">Aprox. neto año <strong style="color:${netA >= 0 ? 'var(--green)' : '#ff6b6b'}">${formatClp(netA)}</strong></div>
+            </div>`;
+        };
+
+        document.getElementById("cards-rendimiento").innerHTML =
+            card('hand', 'Hand Roll', vH_m, vH_a, cfH) +
+            card('cafe', 'Café Órbita', vC_m, vC_a, cfC) +
+            card('fuente', 'Fuente de soda', vF_m, vF_a, cfF);
+    }
+
+    function renderConsolidado() {
+        if (!datosCache || !costosCache) return;
+        const { rH, rC, rF } = datosCache;
+        const now = new Date();
+        const y = now.getFullYear();
+        const m = now.getMonth();
+        const cfH = Number(costosCache.costo_fijo_handroll) || 0;
+        const cfC = Number(costosCache.costo_fijo_cafe) || 0;
+        const cfF = Number(costosCache.costo_fijo_fuente) || 0;
+        const totalM = sumMes(rH, y, m) + sumMes(rC, y, m) + sumMes(rF, y, m);
+        const totalA = sumAnio(rH, y) + sumAnio(rC, y) + sumAnio(rF, y);
+        const cfTotalM = cfH + cfC + cfF;
+        const netM = totalM - cfTotalM;
+        const netA = totalA - cfTotalM * 12;
+
+        document.getElementById("consolidado-body").innerHTML = `
+            <div class="stat-row" style="font-size:1rem;margin-bottom:8px;">Ventas mes (3 locales) <strong>${formatClp(totalM)}</strong></div>
+            <div class="stat-row" style="font-size:0.9rem;">Costos fijos mensuales <strong>− ${formatClp(cfTotalM)}</strong></div>
+            <div class="stat-row" style="font-size:1.05rem;margin-top:12px;padding-top:12px;border-top:1px solid var(--border);">Neto aprox. mes <strong style="color:${netM >= 0 ? 'var(--green)' : '#ff6b6b'}">${formatClp(netM)}</strong></div>
+            <div class="stat-row" style="margin-top:16px;font-size:0.95rem;">Ventas año <strong>${formatClp(totalA)}</strong></div>
+            <div class="stat-row" style="font-size:0.9rem;">Costos fijos 12 meses <strong>− ${formatClp(cfTotalM * 12)}</strong></div>
+            <div class="stat-row" style="font-size:1.05rem;margin-top:10px;">Neto aprox. año <strong style="color:${netA >= 0 ? 'var(--green)' : '#ff6b6b'}">${formatClp(netA)}</strong></div>`;
+    }
+
+    function renderInventario() {
+        if (!costosCache) return;
+        const cfH = Number(costosCache.costo_fijo_handroll) || 0;
+        const cfC = Number(costosCache.costo_fijo_cafe) || 0;
+        const cfF = Number(costosCache.costo_fijo_fuente) || 0;
+        document.getElementById('cf-handroll').value = cfH || '';
+        document.getElementById('cf-cafe').value = cfC || '';
+        document.getElementById('cf-fuente').value = cfF || '';
+        document.getElementById('total-costos-fijos').textContent = formatClp(cfH + cfC + cfF);
+    }
+
+    async function guardarCostoFijo(sitio) {
+        const input = document.getElementById('cf-' + sitio);
+        const v = parseInt(input.value, 10);
+        if (isNaN(v) || v < 0) { alert('Ingresa un monto válido.'); return; }
+        const clave = 'costo_fijo_' + sitio;
+        const r = await window.orbitaCostosFijos.guardar(clave, v);
+        if (!r.ok) { alert(r.error || 'No se pudo guardar.'); return; }
+        costosCache[clave] = v;
+        renderRendimiento();
+        renderConsolidado();
+        renderInventario();
+    }
+
+    function setVista(v) {
+        vistaActual = v;
+        document.getElementById("btn-vista-mes").classList.toggle("active", v === "mes");
+        document.getElementById("btn-vista-anio").classList.toggle("active", v === "anio");
+        document.getElementById("chart-title").textContent = v === "mes"
+            ? "Comparativa ventas — mes actual (CLP)"
+            : "Evolución ventas — año en curso por mes (CLP)";
+        pintarChart();
+        renderConsolidado();
+    }
+
+    function pintarChart() {
+        if (!datosCache) return;
+        const { rH, rC, rF } = datosCache;
+        const now = new Date();
+        const y = now.getFullYear();
+        const m = now.getMonth();
+        const ctx = document.getElementById("chart-main").getContext("2d");
+        if (chartInst) chartInst.destroy();
+
+        if (vistaActual === "mes") {
+            const vH = sumMes(rH, y, m), vC = sumMes(rC, y, m), vF = sumMes(rF, y, m);
+            chartInst = new Chart(ctx, {
+                type: "bar",
+                data: {
+                    labels: ["Hand Roll", "Café Órbita", "Fuente de soda"],
+                    datasets: [{
+                        label: "Ventas mes",
+                        data: [vH, vC, vF],
+                        backgroundColor: ["rgba(255,77,0,0.85)", "rgba(139,26,26,0.9)", "rgba(212,135,42,0.9)"],
+                        borderColor: ["#ff4d00", "#a83232", "#e8a040"],
+                        borderWidth: 1
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    plugins: { legend: { display: false } },
+                    scales: {
+                        y: { beginAtZero: true, ticks: { color: "#8b8b9a" }, grid: { color: "rgba(255,255,255,0.06)" } },
+                        x: { ticks: { color: "#ececf1" }, grid: { display: false } }
+                    }
+                }
+            });
+        } else {
+            const bH = porMes12(rH, y), bC = porMes12(rC, y), bF = porMes12(rF, y);
+            chartInst = new Chart(ctx, {
+                type: "line",
+                data: {
+                    labels: MESES,
+                    datasets: [
+                        { label: "Hand Roll", data: bH, borderColor: "#ff4d00", backgroundColor: "rgba(255,77,0,0.1)", tension: 0.25, fill: false },
+                        { label: "Café", data: bC, borderColor: "#c45c5c", backgroundColor: "rgba(139,26,26,0.08)", tension: 0.25, fill: false },
+                        { label: "Fuente", data: bF, borderColor: "#D4872A", backgroundColor: "rgba(212,135,42,0.08)", tension: 0.25, fill: false }
+                    ]
+                },
+                options: {
+                    responsive: true,
+                    plugins: { legend: { position: "bottom", labels: { color: "#b0b0bc", boxWidth: 12 } } },
+                    scales: {
+                        y: { beginAtZero: true, ticks: { color: "#8b8b9a" }, grid: { color: "rgba(255,255,255,0.06)" } },
+                        x: { ticks: { color: "#b0b0bc" }, grid: { color: "rgba(255,255,255,0.04)" } }
+                    }
+                }
+            });
+        }
+    }
+
+    async function computeMargenes() {
+        if (margenesCache) return margenesCache;
+        const out = { handroll: [], cafe: [], fuente: [] };
+        const sitioKeys = ['handroll', 'cafe', 'fuente'];
+        const catalogos = {};
+        for (const k of sitioKeys) catalogos[k] = await fetchCatalogo(k);
+
+        sitioKeys.forEach(sitioKey => {
+            const rows = sitioKey === 'handroll' ? datosCache.rH : sitioKey === 'cafe' ? datosCache.rC : datosCache.rF;
+            const catalog = catalogos[sitioKey] || [];
+            const byNombre = {}; // nombre → {units, revenue, cost, precio}
+
+            rows.forEach(order => {
+                const items = Array.isArray(order.items_json) ? order.items_json : [];
+                items.forEach(item => {
+                    const nombre = String(item.nombre || '').trim();
+                    if (!nombre || nombre.toLowerCase() === 'delivery') return;
+                    const qty = Number(item.cantidad) || 0;
+                    const precio = Number(item.precio) || 0;
+                    if (!byNombre[nombre]) {
+                        // Buscar costo en catálogo (por nombre aproximado)
+                        const cat = catalog.find(c => String(c.nombre || '').trim() === nombre);
+                        const costoUnit = Number(cat && (cat.costo || cat.cost)) || 0;
+                        byNombre[nombre] = { nombre, units: 0, revenue: 0, cost: 0, costoUnit, precio };
+                    }
+                    byNombre[nombre].units += qty;
+                    byNombre[nombre].revenue += qty * precio;
+                    byNombre[nombre].cost += qty * byNombre[nombre].costoUnit;
+                });
+            });
+
+            const arr = Object.values(byNombre).map(p => {
+                const margenNeto = p.revenue - p.cost;
+                const margenPct = p.revenue > 0 ? ((p.revenue - p.cost) / p.revenue) * 100 : 0;
+                return { ...p, margenNeto, margenPct };
+            });
+            out[sitioKey] = arr;
+        });
+
+        margenesCache = out;
+        return out;
+    }
+
+    function setOrdenMargen(orden) {
+        ordenMargen = orden;
+        document.getElementById('btn-orden-margen').classList.toggle('active', orden === 'margenPct');
+        document.getElementById('btn-orden-unidades').classList.toggle('active', orden === 'unidades');
+        document.getElementById('btn-orden-neto').classList.toggle('active', orden === 'margenNeto');
+        renderMargenes();
+    }
+
+    async function renderMargenes() {
+        const cont = document.getElementById('margenes-por-local');
+        cont.innerHTML = '<p style="color:var(--muted);font-size:0.9rem;text-align:center;">Calculando márgenes...</p>';
+        try {
+            const data = await computeMargenes();
+            const valorFn = {
+                margenPct: p => formatPct(p.margenPct),
+                unidades: p => p.units + ' uds',
+                margenNeto: p => formatClp(p.margenNeto)
+            }[ordenMargen];
+            const cmpFn = {
+                margenPct: (a, b) => b.margenPct - a.margenPct,
+                unidades: (a, b) => b.units - a.units,
+                margenNeto: (a, b) => b.margenNeto - a.margenNeto
+            }[ordenMargen];
+
+            const html = SITES.map(site => {
+                const items = (data[site.key] || []).slice().sort(cmpFn);
+                const rows = items.length
+                    ? items.map((p, i) => `
+                        <div class="product-row">
+                            <span class="p-name"><span class="p-rank">${i+1}</span>${escHtml(p.nombre)}</span>
+                            <span class="p-value">${valorFn(p)}</span>
+                        </div>`).join('')
+                    : `<p style="color:var(--muted);font-size:0.85rem;padding:8px 0;">Sin ventas registradas en ${site.label} este año.</p>`;
+                return `
+                    <div class="margin-section ${site.cssClass}">
+                        <h4>${site.label}</h4>
+                        ${rows}
+                    </div>`;
+            }).join('');
+            cont.innerHTML = html;
+        } catch (e) {
+            cont.innerHTML = '<p style="color:#ff6b6b;font-size:0.9rem;text-align:center;">No se pudo calcular márgenes.</p>';
+        }
+    }
+
+    function escHtml(s) { return String(s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;'); }
+
+    document.addEventListener("DOMContentLoaded", async function () {
+        const { data: { session } } = await window.orbitaAuth.getSession();
+        if (session) {
+            document.getElementById("login-section").style.display = "none";
+            document.getElementById("dashboard").style.display = "block";
+            cargarTodo();
+        }
+    });
+</script>
+</body>
+</html>

@@ -1,0 +1,1663 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Hand Roll Express | Sushi Fresco para Llevar</title>
+    <meta name="description" content="Hand Roll Express — sushi fresco, rápido y crujiente. Pide por WhatsApp o paga en línea. Retira en minutos.">
+    <meta name="keywords" content="hand roll, sushi, sushi para llevar, comida japonesa, hand roll express">
+    <meta name="robots" content="index, follow">
+    <meta name="google-site-verification" content="QFUea1IbOHTdOBKMp_GZnMcZ3-TFAUEP4CXhPYY-UUY">
+    <link rel="canonical" href="https://orbita-prueba-9qlp.vercel.app/">
+    <meta property="og:title" content="Hand Roll Express | Sushi Fresco para Llevar">
+    <meta property="og:description" content="Sushi fresco, rápido y crujiente. Pide por WhatsApp o paga en línea.">
+    <meta property="og:url" content="https://orbita-prueba-9qlp.vercel.app/">
+    <meta property="og:type" content="website">
+    <meta property="og:locale" content="es_CL">
+    <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>🍣</text></svg>">
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link href="https://fonts.googleapis.com/css2?family=Bebas+Neue&family=DM+Sans:wght@300;400;500;700&display=swap" rel="stylesheet">
+    <script src="https://sdk.mercadopago.com/js/v2"></script>
+    <style>
+        :root {
+            --fire: #ff4d00;
+            --black: #0a0a0a;
+            --surface: #141414;
+            --card: #1c1c1c;
+            --border: #2a2a2a;
+            --text: #e8e8e8;
+            --muted: #666;
+            --green: #25d366;
+        }
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        body { background: var(--black); color: var(--text); font-family: 'DM Sans', sans-serif; text-align: center; line-height: 1.6; overflow-x: hidden; }
+        body::before {
+            content: ''; position: fixed; inset: 0;
+            background: radial-gradient(ellipse 60% 40% at 80% 20%, rgba(255,77,0,0.05) 0%, transparent 60%),
+                        radial-gradient(ellipse 40% 60% at 20% 80%, rgba(255,77,0,0.03) 0%, transparent 60%);
+            pointer-events: none; z-index: 0;
+        }
+
+        .hero { position: relative; z-index: 1; padding: 44px 20px 32px; border-bottom: 2px solid var(--fire); background: #000; }
+        .logo { font-family: 'Bebas Neue', sans-serif; font-size: 2.8rem; letter-spacing: 4px; color: var(--fire); line-height: 1; }
+        .logo span { color: var(--text); }
+        .hero-tagline { font-size: 0.8rem; letter-spacing: 3px; text-transform: uppercase; color: var(--muted); margin-top: 8px; }
+
+        .section { position: relative; z-index: 1; padding: 20px 20px 10px; max-width: 640px; margin: auto; }
+        .section-title { font-family: 'Bebas Neue', sans-serif; font-size: 1.6rem; letter-spacing: 2px; color: var(--text); margin-bottom: 18px; }
+
+        .card { background: var(--card); border: 1px solid var(--border); padding: 18px 20px; border-radius: 16px; margin-bottom: 14px; transition: border-color 0.25s; text-align: left; }
+        .card.disabled { opacity: 0.4; pointer-events: none; }
+        .card:not(.disabled):hover { border-color: var(--fire); }
+        .card-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 14px; }
+        .card h3 { font-size: 1.05rem; font-weight: 600; }
+        .price { font-family: 'Bebas Neue', sans-serif; font-size: 1.5rem; color: var(--text); letter-spacing: 1px; }
+
+        .qty-control { display: flex; align-items: center; gap: 0; border: 1px solid var(--border); border-radius: 10px; overflow: hidden; }
+        .qty-btn { background: var(--surface); border: none; width: 42px; height: 42px; font-size: 1.3rem; cursor: pointer; color: var(--text); transition: background 0.15s; display: flex; align-items: center; justify-content: center; }
+        .qty-btn:hover { background: var(--border); }
+        .qty-btn.plus { background: var(--fire); color: #fff; }
+        .qty-btn.plus:hover { opacity: 0.85; }
+        .qty-num { width: 44px; text-align: center; font-weight: 700; font-size: 1rem; background: var(--card); border: none; color: var(--text); }
+
+
+        .order-box { background: var(--card); padding: 24px 20px; border-radius: 20px; border: 2px solid var(--green); margin: 6px 0 20px; }
+        #resumen { font-size: 1rem; font-weight: 500; min-height: 26px; }
+        .btn-wsp { background-color: var(--green); color: #fff; padding: 16px; font-weight: 700; font-family: 'Bebas Neue', sans-serif; font-size: 1.3rem; letter-spacing: 2px; border-radius: 50px; display: block; border: none; cursor: pointer; width: 100%; margin-top: 16px; transition: opacity 0.2s; }
+        .btn-wsp:hover { opacity: 0.9; }
+        .btn-mp { background-color: #009ee3; color: #fff; padding: 16px; font-weight: 700; font-family: 'Bebas Neue', sans-serif; font-size: 1.3rem; letter-spacing: 2px; border-radius: 50px; display: block; border: none; cursor: pointer; width: 100%; margin-top: 10px; transition: opacity 0.2s; }
+        .btn-mp:hover { opacity: 0.9; }
+        .btn-mp:disabled { opacity: 0.5; cursor: not-allowed; }
+        .btn-rayo { 
+            background: linear-gradient(135deg, #FFD700, #FFA500, #FF6347); 
+            color: #000; font-weight: 800; border: 2px solid #FFD700;
+            animation: rayo-pulse 2s infinite; text-shadow: 0 0 8px rgba(255,255,255,0.8);
+            font-family: 'Bebas Neue', sans-serif; font-size: 1.3rem; letter-spacing: 2px;
+            border-radius: 50px; padding: 16px; cursor: pointer; width: 100%; margin-top: 10px;
+            transition: opacity 0.2s;
+        }
+        .btn-rayo:hover { opacity: 0.9; }
+        @keyframes rayo-pulse { 
+            0%, 100% { transform: scale(1); box-shadow: 0 0 20px rgba(255,215,0,0.6); } 
+            50% { transform: scale(1.02); box-shadow: 0 0 30px rgba(255,215,0,0.9); } 
+        }
+
+        .reviews-section { position: relative; z-index: 1; max-width: 480px; margin: 0 auto; padding: 0 20px 50px; }
+        .reviews-header { display: flex; align-items: center; justify-content: space-between; margin-bottom: 18px; }
+        .reviews-header h2 { font-family: 'Bebas Neue', sans-serif; font-size: 1.6rem; letter-spacing: 2px; }
+        .reviews-avg { font-family: 'Bebas Neue', sans-serif; font-size: 1.4rem; color: var(--fire); }
+        .review-card { background: var(--card); border: 1px solid var(--border); border-radius: 14px; padding: 18px; margin-bottom: 12px; text-align: left; animation: fadeUp 0.4s ease; }
+        @keyframes fadeUp { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: translateY(0); } }
+        .review-top { display: flex; justify-content: space-between; align-items: flex-start; margin-bottom: 8px; }
+        .review-name { font-weight: 700; font-size: 0.95rem; }
+        .review-stars { font-size: 0.95rem; }
+        .review-comment { font-size: 0.9rem; color: #c0c0c0; line-height: 1.5; }
+        .review-date { font-size: 0.75rem; color: var(--muted); margin-top: 8px; }
+        .no-reviews { color: var(--muted); font-size: 0.9rem; padding: 20px 0; }
+
+        .accent-line { height: 1px; background: linear-gradient(90deg, transparent, var(--border), transparent); border: none; max-width: 480px; margin: 10px auto 28px; }
+        footer { position: relative; z-index: 1; padding: 28px 20px; color: var(--muted); font-size: 0.8rem; border-top: 1px solid var(--border); }
+        .admin-link { display: none; }
+
+        /* MODAL */
+        .modal-overlay { display: none; position: fixed; inset: 0; background: rgba(0,0,0,0.9); z-index: 100; align-items: flex-start; justify-content: center; overflow-y: auto; padding: 20px; }
+        .modal-overlay.open { display: flex; }
+        .modal { background: var(--card); border: 1px solid var(--border); border-radius: 20px; padding: 28px 22px; max-width: 480px; width: 100%; margin: auto; }
+        .modal h3 { font-family: 'Bebas Neue', sans-serif; font-size: 1.5rem; letter-spacing: 2px; margin-bottom: 20px; color: var(--fire); }
+        .modal input[type=email], .modal input[type=password], .modal input[type=text], .modal input[type=number], .modal input[type=tel], .modal input[type=search], .modal input[type=url], .modal select {
+            width: 100%; background: var(--surface); border: 1px solid var(--border); border-radius: 10px;
+            padding: 12px 14px; color: var(--text); font-family: 'DM Sans', sans-serif; font-size: 1rem; outline: none; margin-bottom: 12px;
+        }
+        .modal input:focus { border-color: var(--fire); }
+        .btn-modal { width: 100%; padding: 13px; border: none; border-radius: 10px; font-family: 'Bebas Neue', sans-serif; font-size: 1.1rem; letter-spacing: 1px; cursor: pointer; transition: opacity 0.2s; margin-bottom: 8px; }
+        .btn-fire { background: var(--fire); color: #fff; }
+        .btn-gray { background: var(--surface); color: var(--muted); }
+        .modal-error { color: var(--fire); font-size: 0.85rem; margin-bottom: 10px; display: none; }
+
+        /* ADMIN TABS */
+        .admin-tabs { display: flex; flex-wrap: wrap; gap: 6px; margin-bottom: 20px; }
+        .tab-btn { flex: 1; padding: 9px 4px; border: 1px solid var(--border); border-radius: 9px; background: var(--surface); color: var(--muted); font-family: 'DM Sans', sans-serif; font-size: 0.78rem; font-weight: 600; cursor: pointer; transition: all 0.2s; }
+        .tab-btn.active { background: var(--fire); color: #fff; border-color: var(--fire); }
+        .tab-content { display: none; }
+        .tab-content.active { display: block; }
+        .section-label { font-size: 0.72rem; text-transform: uppercase; letter-spacing: 1.5px; color: var(--muted); margin-bottom: 12px; }
+        .admin-section { display: flex; flex-wrap: wrap; gap: 12px; margin-bottom: 22px; align-items: flex-start; }
+        .admin-section h4 { flex: 1 1 100%; margin: 0 0 8px; color: var(--hand); letter-spacing: 1px; font-size: 0.92rem; }
+        .admin-section .admin-item { flex: 1 1 340px; min-width: 280px; max-width: 450px; }
+
+        /* ADMIN ITEMS */
+        .admin-item { background: var(--surface); border: 1px solid var(--border); border-radius: 12px; padding: 14px; margin-bottom: 10px; text-align: left; }
+        .admin-item-top { display: flex; justify-content: space-between; align-items: center; margin-bottom: 6px; }
+        .btn-sm { border: none; border-radius: 8px; padding: 6px 9px; font-size: 0.74rem; font-weight: 700; cursor: pointer; transition: opacity 0.2s; white-space: nowrap; }
+        .btn-sm:hover { opacity: 0.8; }
+        .btn-red { background: #ff3333; color: #fff; }
+        .btn-orange { background: var(--fire); color: #fff; }
+        .btn-toggle-on { background: var(--green); color: #fff; }
+        .btn-toggle-off { background: #555; color: #fff; }
+
+        .pedido-item { background: var(--surface); border: 1px solid var(--border); border-radius: 12px; padding: 14px; margin-bottom: 10px; text-align: left; }
+        .pedido-total { font-family: 'Bebas Neue', sans-serif; font-size: 1.1rem; color: var(--green); }
+
+        .edit-form { background: var(--black); border: 1px solid var(--fire); border-radius: 12px; padding: 14px; margin-top: 10px; display: none; }
+        .edit-form.open { display: block; }
+        .edit-row { display: flex; gap: 8px; align-items: center; margin-bottom: 10px; }
+        .edit-row label { font-size: 0.8rem; color: var(--muted); min-width: 60px; }
+        .edit-row input { flex: 1; background: var(--surface); border: 1px solid var(--border); border-radius: 8px; padding: 8px 10px; color: var(--text); font-family: 'DM Sans', sans-serif; font-size: 0.9rem; outline: none; margin-bottom: 0; }
+
+        /* BANNER RESEÑA */
+        .banner-resena { display: none; position: fixed; bottom: 20px; left: 50%; transform: translateX(-50%); width: calc(100% - 40px); max-width: 440px; background: var(--card); border: 1px solid var(--green); border-radius: 16px; padding: 16px 18px; z-index: 50; box-shadow: 0 8px 32px rgba(0,0,0,0.5); animation: slideUp 0.35s ease; }
+        .banner-resena.open { display: flex; align-items: center; gap: 12px; }
+        @keyframes slideUp { from { opacity: 0; transform: translateX(-50%) translateY(20px); } to { opacity: 1; transform: translateX(-50%) translateY(0); } }
+        .banner-resena-text { flex: 1; font-size: 0.9rem; line-height: 1.4; }
+        .banner-resena-text strong { color: var(--green); display: block; margin-bottom: 3px; font-size: 0.95rem; }
+        .banner-resena-text a { color: var(--fire); font-weight: 700; text-decoration: none; }
+        .banner-resena-close { background: var(--surface); border: 1px solid var(--border); color: var(--muted); border-radius: 50%; width: 30px; height: 30px; font-size: 1rem; cursor: pointer; flex-shrink: 0; display: flex; align-items: center; justify-content: center; }
+        .banner-resena-close:hover { color: var(--text); }
+
+        /* FORMULARIO CLIENTE */
+        .cliente-form { margin: 14px 0 4px; display: flex; flex-direction: column; gap: 10px; }
+        .cliente-form label { font-size: 0.72rem; text-transform: uppercase; letter-spacing: 1.5px; color: var(--muted); text-align: left; display: block; margin-bottom: 4px; }
+        .cliente-form input { width: 100%; background: var(--surface); border: 1px solid var(--border); border-radius: 10px; padding: 12px 14px; color: var(--text); font-family: 'DM Sans', sans-serif; font-size: 1rem; outline: none; }
+        .cliente-form input:focus { border-color: var(--fire); }
+        .cliente-form input.input-error { border-color: #ff3333; }
+        .cliente-form input::placeholder { color: var(--muted); }
+
+        /* SECCIÓN UBICACIÓN */
+        .ubicacion-section { position: relative; z-index: 2; max-width: 480px; margin: 0 auto; padding: 10px 20px 40px; text-align: center; background: var(--black); }
+        .ubicacion-title { font-family: 'Bebas Neue', sans-serif; font-size: 1.6rem; letter-spacing: 2px; color: var(--text) !important; margin-bottom: 8px; display: block; }
+        .ubicacion-dir { font-size: 1rem; font-weight: 600; color: var(--text) !important; margin-bottom: 4px; display: block; }
+        .ubicacion-sub { font-size: 0.8rem; color: var(--muted) !important; margin-bottom: 20px; display: block; }
+        .btn-como-llegar { display: inline-block; background: var(--fire); color: #fff !important; padding: 14px 32px; border-radius: 50px; font-family: 'Bebas Neue', sans-serif; font-size: 1.2rem; letter-spacing: 2px; text-decoration: none; transition: opacity 0.2s; }
+        .btn-como-llegar:hover { opacity: 0.85; }
+        .tambien-section { position: relative; z-index: 1; max-width: 480px; margin: 0 auto; padding: 0 20px 40px; }
+        .tambien-title { font-size: 0.7rem; text-transform: uppercase; letter-spacing: 2px; color: var(--muted); margin-bottom: 12px; text-align: center; }
+        .tambien-grid { display: flex; gap: 10px; }
+        .tambien-card { flex: 1; border-radius: 14px; padding: 14px 12px; text-align: center; text-decoration: none; transition: opacity 0.2s; display: block; }
+        .tambien-card:hover { opacity: 0.85; }
+        .tambien-card.cafe { background: #FAF3E0; border: 1px solid #8B1A1A; }
+        .tambien-card.fuente { background: #2C1A0E; border: 1px solid #D4872A; }
+        .tambien-card-name { font-family: 'Bebas Neue', sans-serif; font-size: 1rem; letter-spacing: 2px; display: block; margin-top: 4px; }
+        .tambien-card.cafe .tambien-card-name { color: #8B1A1A; }
+        .tambien-card.fuente .tambien-card-name { color: #D4872A; }
+        .tambien-card-sub { font-size: 0.68rem; letter-spacing: 1px; text-transform: uppercase; display: block; }
+        .tambien-card.cafe .tambien-card-sub { color: #A0522D; }
+        .tambien-card.fuente .tambien-card-sub { color: #c4a882; }
+
+        /* BOTÓN UBICACIÓN */
+        .btn-ubicacion { width: 100%; padding: 12px; background: var(--surface); border: 1px solid var(--border); border-radius: 10px; color: var(--text); font-family: 'DM Sans', sans-serif; font-size: 0.95rem; font-weight: 600; cursor: pointer; transition: all 0.2s; text-align: center; }
+        .btn-ubicacion:hover { border-color: var(--fire); }
+        .btn-ubicacion.obtenida { border-color: var(--green); color: var(--green); }
+        .btn-ubicacion-footer { color: var(--muted); font-size: 0.8rem; text-decoration: none; display: inline-block; margin-top: 6px; }
+        .btn-ubicacion-footer:hover { color: var(--fire); }
+
+        /* SELECTOR ENTREGA */
+        .entrega-selector { display: flex; gap: 8px; margin: 14px 0 16px; }
+        .entrega-btn { flex: 1; padding: 12px 8px; border: 1px solid var(--border); border-radius: 12px; background: var(--surface); color: var(--muted); font-family: 'DM Sans', sans-serif; font-size: 0.88rem; font-weight: 600; cursor: pointer; transition: all 0.2s; }
+        .entrega-btn:hover { border-color: var(--fire); color: var(--text); }
+        .entrega-btn.active { background: var(--fire); color: #fff; border-color: var(--fire); }
+        .cat-label { font-family: 'Bebas Neue', sans-serif; font-size: 1rem; letter-spacing: 3px; color: var(--muted); text-align: left; margin: 22px 0 12px; border-left: 3px solid var(--fire); padding-left: 10px; }
+
+        .menu-two-col { display: grid; grid-template-columns: 1fr 1fr; gap: 14px; align-items: start; max-width: 720px; margin: 0 auto; }
+        @media (max-width: 560px) { .menu-two-col { grid-template-columns: 1fr; } }
+
+        /* ── BUSCADOR ── */
+        .search-container { max-width: 520px; margin: 0 auto 18px; }
+        .search-wrapper { position: relative; }
+        .search-input { width: 100%; background: var(--surface); border: 1px solid var(--border); border-radius: 12px; padding: 12px 42px 12px 16px; color: var(--text); font-family: 'DM Sans', sans-serif; font-size: 0.95rem; outline: none; transition: border-color 0.2s; }
+        .search-input:focus { border-color: var(--fire); }
+        .search-input::placeholder { color: var(--muted); }
+        .search-clear { position: absolute; right: 8px; top: 50%; transform: translateY(-50%); background: none; border: none; color: var(--muted); cursor: pointer; font-size: 1.3rem; padding: 4px 10px; border-radius: 50%; }
+        .search-clear:hover { background: var(--border); color: var(--text); }
+        .search-results { margin-top: 10px; max-height: 340px; overflow-y: auto; }
+        .search-result-item { background: var(--card); border: 1px solid var(--border); padding: 12px 14px; border-radius: 12px; margin-bottom: 8px; cursor: pointer; transition: all 0.2s; text-align: left; display: flex; justify-content: space-between; align-items: center; gap: 10px; }
+        .search-result-item:hover { border-color: var(--fire); transform: translateY(-1px); }
+        .search-result-info { flex: 1; min-width: 0; }
+        .search-result-name { font-weight: 600; color: var(--text); }
+        .search-result-desc { font-size: 0.78rem; color: var(--muted); margin-top: 2px; }
+        .search-result-price { font-family: 'Bebas Neue', sans-serif; font-size: 1.1rem; color: var(--fire); white-space: nowrap; }
+        .search-no-results { text-align: center; color: var(--muted); font-size: 0.9rem; padding: 16px; }
+
+        /* Pulse highlight al llegar desde el buscador */
+        @keyframes orbita-pulse-anim {
+            0%, 100% { box-shadow: 0 0 0 0 rgba(255, 77, 0, 0); }
+            30%      { box-shadow: 0 0 0 4px rgba(255, 77, 0, 0.75); }
+            60%      { box-shadow: 0 0 0 2px rgba(255, 77, 0, 0.4); }
+        }
+        .orbita-pulse { animation: orbita-pulse-anim 1.8s ease-in-out; border-radius: 14px; }
+
+        @keyframes orbita-pulse-error-anim {
+            0%, 100% { box-shadow: 0 0 0 0 rgba(193, 18, 31, 0); outline: 2px solid transparent; }
+            25%      { box-shadow: 0 0 0 5px rgba(193, 18, 31, 0.85); outline: 2px solid #c1121f; }
+            50%      { box-shadow: 0 0 0 2px rgba(193, 18, 31, 0.4); outline: 2px solid transparent; }
+            75%      { box-shadow: 0 0 0 5px rgba(193, 18, 31, 0.85); outline: 2px solid #c1121f; }
+        }
+        .orbita-pulse-error { animation: orbita-pulse-error-anim 1.8s ease-in-out 3; border-radius: 12px; }
+        .menu-col-right { display: flex; flex-direction: column; gap: 10px; }
+        .drinks-box { background: transparent; border: none; padding: 0; margin-bottom: 0; border-radius: 14px; overflow: hidden; }
+        .drinks-box .drinks-acc-head { width: 100%; display: flex; justify-content: space-between; align-items: center; background: var(--card); border: 1px solid var(--border); color: var(--text); font-family: 'Bebas Neue', sans-serif; font-size: 0.95rem; letter-spacing: 2px; padding: 12px 14px; border-radius: 14px; cursor: pointer; text-align: left; }
+        .drinks-box.open .drinks-acc-head { border-radius: 14px 14px 0 0; border-bottom: 1px solid var(--border); }
+        .drinks-acc-title { border-left: 3px solid var(--fire); padding-left: 8px; color: var(--muted); }
+        .drinks-box .acc-chev { transition: transform 0.2s; font-size: 0.65rem; opacity: 0.85; }
+        .drinks-box.open .acc-chev { transform: rotate(180deg); }
+        .drinks-box .drinks-panel { display: none; background: var(--card); border: 1px solid var(--border); border-top: none; padding: 8px 14px 4px; border-radius: 0 0 14px 14px; }
+        .drinks-box.open .drinks-panel { display: block; }
+        .jugo-item { display: flex; justify-content: space-between; align-items: center; padding: 10px 0; border-bottom: 1px solid var(--border); }
+        .jugo-item:last-child { border-bottom: none; }
+        .jugo-info { display: flex; flex-direction: column; gap: 2px; }
+        .jugo-nombre { font-size: 0.92rem; font-weight: 500; color: var(--text); }
+        .jugo-precio { font-family: 'Bebas Neue', sans-serif; font-size: 0.95rem; color: var(--muted); }
+    </style>
+</head>
+<body>
+
+<header class="hero">
+    <div class="logo">🍣 HAND<span>ROLL</span></div>
+    <p class="hero-tagline">Fresco · Rápido · Crujiente</p>
+</header>
+
+<section class="section">
+    <div class="section-title" style="margin-top:10px;">🌯 Nuestro Menú</div>
+
+    <div class="search-container">
+        <div class="search-wrapper">
+            <input type="text" class="search-input" id="search-input" placeholder="Buscar rolls, jugos, bebidas..." oninput="buscarProductos(this.value)">
+            <button type="button" class="search-clear" id="search-clear" onclick="limpiarBusqueda()" style="display:none;">×</button>
+        </div>
+        <div class="search-results" id="search-results" style="display:none;"></div>
+    </div>
+
+    <div class="menu-two-col">
+        <div class="menu-col-left">
+            <div class="cat-label" style="margin-top:0;">&#x1F363; Hand Rolls</div>
+            <div id="menu-handrolls"></div>
+            <p style="font-size:0.78rem;color:var(--muted);margin-top:8px;text-align:center;">Cada hand roll lleva su propia salsa 🍣</p>
+        </div>
+        <div class="menu-col-right">
+            <div class="drinks-box" id="box-jugos">
+                <button type="button" class="drinks-acc-head" id="head-jugos" onclick="toggleDrinksSec('jugos')" aria-expanded="false" aria-controls="panel-jugos">
+                    <span class="drinks-acc-title">Jugos naturales</span><span class="acc-chev">▼</span>
+                </button>
+                <div class="drinks-panel" id="panel-jugos">
+                    <div id="menu-jugos"></div>
+                </div>
+            </div>
+            <div class="drinks-box" id="box-bebidas">
+                <button type="button" class="drinks-acc-head" id="head-bebidas" onclick="toggleDrinksSec('bebidas')" aria-expanded="false" aria-controls="panel-bebidas">
+                    <span class="drinks-acc-title">Bebidas</span><span class="acc-chev">▼</span>
+                </button>
+                <div class="drinks-panel" id="panel-bebidas">
+                    <div id="menu-bebidas"></div>
+                </div>
+            </div>
+            <div class="drinks-box" id="box-aguas">
+                <button type="button" class="drinks-acc-head" id="head-aguas" onclick="toggleDrinksSec('aguas')" aria-expanded="false" aria-controls="panel-aguas">
+                    <span class="drinks-acc-title">Aguas</span><span class="acc-chev">▼</span>
+                </button>
+                <div class="drinks-panel" id="panel-aguas">
+                    <div id="menu-aguas"></div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="order-box">
+        <p id="resumen" style="color: var(--muted);">Tu pedido está vacío</p>
+
+        <div class="entrega-selector">
+            <button class="entrega-btn" id="btn-retiro" onclick="seleccionarEntrega('retiro')">🏪 Retiro en local</button>
+            <button class="entrega-btn" id="btn-delivery" onclick="seleccionarEntrega('delivery')">🛵 Delivery <span id="label-delivery-cost" style="font-size:0.75rem;color:var(--fire);">+$2.000</span></button>
+        </div>
+        <p style="font-size:0.75rem;color:var(--muted);margin:-10px 0 14px;text-align:center;">📍 Delivery solo dentro de Frutillar alto/bajo</p>
+
+        <div class="cliente-form">
+            <div>
+                <label for="input-nombre">👤 Tu nombre</label>
+                <input type="text" id="input-nombre" placeholder="Ej: María González" autocomplete="name">
+            </div>
+            <div id="campo-hora">
+                <label for="input-hora">⏰ Hora de retiro</label>
+                <input type="time" id="input-hora" min="12:00" max="20:00">
+            </div>
+            <div id="campo-direccion" style="display:none;">
+                <label>📍 Dirección de entrega</label>
+                <div id="dirs-guardadas-delivery" style="margin-bottom:6px;"></div>
+                <input type="text" id="input-direccion-delivery" placeholder="Ej: Calle Los Robles 123, depto 4B" autocomplete="street-address" style="width:100%;padding:10px 14px;border:1px solid var(--border);border-radius:12px;background:var(--surface);color:var(--text);font-size:0.95rem;box-sizing:border-box;margin-bottom:0;">
+                <button type="button" class="btn-ubicacion" id="btn-compartir-ubi" onclick="compartirUbicacion()" style="margin-top:8px;font-size:0.82rem;opacity:0.85;">
+                    📍 Usar GPS para autocompletar (opcional)
+                </button>
+                <p id="ubi-estado" style="font-size:0.78rem;color:var(--muted);margin-top:6px;text-align:left;"></p>
+            </div>
+        </div>
+        <button onclick="enviarPedido()" class="btn-wsp">🛒 PEDIR POR WHATSAPP</button>
+        <button onclick="pagarConMP()" class="btn-mp" id="btn-mp">💳 PAGAR EN LÍNEA</button>
+        <button onclick="OrbitaPagoRapido.pagarRapido()" class="btn-rayo" id="btn-rayo" style="display:none;">⚡ PAGO RÁPIDO ⚡</button>
+    </div>
+</section>
+
+<div id="seccion-resenas">
+    <hr class="accent-line">
+    <section class="reviews-section">
+        <div class="reviews-header">
+            <h2>⭐ Reseñas</h2>
+            <span class="reviews-avg" id="avg-display"></span>
+        </div>
+        <div id="reviews-list"><p class="no-reviews">Cargando reseñas...</p></div>
+    </section>
+</div>
+
+<hr class="accent-line">
+<section class="ubicacion-section" style="position:relative;z-index:1;">
+    <div class="ubicacion-title">📍 ¿Dónde estamos?</div>
+    <p class="ubicacion-dir">Cristino Winkler, Frutillar</p>
+    <p class="ubicacion-sub">⏰ Lunes a Domingo · 12:00 - 20:00</p>
+    <a href="https://maps.google.com/?q=Cristino+Winkler,+Frutillar,+Chile" target="_blank" class="btn-como-llegar">
+        🗺️ Cómo llegar →
+    </a>
+</section>
+
+<hr class="accent-line">
+<section class="tambien-section">
+    <p class="tambien-title">También somos</p>
+    <div class="tambien-grid">
+        <a href="cafe.html" class="tambien-card cafe">
+            <span style="font-size:1.4rem;">☕</span>
+            <span class="tambien-card-name">CAFÉ</span>
+            <span class="tambien-card-sub">Órbita</span>
+        </a>
+        <a href="fuente.html" class="tambien-card fuente">
+            <span style="font-size:1.4rem;">🍔</span>
+            <span class="tambien-card-name">FUENTE DE SODA</span>
+            <span class="tambien-card-sub">Órbita</span>
+        </a>
+    </div>
+</section>
+
+<footer>
+    &copy; 2026 Hand Roll Express
+    <br><a href="orbita.html" style="color:var(--muted);font-size:0.75rem;text-decoration:none;">Órbita — otros locales</a>
+</footer>
+
+<!-- MODAL ADMIN -->
+<div class="modal-overlay" id="modal-overlay">
+    <div class="modal">
+        <div id="login-section">
+            <h3>🔒 Acceso staff</h3>
+            <p class="modal-error" id="modal-error">Credenciales incorrectas</p>
+            <input type="email" id="admin-email" placeholder="Email (Supabase Auth)" autocomplete="username">
+            <input type="password" id="admin-pass" placeholder="Contraseña" autocomplete="current-password" onkeydown="if(event.key==='Enter') verificarPass()">
+            <button type="button" class="btn-modal btn-fire" onclick="verificarPass()">INGRESAR</button>
+            <button type="button" class="btn-modal btn-gray" onclick="resetContrasena()" style="font-size:0.8rem;padding:8px 12px;">Olvidé mi contraseña</button>
+            <button type="button" class="btn-modal btn-gray" onclick="cerrarAdmin()">CANCELAR</button>
+        </div>
+
+        <div id="admin-panel" style="display:none;position:relative;">
+            <button type="button" onclick="cerrarAdmin()" title="Cerrar panel" style="position:absolute;top:-6px;right:-6px;width:36px;height:36px;border-radius:50%;border:1px solid var(--border);background:var(--surface);color:var(--text);font-size:1.2rem;line-height:1;cursor:pointer;z-index:5;">✕</button>
+            <h3>⚙️ Panel Admin</h3>
+            <div class="admin-tabs">
+                <button class="tab-btn active" onclick="showTab('tab-pedidos', this)">📦 Pedidos</button>
+                <button class="tab-btn" onclick="showTab('tab-productos', this)">🍣 Productos</button>
+                <button class="tab-btn" onclick="showTab('tab-resenas', this)">⭐ Reseñas</button>
+                <button class="tab-btn" onclick="showTab('tab-inventario', this)">📦 Inventario</button>
+            </div>
+            <div class="tab-content active" id="tab-pedidos">
+                <p class="section-label">Pedidos de hoy</p>
+                <div id="admin-pedidos-list"><p style="color:var(--muted);font-size:0.9rem;">Cargando...</p></div>
+            </div>
+            <div class="tab-content" id="tab-productos">
+                <p class="section-label">Productos activos</p>
+                <button class="btn-modal btn-fire" type="button" style="margin-bottom:12px;padding:10px;" onclick="abrirAgregarProducto()">+ Agregar producto</button>
+                <input id="admin-productos-search" type="text" placeholder="Buscar por nombre o categoría..." oninput="setAdminProductoSearch(this.value)" style="width:100%;background:var(--surface);border:1px solid var(--border);border-radius:10px;padding:12px 14px;margin-bottom:12px;color:var(--text);font-family:'DM Sans',sans-serif;">
+                <div id="admin-productos-list"></div>
+            </div>
+            <div class="tab-content" id="tab-resenas">
+                <p class="section-label">Gestionar reseñas</p>
+                <div id="admin-reviews-list"><p style="color:var(--muted);font-size:0.9rem;">Cargando...</p></div>
+            </div>
+            <div class="tab-content" id="tab-inventario">
+                <p class="section-label">Costo de delivery</p>
+                <p style="font-size:0.78rem;color:var(--muted);text-align:left;margin-bottom:10px;">Se suma al pedido cuando el cliente elige Delivery.</p>
+                <input type="number" id="input-costo-delivery-handroll" placeholder="2000" min="0" step="100">
+                <button class="btn-modal btn-fire" type="button" style="margin-bottom:18px;" onclick="guardarCostoDeliveryHandroll()">Guardar costo delivery</button>
+
+                <p class="section-label">Horario de delivery</p>
+                <p style="font-size:0.78rem;color:var(--muted);text-align:left;margin-bottom:10px;">Fuera de este horario, el cliente no podrá elegir Delivery.</p>
+                <div style="display:flex;gap:8px;margin-bottom:10px;">
+                    <div style="flex:1;">
+                        <label style="font-size:0.72rem;color:var(--muted);text-transform:uppercase;letter-spacing:1px;display:block;margin-bottom:4px;">Desde</label>
+                        <input type="time" id="input-hora-ini-handroll" value="12:00">
+                    </div>
+                    <div style="flex:1;">
+                        <label style="font-size:0.72rem;color:var(--muted);text-transform:uppercase;letter-spacing:1px;display:block;margin-bottom:4px;">Hasta</label>
+                        <input type="time" id="input-hora-fin-handroll" value="21:00">
+                    </div>
+                </div>
+                <button class="btn-modal btn-fire" type="button" style="margin-bottom:18px;" onclick="guardarHorarioDeliveryHandroll()">Guardar horario delivery</button>
+                <p class="section-label">Inventario e insumos</p>
+                <div class="perf-card" style="padding:16px;margin-bottom:14px;">
+                    <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(160px,1fr));gap:10px;">
+                        <input id="handroll-inv-name" type="text" placeholder="Nombre del insumo" style="width:100%;padding:10px;border:1px solid var(--border);border-radius:10px;background:var(--surface);color:var(--text);">
+                        <input id="handroll-inv-stock" type="number" placeholder="Stock inicial" min="0" step="0.01" style="width:100%;padding:10px;border:1px solid var(--border);border-radius:10px;background:var(--surface);color:var(--text);">
+                        <input id="handroll-inv-unit" type="text" placeholder="Unidad (kg, L, u)" style="width:100%;padding:10px;border:1px solid var(--border);border-radius:10px;background:var(--surface);color:var(--text);">
+                        <input id="handroll-inv-costo" type="number" placeholder="Costo unitario" min="0" step="100" style="width:100%;padding:10px;border:1px solid var(--border);border-radius:10px;background:var(--surface);color:var(--text);">
+                    </div>
+                    <button class="btn-modal btn-fire" type="button" style="margin-top:10px;" onclick="window.orbitaInventario.agregarInsumo('handroll','handroll')">Agregar insumo</button>
+                </div>
+                <div id="handroll-inv-list"></div>
+                <h4 style="margin:18px 0 10px;color:var(--hand);">Historial de movimientos</h4>
+                <div id="handroll-inv-history" class="history-list"></div>
+
+                <p class="section-label" style="margin-top:24px;">Cambiar contraseña</p>
+                <p style="font-size:0.78rem;color:var(--muted);text-align:left;margin-bottom:10px;">Por seguridad, te enviamos un link de restablecimiento a tu correo registrado. Desde ahí podrás elegir una nueva contraseña.</p>
+                <button class="btn-modal btn-fire" type="button" onclick="enviarResetPassAdmin()">Enviar link por correo</button>
+            </div>
+            <p style="margin-top:12px;font-size:0.75rem;"><a id="link-admin-recarga" href="index.html?orbita_back" style="color:var(--muted);">Recargar con panel admin</a> · <a href="orbita.html" style="color:var(--muted);">Inicio Órbita</a> · <a href="panel_central.html?k=orbita_8h3k2p_2026" style="color:var(--muted);">Panel central</a> · <button id="btn-admin-reopen" type="button" class="btn-modal btn-fire" onclick="abrirAdmin()" style="margin-left:6px;padding:6px 10px;font-size:0.85rem;">Ingresar credenciales</button></p>
+            <button class="btn-modal btn-gray" style="margin-top:14px;" onclick="cerrarAdmin()">CERRAR</button>
+        </div>
+    </div>
+</div>
+
+<!-- BANNER RESEÑA POST-PAGO -->
+<div class="banner-resena" id="banner-resena">
+    <div class="banner-resena-text">
+        <strong>¡Pago recibido! 🎉</strong>
+        ¿Ya retiraste tu pedido? Déjanos una reseña, nos ayuda mucho.
+        <br><a href="" id="banner-resena-link" target="_blank">⭐ Dejar reseña</a>
+    </div>
+    <button class="banner-resena-close" onclick="document.getElementById('banner-resena').classList.remove('open')">✕</button>
+</div>
+
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.45.4/dist/umd/supabase.min.js"></script>
+<script src="./orbita-auth.js"></script>
+<script src="./orbita-supabase-sync.js"></script>
+<script src="./orbita-delivery.js"></script>
+<script src="./orbita-productos.js"></script>
+<script src="./orbita-inventario.js"></script>
+<script>
+    const WSP_NUMBER  = "56971019691";
+    const LINK_RESENA = "resenas.html?sitio=handroll";
+    window.LINK_RESENA = LINK_RESENA;
+    const MP_PUBLIC_KEY = "APP_USR-1b0d847d-66f5-4257-a8a3-ea955b18c660";
+    const TABLA_VENTAS_HANDROLL = "pedidos";
+
+    const PRODUCTOS_DEF = [
+        { id: 'pollo',              nombre: 'Hand Roll Pollo',           precio: 3000, activo: true, categoria: 'handroll' },
+        { id: 'camaron',            nombre: 'Hand Roll Camarón',          precio: 3000, activo: true, categoria: 'handroll' },
+        { id: 'jugo_frambuesa',     nombre: 'Jugo Frambuesa',            precio: 3000, activo: true, categoria: 'jugo' },
+        { id: 'jugo_frutilla',      nombre: 'Jugo Frutilla',             precio: 2500, activo: true, categoria: 'jugo' },
+        { id: 'jugo_arandano',      nombre: 'Jugo Arándano',             precio: 2500, activo: true, categoria: 'jugo' },
+        { id: 'jugo_fru_ara',       nombre: 'Jugo Frutilla-Arándano',    precio: 2500, activo: true, categoria: 'jugo' },
+        { id: 'jugo_fram_ara',      nombre: 'Jugo Frambuesa-Arándano',   precio: 2500, activo: true, categoria: 'jugo' },
+        { id: 'jugo_melon_tuna',    nombre: 'Jugo Melón Tuna',           precio: 2500, activo: true, categoria: 'jugo' },
+        { id: 'jugo_melon_cal',     nombre: 'Jugo Melón Calameño',       precio: 2500, activo: true, categoria: 'jugo' },
+        { id: 'jugo_pina',          nombre: 'Jugo Piña',                 precio: 2500, activo: true, categoria: 'jugo' },
+        { id: 'jugo_mango',         nombre: 'Jugo Mango',                precio: 2500, activo: true, categoria: 'jugo' },
+        { id: 'jugo_pina_mango',    nombre: 'Jugo Piña-Mango',           precio: 2500, activo: true, categoria: 'jugo' },
+        { id: 'jugo_naranja_plat',  nombre: 'Jugo Naranja-Plátano',      precio: 2500, activo: true, categoria: 'jugo' },
+        { id: 'beb_coca', nombre: 'Coca-Cola',              precio: 2000, activo: true, categoria: 'bebida' },
+        { id: 'beb_coca_zero',    nombre: 'Coca-Cola sin azúcar',   precio: 2000, activo: true, categoria: 'bebida' },
+        { id: 'beb_pepsi',        nombre: 'Pepsi',                  precio: 2000, activo: true, categoria: 'bebida' },
+        { id: 'beb_kem',          nombre: 'Kem',                    precio: 2000, activo: true, categoria: 'bebida' },
+        { id: 'beb_bilz',         nombre: 'Bilz',                   precio: 2000, activo: true, categoria: 'bebida' },
+        { id: 'beb_pap',          nombre: 'Pap',                    precio: 2000, activo: true, categoria: 'bebida' },
+        { id: 'beb_fanta',        nombre: 'Fanta',                  precio: 2000, activo: true, categoria: 'bebida' },
+        { id: 'beb_sprite',       nombre: 'Sprite',                 precio: 2000, activo: true, categoria: 'bebida' },
+        { id: 'agua_gas',         nombre: 'Agua con gas',           precio: 1500, activo: true, categoria: 'agua' },
+        { id: 'agua_sin_gas',     nombre: 'Agua sin gas',           precio: 1500, activo: true, categoria: 'agua' },
+    ];
+
+    let productos = [];
+
+    async function cargarCatalogoHandroll() {
+        try {
+            const raw = await window.orbitaProductos.fetchJson(window.orbitaProductos.SITIO_HANDROLL);
+            if (Array.isArray(raw) && raw.length > 0) {
+                productos = window.orbitaProductos.mergeById(PRODUCTOS_DEF, raw);
+            } else {
+                productos = PRODUCTOS_DEF.map(p => ({ ...p }));
+            }
+        } catch (e) {
+            productos = PRODUCTOS_DEF.map(p => ({ ...p }));
+        }
+    }
+
+    async function persistirCatalogoHandroll() {
+        const slim = productos.map(p => ({ id: p.id, nombre: p.nombre, precio: p.precio, activo: p.activo, categoria: p.categoria, costo: Number(p.costo)||0 }));
+        const r = await window.orbitaProductos.upsert(window.orbitaProductos.SITIO_HANDROLL, slim);
+        if (!r.ok) alert('No se pudo guardar el catálogo en la nube. Revisa Supabase o ejecuta orbita-productos.sql.');
+    }
+
+    let pedido = {};
+    // Hand rolls: lista de unidades. Cada elemento es 1 hand roll con su salsa.
+    // [{ uid, baseId, nombre, precio, salsa: 'Soya'|'Agridulce'|'Sin salsa' }]
+    let handrollsEnPedido = [];
+    // Salsa actualmente seleccionada por handroll para el próximo "+".
+    // { [baseId]: 'Soya' } por defecto Soya (gratis).
+    let salsaSel = {};
+    const SALSAS_HR = [
+        { id: 'Soya',      label: 'Soya',      precio: 0,   nota: 'Gratis' },
+        { id: 'Agridulce', label: 'Agridulce', precio: 500, nota: '+$500' },
+        { id: 'Sin salsa', label: 'Sin salsa', precio: 0,   nota: '' },
+    ];
+    function _salsaPrecio(id) { const s = SALSAS_HR.find(x => x.id === id); return s ? s.precio : 0; }
+    function _qtyHandroll(baseId) { return handrollsEnPedido.filter(h => h.baseId === baseId).length; }
+    function setSalsaHandroll(baseId, salsaId) {
+        salsaSel[baseId] = salsaId;
+        renderMenu();
+    }
+    function agregarHandroll(baseId) {
+        const prod = productos.find(p => p.id === baseId);
+        if (!prod || !prod.activo) return;
+        const salsa = salsaSel[baseId] || 'Soya';
+        handrollsEnPedido.push({
+            uid: 'hr_' + Date.now() + '_' + Math.random().toString(36).slice(2, 6),
+            baseId,
+            nombre: prod.nombre,
+            precio: Number(prod.precio) || 0,
+            salsa,
+        });
+        renderMenu();
+        actualizarResumen();
+        if (window.orbitaPagoFlow && window.orbitaPagoFlow.toast) {
+            const sufijo = salsa === 'Sin salsa' ? '' : ` con ${salsa.toLowerCase()}`;
+            window.orbitaPagoFlow.toast(`${prod.nombre.replace('Hand Roll ','')}${sufijo} ✓`, 'success');
+        }
+    }
+    function quitarHandrollPorUid(uid) {
+        const idx = handrollsEnPedido.findIndex(h => h.uid === uid);
+        if (idx < 0) return;
+        handrollsEnPedido.splice(idx, 1);
+        renderMenu();
+        actualizarResumen();
+    }
+    function quitarUltimoHandroll(baseId) {
+        for (let i = handrollsEnPedido.length - 1; i >= 0; i--) {
+            if (handrollsEnPedido[i].baseId === baseId) {
+                handrollsEnPedido.splice(i, 1);
+                break;
+            }
+        }
+        renderMenu();
+        actualizarResumen();
+    }
+    /** Favoritos: tu-dominio/index.html?k=orbita_8h3k2p_2026&orbita_back */
+    const ADMIN_URL_FLAG = 'orbita_back';
+    const ADMIN_PRIVATE_KEY = 'k';
+    const ADMIN_PRIVATE_SECRET = 'orbita_8h3k2p_2026';
+    const qs = new URLSearchParams(window.location.search);
+    const tieneClavePrivada = qs.get(ADMIN_PRIVATE_KEY) === ADMIN_PRIVATE_SECRET;
+    const esAdmin = tieneClavePrivada;
+
+    function mostrarAdminModoBanner() {
+        const banner = document.createElement('div');
+        banner.id = 'admin-mode-banner';
+        banner.style.cssText = 'position:fixed;top:0;left:0;right:0;z-index:9999;padding:12px 14px;font-family:DM Sans, sans-serif;font-size:0.95rem;text-align:center;background:rgba(17,17,17,0.96);color:#fff;border-bottom:2px solid #ff4d00;';
+        banner.innerHTML = 'Modo admin privado activo: ingresa email y contraseña para ver pedidos y acceder al panel central. <button id="btn-admin-banner" type="button" class="btn-modal btn-fire" style="margin-left:10px;font-size:0.85rem;padding:6px 10px;vertical-align:middle;" onclick="abrirAdmin()">Ingresar credenciales</button>';
+        document.body.insertBefore(banner, document.body.firstChild);
+        document.body.style.paddingTop = '54px';
+    }
+
+    function nombreEnPedido(p) {
+        let nom = p.categoria === 'jugo' ? p.nombre.replace('Jugo ', '') : p.nombre;
+        if (p.categoria === 'jugo') {
+            const op = (window.jugoOpciones && window.jugoOpciones[p.id]) || 'con';
+            const label = op === 'con' ? 'con azúcar' : op === 'sin' ? 'sin azúcar' : 'con endulzante';
+            nom += ' (' + label + ')';
+        }
+        return nom;
+    }
+
+    function filaListaCompacta(p) {
+        const nom = escHtml(nombreEnPedido(p));
+        const esJugo = p.categoria === 'jugo';
+        const opcionSel = (window.jugoOpciones && window.jugoOpciones[p.id]) || 'con';
+        const azucarHtml = esJugo ? `
+            <div class="azucar-opts" style="display:flex;gap:4px;margin-top:6px;">
+                ${['con','sin','endulzante'].map(op => `
+                    <button type="button" onclick="setAzucar('${p.id}','${op}')" class="azucar-btn ${opcionSel === op ? 'active' : ''}" style="flex:1;padding:5px 6px;font-size:0.68rem;border:1px solid var(--border);border-radius:8px;background:${opcionSel === op ? 'var(--fire)' : 'var(--surface)'};color:${opcionSel === op ? '#fff' : 'var(--muted)'};cursor:pointer;text-transform:uppercase;letter-spacing:0.5px;font-weight:600;">${op === 'con' ? 'Con azúcar' : op === 'sin' ? 'Sin azúcar' : 'Endulzante'}</button>
+                `).join('')}
+            </div>` : '';
+        return `
+            <div class="jugo-item">
+                <div style="flex:1;">
+                    <div class="jugo-info">
+                        <span class="jugo-nombre">${nom}${!p.activo ? ' <span style="color:var(--fire);font-size:0.7rem;">(No disponible)</span>' : ''}</span>
+                        <span class="jugo-precio">$${p.precio.toLocaleString('es-CL')}</span>
+                    </div>
+                    ${azucarHtml}
+                </div>
+                <div class="qty-control" style="${!p.activo ? 'opacity:0.4;pointer-events:none;' : ''}">
+                    <button class="qty-btn" onclick="cambiar('${p.id}', -1)">−</button>
+                    <span class="qty-num" id="qty-${p.id}">0</span>
+                    <button class="qty-btn plus" onclick="cambiar('${p.id}', 1)">+</button>
+                </div>
+            </div>`;
+    }
+
+    function setAzucar(id, opcion) {
+        if (!window.jugoOpciones) window.jugoOpciones = {};
+        window.jugoOpciones[id] = opcion;
+        renderMenu();
+        if (typeof actualizarResumen === 'function') actualizarResumen();
+    }
+
+    // ── RENDER MENÚ ──
+    function renderMenu() {
+        const handrolls = productos.filter(p => p.categoria === 'handroll');
+        const jugos     = productos.filter(p => p.categoria === 'jugo');
+        const bebidas   = productos.filter(p => p.categoria === 'bebida');
+        const aguas     = productos.filter(p => p.categoria === 'agua');
+
+        document.getElementById('menu-handrolls').innerHTML = handrolls.map(p => renderCard(p)).join('');
+        document.getElementById('menu-jugos').innerHTML   = jugos.map(filaListaCompacta).join('');
+        document.getElementById('menu-bebidas').innerHTML = bebidas.map(filaListaCompacta).join('');
+        document.getElementById('menu-aguas').innerHTML   = aguas.map(filaListaCompacta).join('');
+
+        productos.forEach(p => { if (pedido[p.id] === undefined) pedido[p.id] = 0; });
+        actualizarResumen();
+    }
+
+    function toggleDrinksSec(seccion) {
+        const map = { jugos: 'jugos', bebidas: 'bebidas', aguas: 'aguas' };
+        const key = map[seccion];
+        if (!key) return;
+        const box = document.getElementById('box-' + key);
+        const head = document.getElementById('head-' + key);
+        if (!box || !head) return;
+        box.classList.toggle('open');
+        const abierto = box.classList.contains('open');
+        head.setAttribute('aria-expanded', abierto ? 'true' : 'false');
+    }
+
+    function renderCard(p) {
+        if (p.categoria === 'handroll') return renderCardHandroll(p);
+        return `<div class="card ${p.activo ? '' : 'disabled'}" id="card-${p.id}">
+            <div class="card-header">
+                <h3>${escHtml(p.nombre)}${!p.activo ? ' <span style="color:var(--fire);font-size:0.75rem;">(No disponible)</span>' : ''}</h3>
+                <span class="price">$${p.precio.toLocaleString('es-CL')}</span>
+            </div>
+            <div class="qty-control">
+                <button class="qty-btn" onclick="cambiar('${p.id}', -1)">−</button>
+                <span class="qty-num" id="qty-${p.id}">0</span>
+                <button class="qty-btn plus" onclick="cambiar('${p.id}', 1)">+</button>
+            </div>
+        </div>`;
+    }
+
+    function renderCardHandroll(p) {
+        const salsa = salsaSel[p.id] || 'Soya';
+        const cant = _qtyHandroll(p.id);
+        const chips = SALSAS_HR.map(s => {
+            const activo = salsa === s.id;
+            const colorNota = s.precio > 0 ? 'var(--fire)' : 'var(--muted)';
+            return `<button type="button" onclick="setSalsaHandroll('${p.id}','${s.id}')" style="flex:1;padding:6px 8px;font-size:0.72rem;border:1px solid var(--border);border-radius:8px;background:${activo ? 'var(--fire)' : 'var(--surface)'};color:${activo ? '#fff' : 'var(--muted)'};cursor:pointer;font-weight:700;letter-spacing:0.5px;text-transform:uppercase;display:flex;flex-direction:column;align-items:center;gap:2px;line-height:1.1;">
+                <span>${escHtml(s.label)}</span>
+                ${s.nota ? `<span style="font-size:0.6rem;color:${activo ? '#fff' : colorNota};font-weight:600;letter-spacing:0;text-transform:none;">${escHtml(s.nota)}</span>` : ''}
+            </button>`;
+        }).join('');
+        return `<div class="card ${p.activo ? '' : 'disabled'}" id="card-${p.id}">
+            <div class="card-header">
+                <h3>${escHtml(p.nombre)}${!p.activo ? ' <span style="color:var(--fire);font-size:0.75rem;">(No disponible)</span>' : ''}</h3>
+                <span class="price">$${p.precio.toLocaleString('es-CL')}</span>
+            </div>
+            <div style="margin-top:10px;">
+                <div style="font-size:0.7rem;color:var(--muted);text-transform:uppercase;letter-spacing:1px;margin-bottom:6px;">Elige salsa</div>
+                <div style="display:flex;gap:6px;">${chips}</div>
+            </div>
+            <div class="qty-control" style="margin-top:12px;${!p.activo ? 'opacity:0.4;pointer-events:none;' : ''}">
+                <button class="qty-btn" onclick="quitarUltimoHandroll('${p.id}')" ${cant === 0 ? 'disabled' : ''}>−</button>
+                <span class="qty-num" id="qty-${p.id}">${cant}</span>
+                <button class="qty-btn plus" onclick="agregarHandroll('${p.id}')">+</button>
+            </div>
+        </div>`;
+    }
+
+    function cambiar(id, delta) {
+        const prod = productos.find(p => p.id === id);
+        if (!prod || !prod.activo) return;
+        // Hand rolls usan agregarHandroll/quitarUltimoHandroll (necesitan salsa).
+        if (prod.categoria === 'handroll') {
+            if (delta > 0) agregarHandroll(id);
+            else quitarUltimoHandroll(id);
+            return;
+        }
+        pedido[id] = Math.max(0, (pedido[id] || 0) + delta);
+        const qtyEl = document.getElementById('qty-' + id);
+        if (qtyEl) qtyEl.textContent = pedido[id];
+        actualizarResumen();
+    }
+
+    // ── BUSCADOR PÚBLICO ──
+    function buscarProductos(query) {
+        const results = document.getElementById('search-results');
+        const clear = document.getElementById('search-clear');
+        const q = (query || '').trim().toLowerCase();
+        if (!q) {
+            results.style.display = 'none';
+            clear.style.display = 'none';
+            return;
+        }
+        clear.style.display = 'block';
+        const found = productos.filter(p => p.activo && (
+            (p.nombre || '').toLowerCase().includes(q) ||
+            (p.categoria || '').toLowerCase().includes(q)
+        ));
+        if (found.length === 0) {
+            results.innerHTML = '<div class="search-no-results">No se encontraron productos</div>';
+        } else {
+            results.innerHTML = found.map(p => `
+                <div class="search-result-item" onclick="agregarDesdeBusqueda('${p.id}')">
+                    <div class="search-result-info">
+                        <div class="search-result-name">${escHtml(p.nombre)}</div>
+                    </div>
+                    <div class="search-result-price">$${(Number(p.precio)||0).toLocaleString('es-CL')}</div>
+                </div>
+            `).join('');
+        }
+        results.style.display = 'block';
+    }
+    function limpiarBusqueda() {
+        document.getElementById('search-input').value = '';
+        document.getElementById('search-results').style.display = 'none';
+        document.getElementById('search-clear').style.display = 'none';
+    }
+    function agregarDesdeBusqueda(id) {
+        const p = productos.find(x => x.id === id);
+        if (!p) return;
+        limpiarBusqueda();
+        // Buscar elemento destino: card directa o fila dentro de acordeón
+        let target = document.getElementById('card-' + id);
+        if (!target) {
+            const qty = document.getElementById('qty-' + id);
+            if (qty) target = qty.closest('.jugo-item') || qty.closest('.card') || qty.parentElement;
+        }
+        if (!target) return;
+        // Abrir acordeón si está cerrado
+        const acc = target.closest('.drinks-box');
+        if (acc && !acc.classList.contains('open')) acc.classList.add('open');
+        setTimeout(() => {
+            target.scrollIntoView({ behavior: 'smooth', block: 'center' });
+            target.classList.add('orbita-pulse');
+            setTimeout(() => target.classList.remove('orbita-pulse'), 1800);
+        }, 50);
+    }
+
+    var ubicacionCliente = null; // { url } — GPS opcional
+
+    function _renderDirsDelivery() {
+        const cont = document.getElementById('dirs-guardadas-delivery');
+        if (!cont) return;
+        const dirs = window.OrbitaPagoRapido?.getDireccionesCliente?.() || [];
+        if (!dirs.length) { cont.innerHTML = ''; return; }
+        cont.innerHTML = '<div style="font-size:0.78rem;color:var(--muted);margin-bottom:5px;">Mis direcciones guardadas:</div>' +
+            dirs.map(d => `<button type="button" onclick="document.getElementById('input-direccion-delivery').value=${JSON.stringify(d)}" style="display:block;width:100%;text-align:left;padding:8px 12px;margin-bottom:4px;background:var(--surface);border:1px solid var(--border);border-radius:10px;color:var(--text);cursor:pointer;font-size:0.85rem;">📍 ${escHtml(d)}</button>`).join('');
+    }
+
+    function compartirUbicacion() {
+        const btn    = document.getElementById('btn-compartir-ubi');
+        const estado = document.getElementById('ubi-estado');
+        btn.textContent = '⏳ Obteniendo ubicación...';
+        btn.disabled = true;
+        navigator.geolocation.getCurrentPosition(
+            pos => {
+                const lat = pos.coords.latitude;
+                const lng = pos.coords.longitude;
+                if (window.orbitaDelivery && !window.orbitaDelivery.dentroDeFrutillar(lat, lng)) {
+                    ubicacionCliente = null;
+                    btn.textContent = '📍 GPS fuera de zona';
+                    btn.disabled = false;
+                    estado.textContent = window.orbitaDelivery.mensajeFueraZona;
+                    estado.style.color = '#ff6b6b';
+                    return;
+                }
+                const url = `https://maps.google.com/?q=${lat},${lng}`;
+                ubicacionCliente = { url };
+                const inputDir = document.getElementById('input-direccion-delivery');
+                if (inputDir && !inputDir.value.trim()) inputDir.value = url;
+                btn.textContent = '✅ GPS obtenido';
+                btn.classList.add('obtenida');
+                btn.disabled = false;
+                estado.textContent = '📍 Enlace GPS adjuntado al pedido.';
+                estado.style.color = 'var(--green)';
+            },
+            err => {
+                btn.textContent = '📍 Usar GPS para autocompletar (opcional)';
+                btn.disabled = false;
+                estado.textContent = 'No se pudo obtener GPS. Escribe tu dirección manualmente.';
+                estado.style.color = 'var(--fire)';
+            },
+            { enableHighAccuracy: true, timeout: 10000 }
+        );
+    }
+
+    var tipoEntrega = null; // 'retiro' o 'delivery'
+
+    async function seleccionarEntrega(tipo) {
+        if (tipo === 'delivery' && window.orbitaDelivery) {
+            const r = await window.orbitaDelivery.puedeHacerDeliveryAhora('handroll');
+            if (!r.ok) {
+                const btn = document.getElementById('btn-delivery');
+                if (window.orbitaPagoFlow && window.orbitaPagoFlow.flashError) {
+                    window.orbitaPagoFlow.flashError(btn, window.orbitaDelivery.mensajeFueraHorario(r.horario));
+                }
+                return;
+            }
+        }
+        tipoEntrega = tipo;
+        document.getElementById('btn-retiro').classList.toggle('active', tipo === 'retiro');
+        document.getElementById('btn-delivery').classList.toggle('active', tipo === 'delivery');
+        document.getElementById('campo-hora').style.display      = tipo === 'retiro'   ? '' : 'none';
+        document.getElementById('campo-direccion').style.display = tipo === 'delivery' ? '' : 'none';
+        if (tipo === 'delivery') _renderDirsDelivery();
+        actualizarResumen();
+    }
+
+    function actualizarResumen() {
+        const res = document.getElementById('resumen');
+        const delivery  = tipoEntrega === 'delivery' ? (window.COSTO_DELIVERY || 2000) : 0;
+        // Total hand rolls: cada unidad con su precio + salsa
+        const totalHandrolls = handrollsEnPedido.reduce((a, h) => a + h.precio + _salsaPrecio(h.salsa), 0);
+        const totalResto = productos.reduce((a, p) => {
+            if (p.categoria === 'handroll') return a;
+            return a + (pedido[p.id] || 0) * p.precio;
+        }, 0);
+        const total = totalHandrolls + totalResto + delivery;
+        const row = (label, precio, onClickFn) => `
+            <div style="display:flex;justify-content:space-between;align-items:center;gap:8px;padding:7px 11px;background:rgba(255,77,0,0.08);border-radius:8px;margin-top:4px;font-size:0.85rem;text-align:left;">
+                <span>${escHtml(label)}${precio > 0 ? ` — $${Number(precio).toLocaleString('es-CL')}` : ''}</span>
+                ${onClickFn ? `<button type="button" onclick="${onClickFn}" style="background:transparent;border:none;color:#c1121f;font-size:1.1rem;cursor:pointer;padding:2px 6px;line-height:1;">×</button>` : ''}
+            </div>`;
+        // Hand rolls: una línea por unidad (con su salsa), agrupadas por (baseId+salsa).
+        const conteoHR = {};
+        handrollsEnPedido.forEach(h => {
+            const k = h.baseId + '||' + h.salsa;
+            if (!conteoHR[k]) conteoHR[k] = { nombre: h.nombre, baseId: h.baseId, salsa: h.salsa, precio: h.precio + _salsaPrecio(h.salsa), cantidad: 0 };
+            conteoHR[k].cantidad++;
+        });
+        const handrollsHtml = Object.values(conteoHR).map(g => {
+            const nom = g.nombre.replace('Hand Roll ', '');
+            const salsaTxt = g.salsa === 'Sin salsa' ? 'sin salsa' : (g.salsa.toLowerCase() + (_salsaPrecio(g.salsa) > 0 ? ' +$500' : ''));
+            const label = (g.cantidad > 1 ? g.cantidad + 'x ' : '1 ') + nom + ' (' + salsaTxt + ')';
+            return row(label, g.cantidad * g.precio, `quitarUltimoHandrollSalsa('${g.baseId}','${g.salsa}')`);
+        }).join('');
+        const restoHtml = productos.filter(p => p.categoria !== 'handroll' && (pedido[p.id]||0) > 0).map(p => {
+            const c = pedido[p.id];
+            const nom = nombreEnPedido(p);
+            const label = (c > 1 ? c + 'x ' : '1 ') + nom;
+            return row(label, c * p.precio, `cambiar('${p.id}', -${c})`);
+        }).join('');
+        if (handrollsHtml || restoHtml) {
+            res.innerHTML = handrollsHtml + restoHtml + `<div style="margin-top:10px;font-family:'Bebas Neue',sans-serif;font-size:1.3rem;color:var(--text);text-align:center;">Total: $${total.toLocaleString('es-CL')}</div>`;
+        } else {
+            res.innerHTML = `<span style="color:var(--muted)">Tu pedido está vacío</span>`;
+        }
+    }
+    function quitarUltimoHandrollSalsa(baseId, salsa) {
+        for (let i = handrollsEnPedido.length - 1; i >= 0; i--) {
+            if (handrollsEnPedido[i].baseId === baseId && handrollsEnPedido[i].salsa === salsa) {
+                handrollsEnPedido.splice(i, 1);
+                break;
+            }
+        }
+        renderMenu();
+        actualizarResumen();
+    }
+
+    // ── ENVIAR PEDIDO ──
+    async function enviarPedido() {
+        const totalUnidades = handrollsEnPedido.length + productos.reduce((a, p) => a + (p.categoria === 'handroll' ? 0 : (pedido[p.id] || 0)), 0);
+        if (totalUnidades === 0) { alert("Primero agrega algo al pedido 🍣"); return; }
+        if (!tipoEntrega) { alert("Por favor elige Retiro en local o Delivery 👆"); return; }
+
+        const nombreInput    = document.getElementById('input-nombre');
+        const horaInput      = document.getElementById('input-hora');
+        const nombre    = nombreInput.value.trim();
+        const hora      = horaInput.value.trim();
+
+        let error = false;
+        nombreInput.classList.remove('input-error');
+        horaInput.classList.remove('input-error');
+        const _dirTexto = (document.getElementById('input-direccion-delivery')?.value || '').trim();
+        if (!nombre) { nombreInput.classList.add('input-error'); nombreInput.focus(); error = true; }
+        if (tipoEntrega === 'retiro' && !hora) { horaInput.classList.add('input-error'); if (!error) horaInput.focus(); error = true; }
+        if (tipoEntrega === 'delivery' && !_dirTexto) { alert("Por favor ingresa tu dirección de entrega 📍"); document.getElementById('input-direccion-delivery')?.focus(); return; }
+        if (error) { alert("Por favor completa todos los campos 👆"); return; }
+
+        const delivery  = tipoEntrega === 'delivery' ? (window.COSTO_DELIVERY || 2000) : 0;
+        const totalHR = handrollsEnPedido.reduce((a, h) => a + h.precio + _salsaPrecio(h.salsa), 0);
+        const totalResto = productos.reduce((a, p) => p.categoria === 'handroll' ? a : (a + (pedido[p.id] || 0) * p.precio), 0);
+        const total = totalHR + totalResto + delivery;
+
+        let msg = `HAND ROLL EXPRESS\n--------------------\n`;
+        // Hand rolls agrupados por (baseId, salsa)
+        const conteoHR = {};
+        handrollsEnPedido.forEach(h => {
+            const k = h.baseId + '||' + h.salsa;
+            if (!conteoHR[k]) conteoHR[k] = { nombre: h.nombre, salsa: h.salsa, precio: h.precio + _salsaPrecio(h.salsa), cantidad: 0 };
+            conteoHR[k].cantidad++;
+        });
+        const conteoArr = Object.values(conteoHR);
+        if (conteoArr.length) {
+            msg += `🍣 Hand Rolls:\n`;
+            conteoArr.forEach(g => {
+                const salsaTxt = g.salsa === 'Sin salsa' ? 'sin salsa' : (g.salsa + (_salsaPrecio(g.salsa) > 0 ? ' +$500' : ''));
+                msg += `  • ${g.cantidad}x ${g.nombre.replace('Hand Roll ','')} (${salsaTxt})\n`;
+            });
+        }
+        const jugoItems     = productos.filter(p => p.categoria === 'jugo'   && pedido[p.id] > 0);
+        const bebidaItems   = productos.filter(p => p.categoria === 'bebida' && pedido[p.id] > 0);
+        const aguaItems     = productos.filter(p => p.categoria === 'agua'   && pedido[p.id] > 0);
+        if (jugoItems.length)     { msg += `🥤 Jugos:\n`;      jugoItems.forEach(p => { msg += `  • ${pedido[p.id]}x ${nombreEnPedido(p)}\n`; }); }
+        if (bebidaItems.length)   { msg += `${String.fromCodePoint(0x1F964)} Bebidas:\n`;    bebidaItems.forEach(p => { msg += `  • ${pedido[p.id]}x ${p.nombre}\n`; }); }
+        if (aguaItems.length)     { msg += `${String.fromCodePoint(0x1F4A7)} Aguas:\n`;      aguaItems.forEach(p => { msg += `  • ${pedido[p.id]}x ${p.nombre}\n`; }); }
+        msg += `--------------------\n`;
+        if (tipoEntrega === 'retiro') {
+            msg += `📦 Retiro en local\n`;
+            msg += `Hora de retiro: ${hora}\n`;
+        } else {
+            msg += `🛵 Delivery (+$${(window.COSTO_DELIVERY || 2000).toLocaleString('es-CL')})\n`;
+            msg += `Dirección: ${_dirTexto}\n`;
+            if (ubicacionCliente?.url) msg += `GPS: ${ubicacionCliente.url}\n`;
+        }
+        msg += `Nombre: ${nombre}\n`;
+        msg += `Total: $${total.toLocaleString('es-CL')}\n`;
+        msg += `--------------------`;
+
+        const items_json = [];
+        conteoArr.forEach(g => {
+            const salsaTxt = g.salsa === 'Sin salsa' ? 'sin salsa' : (g.salsa + (_salsaPrecio(g.salsa) > 0 ? ' +$500' : ''));
+            items_json.push({ id: g.nombre, nombre: g.nombre.replace('Hand Roll ','') + ' (' + salsaTxt + ')', cantidad: g.cantidad, precio: g.precio, salsa: g.salsa });
+        });
+        productos.filter(p => p.categoria !== 'handroll' && pedido[p.id] > 0).forEach(p => {
+            items_json.push({ id: p.id, nombre: p.nombre, cantidad: pedido[p.id], precio: p.precio });
+        });
+        if (tipoEntrega === 'delivery') items_json.push({ id: 'delivery', nombre: 'Delivery', cantidad: 1, precio: (window.COSTO_DELIVERY || 2000) });
+
+        const salsasResumen = conteoArr.map(g => `${g.cantidad}x ${g.salsa}`).join(', ') || null;
+
+        const pedidoBody = {
+            nombre, total,
+            hora_retiro: tipoEntrega === 'retiro' ? hora : null,
+            tipo_entrega: tipoEntrega,
+            items_json,
+            salsas_texto: salsasResumen,
+            direccion_entrega: tipoEntrega === 'delivery' ? (_dirTexto + (ubicacionCliente?.url ? ' | GPS: ' + ubicacionCliente.url : '')) : null,
+            telefono: (window.OrbitaPagoRapido?.estado?.cliente?.telefono) || null,
+        };
+
+        if (window.orbitaPagoFlow) {
+            await window.orbitaPagoFlow.registrarWhatsapp({
+                sitio: 'handroll', pedidoBody, wspNumber: WSP_NUMBER, mensaje: msg
+            });
+        } else {
+            window.open("https://wa.me/" + WSP_NUMBER + "?text=" + encodeURIComponent(msg), '_blank');
+        }
+
+        handrollsEnPedido = [];
+        salsaSel = {};
+        productos.forEach(p => { pedido[p.id] = 0; });
+        document.querySelectorAll('.qty-num').forEach(el => el.textContent = '0');
+        document.getElementById('input-nombre').value = '';
+        document.getElementById('input-hora').value = '';
+        renderMenu();
+        actualizarResumen();
+    }
+
+    // ── MERCADO PAGO ──
+    const MP_EDGE_URL = "https://uldqgxdmblhyqsnxenaz.supabase.co/functions/v1/hyper-worker";
+
+    async function pagarConMP() {
+        const totalUnidades = handrollsEnPedido.length + productos.reduce((a, p) => a + (p.categoria === 'handroll' ? 0 : (pedido[p.id] || 0)), 0);
+        if (totalUnidades === 0) { alert("Primero agrega algo al pedido 🍣"); return; }
+        if (!tipoEntrega) { alert("Por favor elige Retiro en local o Delivery 👆"); return; }
+
+        const nombreInput = document.getElementById('input-nombre');
+        const horaInput   = document.getElementById('input-hora');
+        const nombre = nombreInput.value.trim();
+        const hora   = horaInput.value.trim();
+
+        let error = false;
+        nombreInput.classList.remove('input-error');
+        horaInput.classList.remove('input-error');
+        if (!nombre) { nombreInput.classList.add('input-error'); nombreInput.focus(); error = true; }
+        if (tipoEntrega === 'retiro' && !hora) { horaInput.classList.add('input-error'); if (!error) horaInput.focus(); error = true; }
+        if (tipoEntrega === 'delivery' && !ubicacionCliente) { alert("Por favor comparte tu ubicación para el delivery 📍"); return; }
+        if (error) { alert("Por favor completa todos los campos 👆"); return; }
+
+        const btn = document.getElementById('btn-mp');
+        btn.disabled = true;
+        btn.textContent = '⏳ Generando pago...';
+
+        const items = [];
+        // Hand rolls agrupados por (baseId, salsa) — cada grupo es un line item con su precio (handroll + salsa).
+        const conteoHR = {};
+        handrollsEnPedido.forEach(h => {
+            const k = h.baseId + '||' + h.salsa;
+            if (!conteoHR[k]) conteoHR[k] = { nombre: h.nombre, salsa: h.salsa, precio: h.precio + _salsaPrecio(h.salsa), cantidad: 0 };
+            conteoHR[k].cantidad++;
+        });
+        Object.values(conteoHR).forEach(g => {
+            const salsaTxt = g.salsa === 'Sin salsa' ? 'sin salsa' : (g.salsa + (_salsaPrecio(g.salsa) > 0 ? ' +$500' : ''));
+            const title = (g.nombre.replace('Hand Roll ','') + ' (' + salsaTxt + ')').slice(0, 255);
+            items.push({ title, quantity: g.cantidad, unit_price: g.precio, currency_id: 'CLP' });
+        });
+        productos.filter(p => p.categoria !== 'handroll' && pedido[p.id] > 0)
+            .forEach(p => items.push({ title: p.nombre, quantity: pedido[p.id], unit_price: p.precio, currency_id: 'CLP' }));
+        if (tipoEntrega === 'delivery') items.push({ title: 'Delivery', quantity: 1, unit_price: (window.COSTO_DELIVERY || 2000), currency_id: 'CLP' });
+
+        const items_json = items.map(i => ({ nombre: i.title, cantidad: i.quantity, precio: i.unit_price }));
+        const total = items_json.reduce((a, i) => a + i.cantidad * i.precio, 0);
+        const salsasResumen = Object.values(conteoHR).map(g => `${g.cantidad}x ${g.salsa}`).join(', ') || null;
+
+        const pedidoBody = {
+            nombre, total,
+            hora_retiro: tipoEntrega === 'retiro' ? hora : null,
+            tipo_entrega: tipoEntrega,
+            items_json,
+            salsas_texto: salsasResumen,
+            direccion_entrega: tipoEntrega === 'delivery' ? (_dirTexto + (ubicacionCliente?.url ? ' | GPS: ' + ubicacionCliente.url : '')) : null,
+            telefono: (window.OrbitaPagoRapido?.estado?.cliente?.telefono) || null,
+        };
+
+        if (!window.orbitaPagoFlow) {
+            alert('Error: el módulo de pago no cargó. Recargá la página.');
+            btn.disabled = false; btn.textContent = '💳 PAGAR EN LÍNEA';
+            return;
+        }
+
+        await window.orbitaPagoFlow.iniciarPagoMP({
+            sitio: 'handroll',
+            items,
+            pedidoBody,
+            wspNumber: WSP_NUMBER,
+            onError: () => {
+                alert('No se pudo generar el pago. Intenta pedir por WhatsApp o inténtalo nuevamente.');
+                btn.disabled = false;
+                btn.textContent = '💳 PAGAR EN LÍNEA';
+            }
+        });
+    }
+
+    // ── UTIL ──
+    function escHtml(s) {
+        return String(s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');
+    }
+
+    // ── RESEÑAS PÚBLICAS ──
+    async function cargarResenas() {
+        const lista = document.getElementById('reviews-list');
+        const avgEl = document.getElementById('avg-display');
+        try {
+            const res = await fetch(`${SUPABASE_URL}/rest/v1/resenas?sitio=eq.handroll&select=*&order=creado_at.desc`,
+                { headers: { apikey: SUPABASE_KEY, Authorization: `Bearer ${SUPABASE_KEY}` } });
+            const data = await res.json();
+            if (!Array.isArray(data) || data.length === 0) { lista.innerHTML = '<p class="no-reviews">Aún no hay reseñas. ¡Sé el primero!</p>'; if (avgEl) avgEl.textContent = ''; return; }
+            const prom = (data.reduce((a,r) => a + r.estrellas, 0) / data.length).toFixed(1);
+            avgEl.textContent = `${prom} ⭐ (${data.length})`;
+            lista.innerHTML = data.map(r => `
+                <div class="review-card">
+                    <div class="review-top">
+                        <span class="review-name">${escHtml(r.nombre)}</span>
+                        <span class="review-stars">${'⭐'.repeat(r.estrellas)}</span>
+                    </div>
+                    <p class="review-comment">"${escHtml(r.comentario)}"</p>
+                    <p class="review-date">${new Date(r.creado_at).toLocaleDateString('es-CL',{day:'numeric',month:'long',year:'numeric'})}</p>
+                </div>`).join('');
+        } catch(e) { lista.innerHTML = '<p class="no-reviews">No se pudieron cargar las reseñas.</p>'; }
+    }
+
+    // ── ADMIN LOGIN (Supabase Auth, sin contraseña en el código) ──
+    let adminDesbloqueado = false;
+
+    async function abrirAdmin() {
+        document.getElementById('modal-overlay').classList.add('open');
+        actualizarBotonIngresoAdmin();
+        const { data: { session } } = await window.orbitaAuth.getSession();
+        if (session) {
+            adminDesbloqueado = true;
+            mostrarPanelAdmin();
+            return;
+        }
+        adminDesbloqueado = false;
+        document.getElementById('login-section').style.display = '';
+        document.getElementById('admin-panel').style.display = 'none';
+        document.getElementById('modal-error').style.display = 'none';
+        setTimeout(() => document.getElementById('admin-email').focus(), 100);
+    }
+
+    function cerrarAdmin() {
+        document.getElementById('modal-overlay').classList.remove('open');
+        document.getElementById('admin-email').value = '';
+        document.getElementById('admin-pass').value = '';
+        adminDesbloqueado = false;
+        // Garantizar que el banner muestre "Volver al panel admin" al cerrar.
+        cambiarBannerAdminAVolver();
+    }
+
+    function actualizarBotonIngresoAdmin() {
+        const overlay = document.getElementById('modal-overlay');
+        const panelOpen = overlay && overlay.classList.contains('open');
+        // Banner entero: ocultar cuando el panel admin está abierto, mostrar cuando está cerrado.
+        const banner = document.getElementById('admin-mode-banner');
+        if (banner) banner.style.display = panelOpen ? 'none' : 'block';
+        // Ajustar padding-top del body según visibilidad del banner
+        document.body.style.paddingTop = panelOpen ? '0' : '54px';
+        const btnReopen = document.getElementById('btn-admin-reopen');
+        if (btnReopen) btnReopen.style.display = panelOpen ? 'none' : 'inline-block';
+    }
+
+    async function verificarPass() {
+        const email = document.getElementById('admin-email').value.trim();
+        const password = document.getElementById('admin-pass').value;
+        const modalError = document.getElementById('modal-error');
+        modalError.style.display = 'none';
+        if (!email || !password) {
+            modalError.textContent = 'Ingresa email y contraseña para iniciar sesión.';
+            modalError.style.display = 'block';
+            return;
+        }
+        try {
+            const result = await window.orbitaAuth.signIn(email, password);
+            if (!result || result.error) {
+                modalError.textContent = result && result.error && result.error.message ? result.error.message : 'No se pudo iniciar sesión';
+                modalError.style.display = 'block';
+                document.getElementById('admin-pass').value = '';
+                return;
+            }
+            adminDesbloqueado = true;
+            mostrarPanelAdmin();
+        } catch (e) {
+            modalError.textContent = e.message || 'Error al iniciar sesión. Revisa la consola.';
+            modalError.style.display = 'block';
+            document.getElementById('admin-pass').value = '';
+        }
+    }
+    async function resetContrasena() {
+        const email = document.getElementById('admin-email').value.trim();
+        if (!email) {
+            alert('Ingresa tu email para resetear la contraseña.');
+            return;
+        }
+        try {
+            const result = await window.orbitaAuth.resetPassword(email);
+            if (result.error) {
+                alert('Error al enviar email de reset: ' + result.error.message);
+            } else {
+                alert('Email de reset enviado. Revisa tu bandeja de entrada.');
+            }
+        } catch (e) {
+            alert('Error: ' + e.message);
+        }
+    }
+
+    async function mostrarPanelAdmin() {
+        document.getElementById('login-section').style.display = 'none';
+        document.getElementById('admin-panel').style.display = '';
+        const lr = document.getElementById('link-admin-recarga');
+        if (lr && tieneClavePrivada) lr.href = 'index.html?' + ADMIN_PRIVATE_KEY + '=' + encodeURIComponent(ADMIN_PRIVATE_SECRET) + '&' + ADMIN_URL_FLAG;
+        cambiarBannerAdminAVolver();
+        cargarPedidosAdmin();
+        const lista = document.getElementById('admin-productos-list');
+        if (lista) lista.innerHTML = '<p style="color:var(--muted);font-size:0.9rem;">Cargando productos...</p>';
+        if (!productos || productos.length === 0) {
+            try { await cargarCatalogoHandroll(); } catch (e) {}
+        }
+        renderProductosAdmin();
+        cargarResenasAdmin();
+        if (window.orbitaInventario) window.orbitaInventario.init('handroll', 'handroll');
+    }
+
+    function cambiarBannerAdminAVolver() {
+        const banner = document.getElementById('admin-mode-banner');
+        if (!banner) return;
+        banner.innerHTML = 'Modo admin activo. Si cerraste el panel, puedes volver a abrirlo aquí. <button id="btn-admin-banner" type="button" class="btn-modal btn-fire" style="margin-left:10px;font-size:0.85rem;padding:6px 10px;vertical-align:middle;" onclick="abrirAdmin()">Volver al panel admin</button>';
+        actualizarBotonIngresoAdmin();
+    }
+
+    function showTab(tabId, btn) {
+        document.querySelectorAll('.tab-content').forEach(t => t.classList.remove('active'));
+        document.querySelectorAll('.tab-btn').forEach(b => b.classList.remove('active'));
+        document.getElementById(tabId).classList.add('active');
+        btn.classList.add('active');
+        if (tabId === 'tab-inventario' && window.orbitaInventario) window.orbitaInventario.render('handroll', 'handroll');
+        else if (tabId === 'tab-resenas') cargarResenasAdmin();
+    }
+
+    async function guardarCostoFijoHandroll() {
+        const v = parseInt(document.getElementById('input-cf-handroll').value, 10) || 0;
+        const r = await window.orbitaCostosFijos.guardar(window.orbitaCostosFijos.claveHandroll, v);
+        if (r.ok) alert('Costo fijo guardado y sincronizado.');
+        else alert(r.error || 'No se pudo guardar.');
+        cargarRendimientoHandroll();
+    }
+    async function enviarResetPassAdmin() {
+        try {
+            const { data: { user } } = await window.orbitaAuth.getUser();
+            if (!user || !user.email) { alert('No se pudo obtener el correo. Inicia sesión nuevamente.'); return; }
+            if (!confirm('¿Enviar link de restablecimiento de contraseña a ' + user.email + '?')) return;
+            const r = await window.orbitaAuth.resetPassword(user.email);
+            if (r.error) alert('No se pudo enviar el correo: ' + r.error.message);
+            else alert('Listo, revisa tu bandeja de entrada (y carpeta de spam).');
+        } catch (e) { alert('Error: ' + e.message); }
+    }
+
+    async function cambiarContrasena() {
+        // Flujo legacy: mantiene cambio directo si se llama desde código viejo.
+        const nuevaPass = document.getElementById('input-nueva-pass')?.value.trim() || '';
+        if (!nuevaPass || nuevaPass.length < 6) {
+            alert('La nueva contraseña debe tener al menos 6 caracteres.');
+            return;
+        }
+        try {
+            const result = await window.orbitaAuth.updatePassword(nuevaPass);
+            if (result.error) {
+                alert('Error al cambiar contraseña: ' + result.error.message);
+            } else {
+                alert('Contraseña cambiada exitosamente.');
+                const i = document.getElementById('input-nueva-pass'); if (i) i.value = '';
+            }
+        } catch (e) {
+            alert('Error: ' + e.message);
+        }
+    }
+    async function fetchVentasDesde(tabla, desdeISO) {
+        const res = await window.orbitaAuth.adminFetch(
+            `${SUPABASE_URL}/rest/v1/${tabla}?select=total,creado_at&creado_at=gte.${desdeISO}&order=creado_at.asc`
+        );
+        if (!res.ok) return [];
+        const data = await res.json();
+        return Array.isArray(data) ? data : [];
+    }
+    function sumarVentasEnMes(rows, y, m0) {
+        return rows.reduce((a, r) => {
+            const d = new Date(r.creado_at);
+            if (d.getFullYear() === y && d.getMonth() === m0) return a + (Number(r.total) || 0);
+            return a;
+        }, 0);
+    }
+    function sumarVentasAnio(rows, y) {
+        return rows.reduce((a, r) => {
+            const d = new Date(r.creado_at);
+            if (d.getFullYear() === y) return a + (Number(r.total) || 0);
+            return a;
+        }, 0);
+    }
+    async function cargarRendimientoHandroll() {
+        const box = document.getElementById('rendimiento-handroll-body');
+        const inp = document.getElementById('input-cf-handroll');
+        if (!box) return;
+        box.innerHTML = '<p style="color:var(--muted);font-size:0.9rem;">Cargando...</p>';
+        let costos;
+        try {
+            costos = await window.orbitaCostosFijos.leer();
+        } catch (e) {
+            costos = { costo_fijo_handroll: 0, costo_fijo_cafe: 0, costo_fijo_fuente: 0, _sinTabla: true };
+        }
+        const cf = Number(costos.costo_fijo_handroll) || 0;
+        if (inp) inp.value = cf || '';
+        const now = new Date();
+        const y = now.getFullYear();
+        const m = now.getMonth();
+        const desde = `${y}-01-01T00:00:00`;
+        try {
+            const rows = await fetchVentasDesde(TABLA_VENTAS_HANDROLL, desde);
+            const vm = sumarVentasEnMes(rows, y, m);
+            const va = sumarVentasAnio(rows, y);
+            const netM = vm - cf;
+            const netA = va - cf * 12;
+            const aviso = costos._necesitaLogin ? '<p style="color:var(--fire);font-size:0.78rem;margin-bottom:10px;text-align:left;">Inicia sesión en este panel para ver costos y ventas con RLS.</p>' : (costos._sinTabla ? '<p style="color:var(--fire);font-size:0.78rem;margin-bottom:10px;text-align:left;">No se pudo leer orbita_config. Revisa SQL y sesión.</p>' : '');
+            box.innerHTML = aviso + `
+                <div class="admin-item">
+                    <div style="font-size:0.9rem;margin-bottom:6px;">Ventas <strong>mes actual</strong></div>
+                    <div style="font-family:'Bebas Neue',sans-serif;font-size:1.3rem;color:var(--green);">$${vm.toLocaleString('es-CL')}</div>
+                    <div style="font-size:0.82rem;color:var(--muted);margin-top:8px;">− Costo fijo mes <strong>$${cf.toLocaleString('es-CL')}</strong></div>
+                    <div style="font-size:0.9rem;margin-top:6px;">Resultado aprox. mes: <strong style="color:${netM>=0?'var(--green)':'var(--fire)'}">$${netM.toLocaleString('es-CL')}</strong></div>
+                </div>
+                <div class="admin-item" style="margin-top:10px;">
+                    <div style="font-size:0.9rem;margin-bottom:6px;">Ventas <strong>año ${y}</strong> (acumulado)</div>
+                    <div style="font-family:'Bebas Neue',sans-serif;font-size:1.3rem;color:var(--text);">$${va.toLocaleString('es-CL')}</div>
+                    <div style="font-size:0.82rem;color:var(--muted);margin-top:8px;">− Costos fijos 12 meses <strong>$${(cf*12).toLocaleString('es-CL')}</strong></div>
+                    <div style="font-size:0.9rem;margin-top:6px;">Resultado aprox. año: <strong style="color:${netA>=0?'var(--green)':'var(--fire)'}">$${netA.toLocaleString('es-CL')}</strong></div>
+                </div>`;
+        } catch (e) {
+            box.innerHTML = '<p style="color:var(--fire);font-size:0.85rem;">No se pudieron cargar las ventas.</p>';
+        }
+    }
+
+    // ── PEDIDOS ADMIN ──
+    function _badgeEstado(estado) {
+        const map = {
+            pagado:     { txt: '✓ Pagado',    bg: 'rgba(37,211,102,0.15)', color: 'var(--green)' },
+            pendiente:  { txt: '⏳ Pendiente', bg: 'rgba(255,193,7,0.15)',  color: '#ffc107' },
+            rechazado:  { txt: '✗ Rechazado', bg: 'rgba(255,68,68,0.15)',  color: '#ff4444' },
+            anulado:    { txt: '🚫 Anulado',   bg: 'rgba(120,120,120,0.2)', color: '#aaa' },
+            whatsapp:   { txt: '💬 WhatsApp', bg: 'rgba(37,211,102,0.12)', color: 'var(--green)' }
+        };
+        const m = map[estado] || { txt: estado || '—', bg: 'rgba(120,120,120,0.15)', color: '#aaa' };
+        return `<span style="background:${m.bg};color:${m.color};padding:2px 8px;border-radius:10px;font-size:0.7rem;font-weight:700;">${m.txt}</span>`;
+    }
+
+    // Devuelve HTML vertical (cada ítem en su línea). Items ya escapados.
+    function _itemsResumen(p) {
+        const escItem = s => String(s==null?'':s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');
+        let labels = [];
+        if (Array.isArray(p.items_json) && p.items_json.length) {
+            labels = p.items_json.map(i => `${i.cantidad || 1}x ${escItem(i.nombre)}`);
+        } else {
+            (typeof productos !== 'undefined' ? productos : []).forEach(prod => {
+                if (p[prod.id] > 0) {
+                    const nom = prod.categoria === 'handroll' ? prod.nombre.replace('Hand Roll ','') : (typeof nombreEnPedido === 'function' ? nombreEnPedido(prod) : prod.nombre);
+                    labels.push(`${p[prod.id]}x ${escItem(nom)}`);
+                }
+            });
+        }
+        if (!labels.length) return '—';
+        return labels.map(l => `<div style="line-height:1.4;">• ${l}</div>`).join('');
+    }
+
+    async function anularPedido(id) {
+        if (!confirm('¿Anular este pedido?')) return;
+        try {
+            const res = await window.orbitaAuth.adminFetch(`${SUPABASE_URL}/rest/v1/pedidos?id=eq.${id}`, {
+                method: 'PATCH',
+                headers: { 'Content-Type': 'application/json', Prefer: 'return=minimal' },
+                body: JSON.stringify({ estado: 'anulado' })
+            });
+            if (res.ok) cargarPedidosAdmin();
+            else alert('No se pudo anular.');
+        } catch(e) { alert('Error al anular.'); }
+    }
+    window.anularPedido = anularPedido;
+
+    async function cargarPedidosAdmin() {
+        const lista = document.getElementById('admin-pedidos-list');
+        lista.innerHTML = '<p style="color:var(--muted);font-size:0.9rem;">Cargando...</p>';
+        try {
+            const hoy = new Date().toISOString().split('T')[0];
+            const res = await window.orbitaAuth.adminFetch(
+                `${SUPABASE_URL}/rest/v1/pedidos?select=*&sitio=eq.handroll&creado_at=gte.${hoy}T00:00:00&order=creado_at.desc`
+            );
+            const data = await res.json();
+            if (!Array.isArray(data) || data.length === 0) {
+                lista.innerHTML = '<p style="color:var(--muted);font-size:0.9rem;">Sin pedidos hoy aún.</p>'; return;
+            }
+            const totalDia = data.filter(p => p.estado !== 'anulado' && p.estado !== 'rechazado').reduce((a, p) => a + (p.total || 0), 0);
+            lista.innerHTML = `<p style="color:var(--green);font-size:0.85rem;margin-bottom:12px;">💰 Total del día: $${totalDia.toLocaleString('es-CL')} · ${data.length} pedido${data.length !== 1 ? 's' : ''}</p>` +
+                data.map(p => {
+                    const hora = new Date(p.creado_at).toLocaleTimeString('es-CL', {hour:'2-digit', minute:'2-digit'});
+                    const items = _itemsResumen(p);
+                    const puedeAnular = p.estado === 'pendiente' || p.estado === 'whatsapp';
+                    const salsas = p.salsas_texto || p.salsas;
+                    return `<div class="pedido-item">
+                        <div style="display:flex;justify-content:space-between;align-items:center;gap:8px;margin-bottom:4px;">
+                            <div style="font-weight:700;font-size:0.92rem;flex:1;">${items}</div>
+                            ${_badgeEstado(p.estado)}
+                        </div>
+                        ${p.nombre ? `<div style="font-size:0.8rem;color:#aaa;">👤 ${escHtml(p.nombre)}</div>` : ''}
+                        ${p.telefono ? `<div style="font-size:0.8rem;color:#aaa;margin-top:2px;">📞 <a href="tel:${escHtml(p.telefono)}" style="color:var(--fire);text-decoration:none;">${escHtml(p.telefono)}</a></div>` : ''}
+                        ${p.direccion_entrega ? (()=>{ const _gps = p.direccion_entrega.match(/GPS: (https?:\/\/\S+)/); const _txt = p.direccion_entrega.replace(/ \| GPS:.*$/, ''); return `<div style="font-size:0.8rem;color:#aaa;margin-top:2px;">📍 ${escHtml(_txt)}${_gps ? ' <a href="' + escHtml(_gps[1]) + '" target="_blank" style="color:var(--fire);text-decoration:none;">[GPS]</a>' : ''}</div>`; })() : ''}
+                        ${salsas ? `<div style="font-size:0.85rem;color:#aaa;margin-top:2px;">🫙 ${escHtml(salsas)}</div>` : ''}
+                        <div style="display:flex;justify-content:space-between;align-items:center;margin-top:8px;gap:8px;">
+                            <span style="font-size:0.75rem;color:var(--muted);">⏰ ${hora}</span>
+                            <span class="pedido-total">$${(p.total||0).toLocaleString('es-CL')}</span>
+                        </div>
+                        ${puedeAnular ? `<button class="btn-sm btn-red" style="margin-top:8px;width:100%;" onclick="anularPedido(${p.id})">Anular pedido</button>` : ''}
+                    </div>`;
+                }).join('');
+        } catch(e) { lista.innerHTML = '<p style="color:var(--fire);font-size:0.85rem;">Error al cargar pedidos.</p>'; }
+    }
+
+    // ── PRODUCTOS ADMIN ──
+    let adminProductoQuery = '';
+    function setAdminProductoSearch(value) {
+        adminProductoQuery = value.trim().toLowerCase();
+        renderProductosAdmin();
+    }
+    function matchesAdminSearch(product) {
+        if (!adminProductoQuery) return true;
+        var nombre = String(product.nombre || '').toLowerCase();
+        var categoria = String(product.categoria || product.cat || '').toLowerCase();
+        return nombre.includes(adminProductoQuery) || categoria.includes(adminProductoQuery);
+    }
+    function renderProductosAdmin() {
+        const lista = document.getElementById('admin-productos-list');
+        const sections = [
+            { title: 'Hand Roll', items: productos.filter(p => p.categoria === 'handroll' && matchesAdminSearch(p)) },
+            { title: 'Jugos naturales', items: productos.filter(p => p.categoria === 'jugo' && matchesAdminSearch(p)) },
+            { title: 'Bebidas', items: productos.filter(p => p.categoria === 'bebida' && matchesAdminSearch(p)) },
+            { title: 'Aguas', items: productos.filter(p => p.categoria === 'agua' && matchesAdminSearch(p)) }
+        ];
+        const html = sections.map(section => {
+            if (!section.items.length) return '';
+            return `
+                <div class="admin-section">
+                    <h4 style="margin:0 0 12px;color:var(--hand);letter-spacing:1px;font-size:0.92rem;">${section.title}</h4>
+                    ${section.items.map(p => {
+                        const idx = productos.findIndex(pp => pp.id === p.id);
+                        return `
+                        <div class="admin-item">
+                            <div class="admin-item-top">
+                                <div>
+                                    <div style="font-weight:700;font-size:0.95rem;">${escHtml(p.nombre)}</div>
+                                    <div style="font-size:0.85rem;color:var(--muted);">$${p.precio.toLocaleString('es-CL')}</div>
+                                </div>
+                                <div style="display:flex;gap:6px;flex-wrap:wrap;justify-content:flex-end;">
+                                    <button class="btn-sm ${p.activo ? 'btn-toggle-on' : 'btn-toggle-off'}" onclick="toggleProducto(${idx})">${p.activo ? '✅ Activo' : '❌ Pausado'}</button>
+                                    <button class="btn-sm btn-orange" onclick="abrirEditProducto('${p.id}')">✏️ Editar</button>
+                                    <button class="btn-sm" style="background:#c1121f;color:#fff;" onclick="eliminarProducto(${idx})">🗑️ Eliminar</button>
+                                </div>
+                            </div>
+                            <div class="edit-form" id="edit-${p.id}">
+                                <div class="edit-row">
+                                    <label>Nombre</label>
+                                    <input type="text" id="edit-nombre-${p.id}" value="${escHtml(p.nombre)}">
+                                </div>
+                                <div class="edit-row">
+                                    <label>Precio venta</label>
+                                    <input type="number" id="edit-precio-${p.id}" value="${p.precio}" step="100">
+                                </div>
+                                <div class="edit-row">
+                                    <label>Costo unitario</label>
+                                    <input type="number" id="edit-costo-${p.id}" value="${Number(p.costo)||0}" step="100" min="0">
+                                </div>
+                                <button class="btn-sm btn-fire" style="width:100%;padding:9px;margin-top:4px;" onclick="guardarProducto(${idx})">💾 GUARDAR</button>
+                            </div>
+                        </div>
+                    `;}).join('')}
+                </div>`;
+        }).join('');
+        lista.innerHTML = html.trim() ? html : '<p style="color:var(--muted);font-size:0.9rem;">No se encontraron productos.</p>';
+    }
+
+    function toggleProducto(i) {
+        productos[i].activo = !productos[i].activo;
+        renderMenu();
+        renderProductosAdmin();
+        persistirCatalogoHandroll();
+    }
+
+    function abrirEditProducto(id) {
+        const form = document.getElementById('edit-' + id);
+        form.classList.toggle('open');
+    }
+
+    function guardarProducto(i) {
+        const p = productos[i];
+        const nuevoNombre = document.getElementById('edit-nombre-' + p.id).value.trim();
+        const nuevoPrecio = parseInt(document.getElementById('edit-precio-' + p.id).value);
+        const nuevoCosto = parseInt(document.getElementById('edit-costo-' + p.id).value) || 0;
+        if (!nuevoNombre || isNaN(nuevoPrecio) || nuevoPrecio < 0 || nuevoCosto < 0) { alert('Datos inválidos'); return; }
+        productos[i].nombre = nuevoNombre;
+        productos[i].precio = nuevoPrecio;
+        productos[i].costo = nuevoCosto;
+        renderMenu();
+        renderProductosAdmin();
+        persistirCatalogoHandroll();
+    }
+
+    function eliminarProducto(i) {
+        const p = productos[i];
+        if (!p) return;
+        if (!confirm('¿Eliminar "' + p.nombre + '"? Esta acción no se puede deshacer.')) return;
+        productos.splice(i, 1);
+        renderMenu();
+        renderProductosAdmin();
+        persistirCatalogoHandroll();
+    }
+
+    function abrirAgregarProducto() {
+        const nombre = prompt('Nombre del producto:');
+        if (!nombre || !nombre.trim()) return;
+        const precioStr = prompt('Precio (CLP, sin puntos):', '0');
+        const precio = parseInt(precioStr, 10);
+        if (isNaN(precio) || precio < 0) { alert('Precio inválido.'); return; }
+        const categoria = prompt('Categoría (handroll, jugo, bebida, agua):', 'handroll') || 'handroll';
+        const id = 'p_' + Date.now();
+        productos.push({ id, nombre: nombre.trim(), precio, activo: true, categoria });
+        renderMenu();
+        renderProductosAdmin();
+        persistirCatalogoHandroll();
+    }
+
+    // ── RESEÑAS ADMIN ──
+    async function cargarResenasAdmin() {
+        const lista = document.getElementById('admin-reviews-list');
+        lista.innerHTML = '<p style="color:var(--muted);font-size:0.9rem;">Cargando...</p>';
+        try {
+            const res = await window.orbitaAuth.adminFetch(`${SUPABASE_URL}/rest/v1/resenas?sitio=eq.handroll&select=*&order=creado_at.desc`);
+            const data = await res.json();
+            if (!Array.isArray(data) || data.length === 0) { lista.innerHTML = '<p style="color:var(--muted);font-size:0.9rem;">No hay reseñas aún.</p>'; return; }
+            lista.innerHTML = data.map(r => `
+                <div class="admin-item" id="ar-${r.id}">
+                    <div class="admin-item-top">
+                        <span style="font-weight:700;font-size:0.9rem;">${escHtml(r.nombre)} ${'⭐'.repeat(r.estrellas)}</span>
+                        <button class="btn-sm btn-red" onclick="borrarResena(${r.id})">🗑️ Borrar</button>
+                    </div>
+                    <p style="font-size:0.85rem;color:#c0c0c0;">"${escHtml(r.comentario)}"</p>
+                </div>`).join('');
+        } catch(e) { lista.innerHTML = '<p style="color:var(--fire);font-size:0.85rem;">Error al cargar.</p>'; }
+    }
+
+    async function borrarResena(id) {
+        if (!confirm('¿Borrar esta reseña?')) return;
+        try {
+            const res = await window.orbitaAuth.adminFetch(`${SUPABASE_URL}/rest/v1/resenas?id=eq.${id}`, { method: 'DELETE' });
+            if (res.ok) { document.getElementById('ar-' + id)?.remove(); cargarResenas(); }
+        } catch(e) { alert('Error al borrar.'); }
+    }
+
+    // Click fuera del panel NO cierra el admin (se cierra solo con el botón CERRAR).
+
+    // ── COSTO DELIVERY ──
+    async function cargarCostoDeliveryHandroll() {
+        try {
+            if (window.orbitaCostosFijos && window.orbitaCostosFijos.leerCostoDelivery) {
+                window.COSTO_DELIVERY = await window.orbitaCostosFijos.leerCostoDelivery('handroll');
+            } else {
+                window.COSTO_DELIVERY = 2000;
+            }
+        } catch (e) { window.COSTO_DELIVERY = 2000; }
+        const lbl = document.getElementById('label-delivery-cost');
+        if (lbl) lbl.textContent = '+$' + (window.COSTO_DELIVERY || 2000).toLocaleString('es-CL');
+        const inp = document.getElementById('input-costo-delivery-handroll');
+        if (inp) inp.value = window.COSTO_DELIVERY || 2000;
+        if (typeof actualizarResumen === 'function') actualizarResumen();
+    }
+
+    async function guardarCostoDeliveryHandroll() {
+        const v = parseInt(document.getElementById('input-costo-delivery-handroll').value, 10);
+        if (isNaN(v) || v < 0) { alert('Ingresa un monto válido.'); return; }
+        const r = await window.orbitaCostosFijos.guardar('costo_delivery_handroll', v);
+        if (r.ok) {
+            window.COSTO_DELIVERY = v;
+            alert('Costo de delivery actualizado: $' + v.toLocaleString('es-CL'));
+            const lbl = document.getElementById('label-delivery-cost');
+            if (lbl) lbl.textContent = '+$' + v.toLocaleString('es-CL');
+            if (typeof actualizarResumen === 'function') actualizarResumen();
+        } else alert(r.error || 'No se pudo guardar.');
+    }
+
+    async function cargarHorarioDeliveryHandroll() {
+        try {
+            const h = await window.orbitaCostosFijos.leerHorarioDelivery('handroll');
+            window.DELIVERY_HORARIO = h;
+            const fmt = window.orbitaHorario.formatHHMM;
+            const iIni = document.getElementById('input-hora-ini-handroll');
+            const iFin = document.getElementById('input-hora-fin-handroll');
+            if (iIni) iIni.value = fmt(h.inicio);
+            if (iFin) iFin.value = fmt(h.fin);
+        } catch (e) {}
+    }
+
+    async function guardarHorarioDeliveryHandroll() {
+        const ini = window.orbitaHorario.parseHHMM(document.getElementById('input-hora-ini-handroll').value);
+        const fin = window.orbitaHorario.parseHHMM(document.getElementById('input-hora-fin-handroll').value);
+        if (ini == null || fin == null) { alert('Horarios inválidos.'); return; }
+        if (ini >= fin) { alert('La hora de inicio debe ser menor que la de fin.'); return; }
+        const r1 = await window.orbitaCostosFijos.guardar('delivery_hora_inicio_handroll', ini);
+        const r2 = await window.orbitaCostosFijos.guardar('delivery_hora_fin_handroll', fin);
+        if (r1.ok && r2.ok) {
+            window.DELIVERY_HORARIO = { inicio: ini, fin: fin };
+            alert('Horario actualizado: ' + window.orbitaHorario.formatHHMM(ini) + ' a ' + window.orbitaHorario.formatHHMM(fin));
+        } else alert((r1.error || r2.error) || 'No se pudo guardar.');
+    }
+
+    // ── INIT ──
+    (async function init() {
+        await cargarCatalogoHandroll();
+        cargarCostoDeliveryHandroll();
+        cargarHorarioDeliveryHandroll();
+        renderMenu();
+        if (window.orbitaPagoFlow) window.orbitaPagoFlow.detectarRetorno();
+    })();
+    cargarResenas();
+    if (esAdmin) window.addEventListener('load', () => {
+        mostrarAdminModoBanner();
+        setTimeout(abrirAdmin, 300);
+    });
+    
+    // Inicializar Pago Rápido Órbita
+    window.addEventListener('load', () => {
+        if (window.OrbitaPagoRapido) {
+            window.OrbitaPagoRapido.init({
+                local: 'handroll',
+                wspNumber: WSP_NUMBER,
+                mpEdgeUrl: MP_EDGE_URL
+            });
+            
+            // Actualizar total cuando cambie el pedido
+            const originalActualizarResumen = window.actualizarResumen;
+            if (originalActualizarResumen) {
+                window.actualizarResumen = function() {
+                    originalActualizarResumen();
+
+                    const totalHR = handrollsEnPedido.reduce((a, h) => a + h.precio + _salsaPrecio(h.salsa), 0);
+                    const totalResto = productos.reduce((a, p) => p.categoria === 'handroll' ? a : (a + (pedido[p.id] || 0) * p.precio), 0);
+                    const delivery = tipoEntrega === 'delivery' ? (window.COSTO_DELIVERY || 2000) : 0;
+                    const totalFinal = totalHR + totalResto + delivery;
+
+                    const items = [];
+                    // Hand rolls agrupados por (baseId, salsa)
+                    const conteoHR = {};
+                    handrollsEnPedido.forEach(h => {
+                        const k = h.baseId + '||' + h.salsa;
+                        if (!conteoHR[k]) conteoHR[k] = { nombre: h.nombre, salsa: h.salsa, cantidad: 0 };
+                        conteoHR[k].cantidad++;
+                    });
+                    Object.values(conteoHR).forEach(g => {
+                        const salsaTxt = g.salsa === 'Sin salsa' ? 'sin salsa' : g.salsa.toLowerCase();
+                        items.push(`${g.cantidad}x ${g.nombre.replace('Hand Roll ','')} (${salsaTxt})`);
+                    });
+                    productos.forEach(p => {
+                        if (p.categoria !== 'handroll' && pedido[p.id] > 0) items.push(`${pedido[p.id]}x ${p.nombre}`);
+                    });
+
+                    window.OrbitaPagoRapido.actualizarTotal(totalFinal, items);
+                };
+            }
+        }
+    });
+</script>
+<script src="./orbita-pago-flow.js"></script>
+<script src="./orbita-pago-rapido.js"></script>
+</body>
+</html>

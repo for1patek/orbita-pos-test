@@ -1,0 +1,8 @@
+supabase/.temp/
+supabase/.branches/
+demo-secrets.env
+backup-supabase/
+node_modules/
+.vercel
+
+.vercel

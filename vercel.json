@@ -1,0 +1,15 @@
+{
+  "cleanUrls": true,
+  "trailingSlash": false,
+  "rewrites": [
+    { "source": "/cafe", "destination": "/cafe.html" },
+    { "source": "/cafe/", "destination": "/cafe.html" },
+    { "source": "/fuente", "destination": "/fuente.html" },
+    { "source": "/fuente/", "destination": "/fuente.html" },
+    { "source": "/orbita", "destination": "/orbita.html" },
+    { "source": "/orbita/", "destination": "/orbita.html" },
+    { "source": "/panel-central", "destination": "/panel_central.html" },
+    { "source": "/panel-central/", "destination": "/panel_central.html" }
+  ]
+}
+
