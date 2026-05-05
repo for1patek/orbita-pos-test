@@ -246,6 +246,22 @@
         .pedido-total { font-family: 'Bebas Neue', sans-serif; font-size: 1.1rem; color: var(--green); }
         .edit-form { background: var(--bg); border: 1px solid var(--primary); border-radius: 12px; padding: 14px; margin-top: 10px; display: none; }
         .edit-form.open { display: block; }
+        /* Modal agregar producto */
+        .modal-agregar-overlay { display:none; position:fixed; inset:0; background:rgba(0,0,0,0.7); z-index:9999; align-items:center; justify-content:center; padding:16px; }
+        .modal-agregar-overlay.open { display:flex; }
+        .modal-agregar-box { background:var(--card); border-radius:18px; padding:24px 20px; width:100%; max-width:420px; border:1px solid var(--primary); }
+        .modal-agregar-box h3 { margin:0 0 18px; font-size:1.1rem; color:var(--primary); }
+        .mag-row { margin-bottom:13px; }
+        .mag-row label { display:block; font-size:0.8rem; color:var(--muted); margin-bottom:5px; font-weight:600; text-transform:uppercase; letter-spacing:.04em; }
+        .mag-row input, .mag-row select { width:100%; padding:10px 12px; border-radius:10px; border:1px solid var(--border2); background:var(--bg); color:var(--text); font-size:0.95rem; box-sizing:border-box; }
+        .canal-btns { display:flex; gap:8px; flex-wrap:wrap; }
+        .canal-btn { flex:1; min-width:90px; padding:9px 6px; border-radius:10px; border:1px solid var(--border2); background:var(--bg); color:var(--muted); font-size:0.82rem; cursor:pointer; text-align:center; transition:all .15s; }
+        .canal-btn.active { border-color:var(--primary); background:var(--primary); color:#fff; font-weight:700; }
+        .mag-footer { display:flex; gap:10px; margin-top:18px; }
+        .mag-footer button { flex:1; padding:11px; border-radius:11px; border:none; cursor:pointer; font-weight:700; font-size:0.9rem; }
+        .mag-btn-cancel { background:var(--border2); color:var(--muted); }
+        .mag-btn-add { background:var(--primary); color:#fff; }
+        .mag-error { color:#f87171; font-size:0.82rem; margin-top:8px; display:none; }
         .edit-row { display: flex; gap: 8px; align-items: center; margin-bottom: 10px; }
         .edit-row label { font-size: 0.8rem; color: var(--muted); min-width: 60px; }
         .edit-row input { flex: 1; background: var(--surface); border: 1px solid var(--border); border-radius: 8px; padding: 8px 10px; color: var(--text); font-family: 'DM Sans', sans-serif; font-size: 0.9rem; outline: none; margin-bottom: 0; }
@@ -1449,6 +1465,7 @@
                                 <div class="edit-row"><label>Nombre</label><input type="text" id="edit-nombre-${p.id}" value="${escHtml(p.nombre)}"></div>
                                 <div class="edit-row"><label>Precio venta</label><input type="number" id="edit-precio-${p.id}" value="${p.precio}" step="100"></div>
                                 <div class="edit-row"><label>Costo unitario</label><input type="number" id="edit-costo-${p.id}" value="${Number(p.costo)||0}" step="100" min="0"></div>
+                                <div class="edit-row"><label>Canal</label><select id="edit-canal-${p.id}" style="width:100%;padding:8px 10px;border-radius:8px;border:1px solid var(--border2);background:var(--bg);color:var(--text);"><option value="ambos" ${(p.canal||'ambos')==='ambos'?'selected':''}>🌐 Web y POS</option><option value="web" ${p.canal==='web'?'selected':''}>💻 Solo web</option><option value="pos" ${p.canal==='pos'?'selected':''}>🖥️ Solo POS</option></select></div>
                                 <button class="btn-sm btn-fire" style="width:100%;padding:9px;margin-top:4px;" onclick="guardarProducto(${idx})">💾 GUARDAR</button>
                             </div>
                         </div>
@@ -1464,8 +1481,9 @@
         const n = document.getElementById('edit-nombre-' + p.id).value.trim();
         const pr = parseInt(document.getElementById('edit-precio-' + p.id).value);
         const co = parseInt(document.getElementById('edit-costo-' + p.id).value) || 0;
+        const canal = document.getElementById('edit-canal-' + p.id)?.value || 'ambos';
         if (!n || isNaN(pr) || pr < 0 || co < 0) { alert('Datos inválidos'); return; }
-        productos[i].nombre = n; productos[i].precio = pr; productos[i].costo = co;
+        productos[i].nombre = n; productos[i].precio = pr; productos[i].costo = co; productos[i].canal = canal;
         renderMenu(); renderProductosAdmin();
         persistirCatalogoCafe();
     }
@@ -1480,16 +1498,38 @@
     }
 
     function abrirAgregarProductoCafe() {
-        const nombre = prompt('Nombre del producto:');
-        if (!nombre || !nombre.trim()) return;
-        const precioStr = prompt('Precio (CLP, sin puntos):', '0');
-        const precio = parseInt(precioStr, 10);
-        if (isNaN(precio) || precio < 0) { alert('Precio inválido.'); return; }
-        const cat = prompt('Categoría (cafe, pastel, jugo, bebida, agua):', 'cafe') || 'cafe';
+        document.getElementById('ag-cafe-nombre').value = '';
+        document.getElementById('ag-cafe-desc').value = '';
+        document.getElementById('ag-cafe-precio').value = '';
+        document.getElementById('ag-cafe-costo').value = '';
+        document.getElementById('ag-cafe-cat').value = 'cafe';
+        document.querySelectorAll('#modal-agregar-cafe .canal-btn').forEach(b => b.classList.toggle('active', b.dataset.canal === 'ambos'));
+        document.getElementById('err-agregar-cafe').style.display = 'none';
+        document.getElementById('modal-agregar-cafe').classList.add('open');
+    }
+    function cerrarModalAgregarCafe() {
+        document.getElementById('modal-agregar-cafe').classList.remove('open');
+    }
+    function confirmarAgregarCafe() {
+        const nombre = document.getElementById('ag-cafe-nombre').value.trim();
+        const desc   = document.getElementById('ag-cafe-desc').value.trim();
+        const cat    = document.getElementById('ag-cafe-cat').value;
+        const precio = parseInt(document.getElementById('ag-cafe-precio').value) || 0;
+        const costo  = parseInt(document.getElementById('ag-cafe-costo').value) || 0;
+        const canal  = document.querySelector('#modal-agregar-cafe .canal-btn.active')?.dataset.canal || 'ambos';
+        const errEl  = document.getElementById('err-agregar-cafe');
+        if (!nombre) { errEl.textContent = 'El nombre es obligatorio.'; errEl.style.display='block'; return; }
+        if (precio < 0 || costo < 0) { errEl.textContent = 'Precio y costo deben ser 0 o más.'; errEl.style.display='block'; return; }
+        errEl.style.display = 'none';
         const id = 'p_' + Date.now();
-        productos.push({ id, nombre: nombre.trim(), precio, activo: true, cat, desc: '', grano: cat === 'cafe' });
+        productos.push({ id, nombre, precio, costo, activo: true, cat, desc, canal, grano: cat === 'cafe' });
         renderMenu(); renderProductosAdmin();
         persistirCatalogoCafe();
+        cerrarModalAgregarCafe();
+    }
+    function selCanal(btn, modalId) {
+        document.querySelectorAll('#' + modalId + ' .canal-btn').forEach(b => b.classList.remove('active'));
+        btn.classList.add('active');
     }
     function escHtml(s) { return String(s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;'); }
 
@@ -1713,5 +1753,51 @@
 </div>
 <script src="./orbita-pago-flow.js"></script>
 <script src="./orbita-pago-rapido.js"></script>
+
+  <!-- Modal agregar producto café -->
+  <div class="modal-agregar-overlay" id="modal-agregar-cafe">
+    <div class="modal-agregar-box">
+      <h3>+ Agregar producto</h3>
+      <div class="mag-row">
+        <label>Nombre *</label>
+        <input type="text" id="ag-cafe-nombre" placeholder="Ej: Cortado">
+      </div>
+      <div class="mag-row">
+        <label>Descripción (opcional)</label>
+        <input type="text" id="ag-cafe-desc" placeholder="Ej: Café Kimbo con leche">
+      </div>
+      <div class="mag-row">
+        <label>Categoría *</label>
+        <select id="ag-cafe-cat">
+          <option value="cafe">☕ Café</option>
+          <option value="pastel">🍰 Pastel</option>
+          <option value="jugo">🥤 Jugo</option>
+          <option value="bebida">🥤 Bebida</option>
+          <option value="agua">💧 Agua</option>
+        </select>
+      </div>
+      <div class="mag-row">
+        <label>Precio venta (CLP)</label>
+        <input type="number" id="ag-cafe-precio" placeholder="0" min="0" step="100">
+      </div>
+      <div class="mag-row">
+        <label>Costo unitario (CLP)</label>
+        <input type="number" id="ag-cafe-costo" placeholder="0" min="0" step="100">
+      </div>
+      <div class="mag-row">
+        <label>Disponible en</label>
+        <div class="canal-btns">
+          <button class="canal-btn active" data-canal="ambos" onclick="selCanal(this,'modal-agregar-cafe')">🌐 Web y POS</button>
+          <button class="canal-btn" data-canal="web" onclick="selCanal(this,'modal-agregar-cafe')">💻 Solo web</button>
+          <button class="canal-btn" data-canal="pos" onclick="selCanal(this,'modal-agregar-cafe')">🖥️ Solo POS</button>
+        </div>
+      </div>
+      <div class="mag-error" id="err-agregar-cafe"></div>
+      <div class="mag-footer">
+        <button class="mag-btn-cancel" onclick="cerrarModalAgregarCafe()">Cancelar</button>
+        <button class="mag-btn-add" onclick="confirmarAgregarCafe()">+ AGREGAR</button>
+      </div>
+    </div>
+  </div>
 </body>
 </html>
