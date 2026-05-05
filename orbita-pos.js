@@ -259,7 +259,9 @@
     // ─── RENDER PRODUCTOS ────────────────────────────────────────────────────
     function renderProductos() {
         const grid = document.getElementById('productos-grid');
-        const cat  = getCatalogo().filter(p => p.activo !== false && p.cat === catActiva);
+        const catIds = [catActiva];
+        if (estado.local === 'fuente' && catActiva === 'bebida') catIds.push('agua');
+        const cat  = getCatalogo().filter(p => p.activo !== false && catIds.includes(p.cat));
 
         if (cat.length === 0) {
             grid.innerHTML = '<div style="color:var(--muted);font-size:0.85rem;padding:20px;">Sin productos en esta categoría.</div>';
