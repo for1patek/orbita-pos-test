@@ -30,8 +30,7 @@
             { id: 'cafe',   label: '☕ Cafés' },
             { id: 'pastel', label: '🍰 Pastelería' },
             { id: 'jugo',   label: '🥤 Jugos' },
-            { id: 'bebida', label: '🧃 Bebidas' },
-            { id: 'agua',   label: '💧 Aguas' },
+            { id: 'bebida', label: '🥤 Bebidas/Aguas' },
         ],
         fuente: [
             { id: 'sandwich', label: '🍔 Sándwiches' },
@@ -260,7 +259,7 @@
     function renderProductos() {
         const grid = document.getElementById('productos-grid');
         const catIds = [catActiva];
-        if (estado.local === 'fuente' && catActiva === 'bebida') catIds.push('agua');
+        if (catActiva === 'bebida') catIds.push('agua');
         const cat  = getCatalogo().filter(p => p.activo !== false && catIds.includes(p.cat));
 
         if (cat.length === 0) {
