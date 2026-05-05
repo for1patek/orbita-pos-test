@@ -34,15 +34,33 @@
             { id: 'agua',   label: '💧 Aguas' },
         ],
         fuente: [
-            { id: 'sandwich', label: '🥪 Sándwiches' },
+            { id: 'sandwich', label: '🍔 Sándwiches' },
+            { id: 'handroll', label: '🍣 Hand Roll' },
             { id: 'completo', label: '🌭 Completos' },
-            { id: 'extra',    label: '🍟 Papas/Extras' },
-            { id: 'jugo',     label: '🥤 Jugos' },
-            { id: 'bebida',   label: '🧃 Bebidas' },
-            { id: 'agua',     label: '💧 Aguas' },
+            { id: 'extra',    label: '🍟 Papas' },
+            { id: 'jugo',     label: '🍹 Jugos' },
+            { id: 'bebida',   label: '🥤 Bebidas/Aguas' },
         ],
     };
     let catActiva = 'cafe';
+
+    // ─── Temas de color por local ─────────────────────────────────────────────
+    const TEMAS = {
+        cafe:   { primary: '#8B1A1A', accent: '#A0522D', activeBg: '#2a0808' },
+        fuente: { primary: '#b8860b', accent: '#8B6914', activeBg: '#2a1e00' },
+    };
+
+    function aplicarTemaLocal(local) {
+        const t = TEMAS[local] || TEMAS.cafe;
+        const r = document.documentElement.style;
+        r.setProperty('--primary', t.primary);
+        r.setProperty('--accent',  t.accent);
+        // Actualizar el fondo del local-btn activo (inline style no se puede con CSS var, usamos clase)
+        document.querySelectorAll('.local-btn.active').forEach(b => {
+            b.style.background = t.activeBg;
+            b.style.borderColor = t.primary;
+        });
+    }
 
     // ─── Utilidades ──────────────────────────────────────────────────────────
     function fmt(n) { return '$' + Math.round(n).toLocaleString('es-CL'); }
@@ -67,6 +85,7 @@
         estado.local = local;
         document.querySelectorAll('.local-btn').forEach(b => b.classList.remove('active'));
         btn.classList.add('active');
+        aplicarTemaLocal(local);
         cargarUsuarios();
     }
 
@@ -157,6 +176,7 @@
     // ─── ABRIR POS ───────────────────────────────────────────────────────────
     async function abrirPOS() {
         document.getElementById('pantalla-login').style.display = 'none';
+        aplicarTemaLocal(estado.local);
         document.getElementById('pantalla-pos').style.display   = 'flex';
         document.getElementById('header-local').textContent =
             estado.local === 'cafe' ? '☕ Café' : '🌭 Fuente de Soda';
