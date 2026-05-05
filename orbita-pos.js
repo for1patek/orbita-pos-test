@@ -53,13 +53,9 @@
     function aplicarTemaLocal(local) {
         const t = TEMAS[local] || TEMAS.cafe;
         const r = document.documentElement.style;
-        r.setProperty('--primary', t.primary);
-        r.setProperty('--accent',  t.accent);
-        // Actualizar el fondo del local-btn activo (inline style no se puede con CSS var, usamos clase)
-        document.querySelectorAll('.local-btn.active').forEach(b => {
-            b.style.background = t.activeBg;
-            b.style.borderColor = t.primary;
-        });
+        r.setProperty('--primary',   t.primary);
+        r.setProperty('--accent',    t.accent);
+        r.setProperty('--local-bg',  t.activeBg);
     }
 
     // ─── Utilidades ──────────────────────────────────────────────────────────
@@ -83,9 +79,9 @@
 
     function seleccionarLocal(local, btn) {
         estado.local = local;
+        aplicarTemaLocal(local);
         document.querySelectorAll('.local-btn').forEach(b => b.classList.remove('active'));
         btn.classList.add('active');
-        aplicarTemaLocal(local);
         cargarUsuarios();
     }
 
@@ -131,6 +127,18 @@
         el.textContent = '●  '.repeat(pinBuffer.length).trim();
     }
 
+    // ─── Teclado físico para PIN ─────────────────────────────────────────────
+    document.addEventListener('keydown', function(e) {
+        const loginVisible = document.getElementById('pantalla-login').style.display !== 'none'
+            && !document.getElementById('pantalla-login').style.display; // visible por defecto
+        const enLogin = document.getElementById('pantalla-pos').style.display === 'none'
+            || !document.getElementById('pantalla-pos').style.display;
+        if (!enLogin) return;
+        if (e.key >= '0' && e.key <= '9') { window.pinDigit(e.key); }
+        else if (e.key === 'Backspace')    { window.pinDel(); }
+        else if (e.key === 'Enter')        { window.pinEnter(); }
+    });
+
     window.pinDigit = function (d) {
         if (pinBuffer.length >= 4) return;
         pinBuffer += d;
@@ -172,6 +180,15 @@
     };
 
     window.seleccionarLocal = seleccionarLocal;
+
+    // Aplicar tema café por defecto al cargar
+    (function initLocal() {
+        const btnCafe = document.querySelector('.local-btn[data-local="cafe"]');
+        if (btnCafe) {
+            aplicarTemaLocal('cafe');
+            btnCafe.classList.add('active');
+        }
+    })();
 
     // ─── ABRIR POS ───────────────────────────────────────────────────────────
     async function abrirPOS() {
