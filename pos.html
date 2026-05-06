@@ -68,7 +68,7 @@
         .pos-body { display: flex; flex: 1; overflow: hidden; }
 
         /* ── PANEL IZQUIERDO: MENÚ ── */
-        .panel-menu { flex: 1.4; display: flex; flex-direction: column; border-right: 1px solid var(--border); overflow: hidden; min-height: 0; }
+        .panel-menu { flex: 1.4; display: flex; flex-direction: column; border-right: 1px solid var(--border); overflow: hidden; min-height: 0; height: 100%; }
         .tabs-locales { display: none; } /* se muestra si hay pedidos web */
         .cat-tabs { display: flex; gap: 6px; padding: 10px 12px; overflow-x: auto; flex-shrink: 0; border-bottom: 1px solid var(--border); scrollbar-width: none; }
         .cat-tabs::-webkit-scrollbar { display: none; }
@@ -246,13 +246,13 @@
         <div class="panel-menu">
 
             <!-- Vista: nueva venta -->
-            <div id="vista-venta">
+            <div id="vista-venta" style="display:flex;flex-direction:column;flex:1;min-height:0;">
                 <div class="cat-tabs" id="cat-tabs"><!-- dinámico --></div>
                 <div class="productos-grid" id="productos-grid"><!-- dinámico --></div>
             </div>
 
             <!-- Vista: pedidos web -->
-            <div id="vista-pedidos" class="hidden">
+            <div id="vista-pedidos" class="hidden" style="display:flex;flex-direction:column;flex:1;min-height:0;height:100%;">
                 <div id="pantalla-pedidos-web">
                 <div class="cat-tabs" style="border-bottom:1px solid var(--border);padding:10px 12px;flex-shrink:0;">
                     <span style="font-size:0.8rem;color:var(--muted);font-weight:700;letter-spacing:1px;text-transform:uppercase;">Pedidos pendientes del local</span>
