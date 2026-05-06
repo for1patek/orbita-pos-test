@@ -85,6 +85,22 @@
             <div class="pedido-total" id="ent-total"></div>
         </div>
 
+        <!-- Código de confirmación -->
+        <div style="margin-bottom:16px;">
+            <label style="display:block;font-size:0.78rem;color:var(--muted);text-transform:uppercase;letter-spacing:1px;margin-bottom:8px;">Código del cliente</label>
+            <input id="input-codigo" type="number" maxlength="4" placeholder="0000"
+                style="width:100%;padding:14px;border-radius:12px;border:1px solid var(--border);background:var(--surface);color:var(--text);font-size:1.5rem;text-align:center;letter-spacing:8px;font-family:'Bebas Neue',sans-serif;">
+        </div>
+
+        <!-- Método de pago -->
+        <div style="margin-bottom:16px;">
+            <label style="display:block;font-size:0.78rem;color:var(--muted);text-transform:uppercase;letter-spacing:1px;margin-bottom:8px;">Método de pago recibido</label>
+            <div style="display:flex;gap:10px;">
+                <button id="btn-efectivo" onclick="selMetodo('efectivo')" style="flex:1;padding:12px;border-radius:12px;border:2px solid var(--border);background:var(--surface);color:var(--muted);font-weight:700;cursor:pointer;transition:all .15s;">💵 Efectivo</button>
+                <button id="btn-transferencia" onclick="selMetodo('transferencia')" style="flex:1;padding:12px;border-radius:12px;border:2px solid var(--border);background:var(--surface);color:var(--muted);font-weight:700;cursor:pointer;transition:all .15s;">🏦 Transferencia</button>
+            </div>
+        </div>
+
         <button class="btn-confirmar" id="btn-confirmar" onclick="confirmarEntrega()">
             ✅ CONFIRMAR ENTREGA
         </button>
@@ -148,6 +164,8 @@
     // Si fue anulado o rechazado
     if (pedido.estado === 'anulado' || pedido.estado === 'rechazado') { show('vista-error'); return; }
 
+    // Guardar referencia global al pedido
+    window.pedido = pedido;
     // Mostrar datos del pedido
     document.getElementById('ent-nombre').textContent = pedido.nombre || '—';
     document.getElementById('ent-dir').textContent    = pedido.direccion || '';
@@ -156,24 +174,59 @@
         : '—';
     document.getElementById('ent-items').textContent  = items;
     document.getElementById('ent-total').textContent  = fmt(pedido.total || 0) + ' · pagado ✅';
+    // Ocultar campo código si no aplica
+    if (!pedido.codigo_entrega) {
+        document.getElementById('input-codigo').closest('div').style.display = 'none';
+    }
     show('vista-listo');
+
+    // Método de pago seleccionado
+    let metodoPagoSeleccionado = null;
+    window.selMetodo = function(metodo) {
+        metodoPagoSeleccionado = metodo;
+        ['efectivo','transferencia'].forEach(m => {
+            const btn = document.getElementById('btn-' + m);
+            btn.style.borderColor = m === metodo ? '#22c55e' : 'var(--border)';
+            btn.style.color = m === metodo ? '#22c55e' : 'var(--muted)';
+            btn.style.background = m === metodo ? '#0a2a14' : 'var(--surface)';
+        });
+    };
 
     // Confirmar entrega
     window.confirmarEntrega = async function () {
         const btn = document.getElementById('btn-confirmar');
         const msg = document.getElementById('msg-confirmar');
-        btn.disabled   = true;
+
+        // Validar código si el pedido lo tiene
+        if (pedido.codigo_entrega) {
+            const codigoIngresado = document.getElementById('input-codigo').value.trim();
+            if (codigoIngresado !== pedido.codigo_entrega) {
+                msg.innerHTML = '<span class="msg-error">❌ Código incorrecto. Pídele el código al cliente.</span>';
+                return;
+            }
+        }
+
+        // Validar método de pago (solo si no está ya pagado online)
+        if (pedido.estado !== 'recibido' && !metodoPagoSeleccionado && pedido.metodo_pago !== 'mercadopago') {
+            msg.innerHTML = '<span class="msg-error">Selecciona el método de pago.</span>';
+            return;
+        }
+
+        btn.disabled = true;
         btn.textContent = 'Confirmando…';
 
         const { error: err } = await SB
             .from('pedidos')
-            .update({ estado: 'recibido' })
+            .update({
+                estado: 'recibido',
+                metodo_pago_entrega: metodoPagoSeleccionado || pedido.metodo_pago || 'online'
+            })
             .eq('id', pedidoId);
 
         if (err) {
-            btn.disabled    = false;
+            btn.disabled = false;
             btn.textContent = '✅ CONFIRMAR ENTREGA';
-            msg.innerHTML   = '<span class="msg-error">Error al confirmar. Intenta de nuevo.</span>';
+            msg.innerHTML = '<span class="msg-error">Error al confirmar. Intenta de nuevo.</span>';
             return;
         }
 
