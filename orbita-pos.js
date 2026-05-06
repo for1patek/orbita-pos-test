@@ -433,14 +433,6 @@
     let pedidosConocidos = new Set();
 
     function notificarPedidoNuevo(p) {
-        // Toast especial
-        const esDelivery = p.tipo_entrega === 'delivery';
-        const el = document.getElementById('toast');
-        el.textContent = esDelivery ? `🛵 Nuevo delivery — ${p.nombre}` : `📦 Nuevo pedido retiro — ${p.nombre}`;
-        el.className = 'toast show ok';
-        el.style.fontSize = '1rem';
-        el.style.padding = '14px 20px';
-        setTimeout(() => { el.className = 'toast'; el.style = ''; }, 4000);
         // Sonido
         try {
             const ctx = new (window.AudioContext || window.webkitAudioContext)();
@@ -456,6 +448,17 @@
                 o.stop(ctx.currentTime + i * 0.15 + 0.3);
             });
         } catch(e) {}
+    }
+
+    function actualizarBadgePendientes(total) {
+        const badge = document.getElementById('badge-pendientes');
+        if (!badge) return;
+        if (total > 0) {
+            badge.textContent = total;
+            badge.style.display = 'inline-flex';
+        } else {
+            badge.style.display = 'none';
+        }
     }
 
     window.cargarPedidosWeb = async function () {
@@ -475,6 +478,10 @@
         }
 
         lista.innerHTML = '';
+        // Contar pendientes activos
+        const pendientesActivos = data.filter(p => ['pendiente','pagado','whatsapp','en_cocina','listo'].includes(p.estado)).length;
+        actualizarBadgePendientes(pendientesActivos);
+
         data.forEach(p => {
             // Notificar si es un pedido que no conocíamos
             if (!pedidosConocidos.has(p.id) && pedidosConocidos.size > 0) {
