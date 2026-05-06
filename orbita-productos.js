@@ -3,7 +3,7 @@
  * Requiere: supabase-js → orbita-auth.js → este archivo.
  */
 (function () {
-    var U = (window.orbitaAuth && window.orbitaAuth.url) || "https://uldqgxdmblhyqsnxenaz.supabase.co";
+    var U = (window.orbitaAuth && window.orbitaAuth.url) || "https://ftyxipxsyzldofdyamqt.supabase.co";
     var K_FALLBACK = (window.orbitaAuth && window.orbitaAuth.anonKey) || "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InVsZHFneGRtYmxoeXFzbnhlbmF6Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzQ4MjY2NjUsImV4cCI6MjA5MDQwMjY2NX0.9o0GseD_yxXv-tf98w_1H2q_aJLSvyX3gh1KxIYLbMg";
 
     async function hdr() {
