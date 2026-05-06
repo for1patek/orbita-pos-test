@@ -54,6 +54,7 @@
 
         /* ── LAYOUT POS ── */
         #pantalla-pos { display: none; height: 100dvh; flex-direction: column; }
+        #pantalla-pedidos-web { display: flex; flex-direction: column; flex: 1; min-height: 0; overflow: hidden; }
         .pos-header { display: flex; align-items: center; justify-content: space-between; padding: 10px 16px; background: var(--card); border-bottom: 1px solid var(--border); flex-shrink: 0; }
         .pos-header-left { display: flex; align-items: center; gap: 12px; }
         .pos-titulo { font-family: 'Bebas Neue', sans-serif; font-size: 1.4rem; letter-spacing: 2px; color: var(--primary); }
@@ -252,11 +253,14 @@
 
             <!-- Vista: pedidos web -->
             <div id="vista-pedidos" class="hidden">
-                <div class="cat-tabs" style="border-bottom:1px solid var(--border);padding:10px 12px;">
+                <div id="pantalla-pedidos-web">
+                <div class="cat-tabs" style="border-bottom:1px solid var(--border);padding:10px 12px;flex-shrink:0;">
                     <span style="font-size:0.8rem;color:var(--muted);font-weight:700;letter-spacing:1px;text-transform:uppercase;">Pedidos pendientes del local</span>
+                    <span id="badge-pendientes" style="display:none;background:var(--primary);color:#fff;border-radius:50%;width:22px;height:22px;font-size:0.75rem;font-weight:700;align-items:center;justify-content:center;margin-left:8px;"></span>
                     <button onclick="cargarPedidosWeb()" style="margin-left:auto;padding:6px 12px;border:1px solid var(--border);border-radius:8px;background:var(--surface);color:var(--muted);font-size:0.75rem;cursor:pointer;">↺ Actualizar</button>
                 </div>
                 <div class="pedidos-web-list" id="pedidos-web-list"><!-- dinámico --></div>
+                </div>
             </div>
         </div>
 
