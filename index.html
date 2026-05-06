@@ -1002,7 +1002,7 @@
 
         if (window.orbitaPagoFlow) {
             await window.orbitaPagoFlow.registrarWhatsapp({
-                sitio: 'handroll', pedidoBody, wspNumber: WSP_NUMBER, mensaje: msg
+                sitio: 'fuente', pedidoBody, wspNumber: WSP_NUMBER, mensaje: msg
             });
         } else {
             window.open("https://wa.me/" + WSP_NUMBER + "?text=" + encodeURIComponent(msg), '_blank');
@@ -1081,7 +1081,7 @@
         }
 
         await window.orbitaPagoFlow.iniciarPagoMP({
-            sitio: 'handroll',
+            sitio: 'fuente',
             items,
             pedidoBody,
             wspNumber: WSP_NUMBER,
