@@ -429,6 +429,35 @@
     };
 
     // ─── PEDIDOS WEB ──────────────────────────────────────────────────────────
+    // ─── Notificación pedido nuevo ───────────────────────────────────────────
+    let pedidosConocidos = new Set();
+
+    function notificarPedidoNuevo(p) {
+        // Toast especial
+        const esDelivery = p.tipo_entrega === 'delivery';
+        const el = document.getElementById('toast');
+        el.textContent = esDelivery ? `🛵 Nuevo delivery — ${p.nombre}` : `📦 Nuevo pedido retiro — ${p.nombre}`;
+        el.className = 'toast show ok';
+        el.style.fontSize = '1rem';
+        el.style.padding = '14px 20px';
+        setTimeout(() => { el.className = 'toast'; el.style = ''; }, 4000);
+        // Sonido
+        try {
+            const ctx = new (window.AudioContext || window.webkitAudioContext)();
+            [523, 659, 784].forEach((freq, i) => {
+                const o = ctx.createOscillator();
+                const g = ctx.createGain();
+                o.connect(g); g.connect(ctx.destination);
+                o.frequency.value = freq;
+                o.type = 'sine';
+                g.gain.setValueAtTime(0.3, ctx.currentTime + i * 0.15);
+                g.gain.exponentialRampToValueAtTime(0.001, ctx.currentTime + i * 0.15 + 0.3);
+                o.start(ctx.currentTime + i * 0.15);
+                o.stop(ctx.currentTime + i * 0.15 + 0.3);
+            });
+        } catch(e) {}
+    }
+
     window.cargarPedidosWeb = async function () {
         const lista = document.getElementById('pedidos-web-list');
         lista.innerHTML = '<div style="color:var(--muted);font-size:0.85rem;padding:20px;text-align:center;">Cargando…</div>';
@@ -437,7 +466,7 @@
             .from('pedidos')
             .select('*')
             .eq('sitio', estado.local)
-            .in('estado', ['pendiente', 'pagado', 'whatsapp', 'en_camino'])
+            .in('estado', ['pendiente', 'pagado', 'whatsapp', 'en_cocina', 'listo', 'en_camino'])
             .order('creado_at', { ascending: true });
 
         if (error || !data || data.length === 0) {
@@ -447,19 +476,28 @@
 
         lista.innerHTML = '';
         data.forEach(p => {
+            // Notificar si es un pedido que no conocíamos
+            if (!pedidosConocidos.has(p.id) && pedidosConocidos.size > 0) {
+                if (['pendiente','pagado','whatsapp'].includes(p.estado)) notificarPedidoNuevo(p);
+            }
+            pedidosConocidos.add(p.id);
             const items = Array.isArray(p.items_json)
                 ? p.items_json.map(i => `${i.qty}x ${i.nombre}`).join(', ')
                 : '—';
             const badgeClass = {
                 pagado:     'badge-pagado',
                 whatsapp:   'badge-whatsapp',
+                en_cocina:  'badge-en-cocina',
+                listo:      'badge-listo',
                 en_camino:  'badge-en-camino',
                 pendiente:  'badge-pendiente',
             }[p.estado] || 'badge-pendiente';
             const badgeLabel = {
                 pagado:    'Pagado',
                 whatsapp:  'WhatsApp',
-                en_camino: 'En camino',
+                en_cocina: 'En cocina 🍳',
+                listo:     'Listo ✅',
+                en_camino: 'En camino 🛵',
                 pendiente: 'Pendiente',
             }[p.estado] || p.estado;
 
@@ -485,37 +523,60 @@
 
     function renderAccionesPedido(p, container) {
         container.innerHTML = '';
+        const esDelivery = p.tipo_entrega === 'delivery';
 
-        if (p.estado === 'pagado' || p.estado === 'whatsapp') {
-            if (p.tipo_entrega === 'delivery') {
-                // Despachar → en_camino + WhatsApp al repartidor
-                const btnDesp = document.createElement('button');
-                btnDesp.className = 'btn-accion btn-despachar';
-                btnDesp.textContent = '🛵 Despachar';
-                btnDesp.onclick = () => despacharDelivery(p);
-                container.appendChild(btnDesp);
+        // Estado: pendiente o whatsapp → pasar a En Cocina
+        if (p.estado === 'pendiente' || p.estado === 'whatsapp' || p.estado === 'pagado') {
+            const btn = document.createElement('button');
+            btn.className = 'btn-accion btn-despachar';
+            btn.textContent = '🍳 En cocina';
+            btn.onclick = () => cambiarEstadoPedido(p.id, 'en_cocina', true);
+            container.appendChild(btn);
+        }
+
+        // Estado: en_cocina → marcar Listo (dispara WhatsApp al repartidor si es delivery)
+        if (p.estado === 'en_cocina') {
+            const btn = document.createElement('button');
+            btn.className = 'btn-accion btn-confirmar';
+            btn.style.background = '#b8860b';
+            btn.textContent = '✅ Listo';
+            btn.onclick = () => marcarListo(p);
+            container.appendChild(btn);
+        }
+
+        // Estado: listo → En camino (dispara WhatsApp al cliente)
+        if (p.estado === 'listo') {
+            if (esDelivery) {
+                const btn = document.createElement('button');
+                btn.className = 'btn-accion btn-despachar';
+                btn.textContent = '🛵 En camino';
+                btn.onclick = () => marcarEnCamino(p);
+                container.appendChild(btn);
             } else {
-                // Retiro / WhatsApp presencial → confirmar entrega
-                const btnConf = document.createElement('button');
-                btnConf.className = 'btn-accion btn-confirmar';
-                btnConf.textContent = '✅ Entregado';
-                btnConf.onclick = () => cambiarEstadoPedido(p.id, 'pagado', true);
-                container.appendChild(btnConf);
+                // Retiro en local → entregado directo
+                const btn = document.createElement('button');
+                btn.className = 'btn-accion btn-confirmar';
+                btn.textContent = '✅ Entregado';
+                btn.onclick = () => cambiarEstadoPedido(p.id, 'recibido', true);
+                container.appendChild(btn);
             }
+        }
 
-            // Anular siempre disponible
+        // Estado: en_camino → esperando repartidor
+        if (p.estado === 'en_camino') {
+            const info = document.createElement('span');
+            info.style.cssText = 'font-size:0.8rem;color:var(--blue);padding:10px 0;display:block;';
+            info.textContent = '🛵 Esperando confirmación del repartidor…';
+            container.appendChild(info);
+        }
+
+        // Anular disponible en todos los estados activos
+        if (!['recibido','anulado'].includes(p.estado)) {
             const btnAnul = document.createElement('button');
             btnAnul.className = 'btn-accion btn-anular-web';
             btnAnul.textContent = '✕ Anular';
             btnAnul.onclick = () => abrirModalAnular(p.id, p.nombre);
             container.appendChild(btnAnul);
-        }
-
-        if (p.estado === 'en_camino') {
-            const info = document.createElement('span');
-            info.style.cssText = 'font-size:0.8rem;color:var(--blue);padding:10px 0;';
-            info.textContent = '🛵 Esperando confirmación del repartidor…';
-            container.appendChild(info);
         }
     }
 
@@ -526,38 +587,67 @@
         if (recargar) cargarPedidosWeb();
     }
 
-    async function despacharDelivery(p) {
-        // 1. Actualizar estado
+    // Genera código de 4 dígitos
+    function generarCodigo() {
+        return String(Math.floor(1000 + Math.random() * 9000));
+    }
+
+    // Cajero marca "Listo" → WhatsApp al repartidor si es delivery
+    async function marcarListo(p) {
+        // Generar y guardar código si es delivery
+        let codigo = p.codigo_entrega;
+        if (p.tipo_entrega === 'delivery' && !codigo) {
+            codigo = generarCodigo();
+            await SB.from('pedidos').update({ codigo_entrega: codigo }).eq('id', p.id);
+        }
+        await cambiarEstadoPedido(p.id, 'listo');
+
+        if (p.tipo_entrega === 'delivery') {
+            // WhatsApp al repartidor
+            const { data } = await SB.from('pos_config').select('valor_text').eq('clave', 'wsp_repartidor').single();
+            const numRepartidor = data?.valor_text || '';
+            if (!numRepartidor || numRepartidor === '+56900000000') {
+                toast('Configura el número del repartidor en el panel admin', 'err');
+            } else {
+                const localNombre = estado.local === 'cafe' ? 'CAFÉ ÓRBITA' : 'FUENTE DE SODA ÓRBITA';
+                const items = Array.isArray(p.items_json)
+                    ? p.items_json.map(i => `• ${i.qty}x ${i.nombre}`).join('\n')
+                    : '—';
+                const linkEntrega = `${window.location.origin}/entrega.html?id=${p.id}`;
+                const msg = encodeURIComponent(
+                    `🛵 PEDIDO LISTO — ${localNombre}\n\n` +
+                    `👤 Cliente: ${p.nombre}\n` +
+                    `📍 Dirección: ${p.direccion || p.direccion_entrega || 'Sin dirección'}\n\n` +
+                    `📋 Pedido:\n${items}\n\n` +
+                    `💰 Total: ${fmt(p.total)}\n` +
+                    `🔑 Código de entrega: ${codigo}\n\n` +
+                    `✅ Confirmar entrega → ${linkEntrega}`
+                );
+                window.open(`https://wa.me/${numRepartidor.replace(/\D/g, '')}?text=${msg}`, '_blank');
+            }
+        }
+        cargarPedidosWeb();
+    }
+
+    // Cajero marca "En camino" → WhatsApp al cliente
+    async function marcarEnCamino(p) {
         await cambiarEstadoPedido(p.id, 'en_camino');
 
-        // 2. Cargar número del repartidor desde pos_config
-        const { data } = await SB.from('pos_config').select('valor_text').eq('clave', 'wsp_repartidor').single();
-        const numRepartidor = data?.valor_text || '';
-
-        if (!numRepartidor || numRepartidor === '+56900000000') {
-            toast('Configura el número del repartidor en el panel admin', 'err');
-            cargarPedidosWeb();
-            return;
+        // WhatsApp al cliente si tiene teléfono
+        const telefono = p.telefono || p.telefono_cliente || '';
+        if (telefono) {
+            const items = Array.isArray(p.items_json)
+                ? p.items_json.map(i => `• ${i.qty}x ${i.nombre}`).join('\n')
+                : '—';
+            const msg = encodeURIComponent(
+                `🛵 ¡Tu pedido está en camino!\n\n` +
+                `📋 ${items}\n` +
+                `💰 Total: ${fmt(p.total)}\n\n` +
+                `🔑 Código de entrega: ${p.codigo_entrega}\n` +
+                `(Muéstraselo al repartidor al recibir tu pedido)`
+            );
+            window.open(`https://wa.me/${telefono.replace(/\D/g, '')}?text=${msg}`, '_blank');
         }
-
-        // 3. Armar link de confirmación de entrega
-        const linkEntrega = `${window.location.origin}/entrega.html?id=${p.id}`;
-
-        // 4. Armar mensaje WhatsApp
-        const localNombre = estado.local === 'cafe' ? 'CAFÉ ÓRBITA' : 'FUENTE DE SODA ÓRBITA';
-        const items = Array.isArray(p.items_json)
-            ? p.items_json.map(i => `• ${i.qty}x ${i.nombre}`).join('\n')
-            : '—';
-        const msg = encodeURIComponent(
-            `🛵 NUEVO DELIVERY — ${localNombre}\n\n` +
-            `👤 Cliente: ${p.nombre}\n` +
-            `📍 Dirección: ${p.direccion || 'Sin dirección'}\n\n` +
-            `📋 Pedido:\n${items}\n\n` +
-            `💰 Total: ${fmt(p.total)} (pagado ✅)\n\n` +
-            `✅ Confirmar entrega → ${linkEntrega}`
-        );
-
-        window.open(`https://wa.me/${numRepartidor.replace(/\D/g, '')}?text=${msg}`, '_blank');
         cargarPedidosWeb();
     }
 
