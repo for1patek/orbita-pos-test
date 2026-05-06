@@ -1862,6 +1862,13 @@
         });
     }
 
+    // Cuenta cuántas papas de un tamaño específico hay en el pedido actual
+    function _papasUsadasPorTamano(sizeId) {
+        const enPapas  = papasEnPedido.filter(p => p.id === sizeId).length;
+        const enExtras = extrasPapasEnPedido.filter(p => p.sizeId === sizeId).length;
+        return enPapas + enExtras;
+    }
+
     // Descuenta del stock de PAPAS_TAMANIOS las unidades en pedido (papas + extras)
     // y persiste el catálogo en Supabase. Best-effort: si falla la persistencia, el
     // descuento queda en memoria y se reintenta en el próximo guardado del catálogo.
