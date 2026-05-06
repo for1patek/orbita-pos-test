@@ -67,7 +67,7 @@
         .pos-body { display: flex; flex: 1; overflow: hidden; }
 
         /* ── PANEL IZQUIERDO: MENÚ ── */
-        .panel-menu { flex: 1.4; display: flex; flex-direction: column; border-right: 1px solid var(--border); overflow: hidden; }
+        .panel-menu { flex: 1.4; display: flex; flex-direction: column; border-right: 1px solid var(--border); overflow: hidden; min-height: 0; }
         .tabs-locales { display: none; } /* se muestra si hay pedidos web */
         .cat-tabs { display: flex; gap: 6px; padding: 10px 12px; overflow-x: auto; flex-shrink: 0; border-bottom: 1px solid var(--border); scrollbar-width: none; }
         .cat-tabs::-webkit-scrollbar { display: none; }
@@ -83,7 +83,7 @@
         .prod-precio.sin-precio { color: var(--red); font-size: 0.75rem; font-family: 'DM Sans', sans-serif; font-weight: 700; }
 
         /* pedidos web */
-        .pedidos-web-list { flex: 1; overflow-y: auto; padding: 12px; display: flex; flex-direction: column; gap: 10px; }
+        .pedidos-web-list { flex: 1; overflow-y: auto; padding: 12px; display: flex; flex-direction: column; gap: 10px; min-height: 0; }
         .pedido-web-card { background: var(--card); border: 1px solid var(--border); border-radius: 14px; padding: 14px; }
         .pedido-web-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 8px; }
         .pedido-web-nombre { font-weight: 700; font-size: 0.95rem; }
