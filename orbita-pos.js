@@ -482,7 +482,7 @@
             }
             pedidosConocidos.add(p.id);
             const items = Array.isArray(p.items_json)
-                ? p.items_json.map(i => `${i.qty}x ${i.nombre}`).join(', ')
+                ? p.items_json.map(i => `${i.qty ?? i.cantidad ?? '?'}x ${i.nombre}`).join(', ')
                 : '—';
             const badgeClass = {
                 pagado:     'badge-pagado',
@@ -611,7 +611,7 @@
             } else {
                 const localNombre = estado.local === 'cafe' ? 'CAFÉ ÓRBITA' : 'FUENTE DE SODA ÓRBITA';
                 const items = Array.isArray(p.items_json)
-                    ? p.items_json.map(i => `• ${i.qty}x ${i.nombre}`).join('\n')
+                    ? p.items_json.map(i => `• ${i.qty ?? i.cantidad ?? '?'}x ${i.nombre}`).join('\n')
                     : '—';
                 const linkEntrega = `${window.location.origin}/entrega.html?id=${p.id}`;
                 const msg = encodeURIComponent(
@@ -637,7 +637,7 @@
         const telefono = p.telefono || p.telefono_cliente || '';
         if (telefono) {
             const items = Array.isArray(p.items_json)
-                ? p.items_json.map(i => `• ${i.qty}x ${i.nombre}`).join('\n')
+                ? p.items_json.map(i => `• ${i.qty ?? i.cantidad ?? '?'}x ${i.nombre}`).join('\n')
                 : '—';
             const msg = encodeURIComponent(
                 `🛵 ¡Tu pedido está en camino!\n\n` +
