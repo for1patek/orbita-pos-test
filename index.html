@@ -109,6 +109,20 @@
             padding: 12px 14px; color: var(--text); font-family: 'DM Sans', sans-serif; font-size: 1rem; outline: none; margin-bottom: 12px;
         }
         .modal input:focus { border-color: var(--fire); }
+        /* Modal agregar producto */
+        .modal-agregar-overlay { display:none; position:fixed; inset:0; background:rgba(0,0,0,0.85); z-index:200; align-items:center; justify-content:center; padding:16px; }
+        .modal-agregar-overlay.open { display:flex; }
+        .modal-agregar { background:var(--card,#1a1a1a); border:1px solid var(--border,#333); border-radius:20px; padding:28px 22px; max-width:440px; width:100%; max-height:90dvh; overflow-y:auto; }
+        .modal-agregar h3 { font-family:'Bebas Neue',sans-serif; font-size:1.3rem; letter-spacing:2px; color:var(--fire); margin-bottom:18px; }
+        .modal-agregar label { display:block; font-size:0.78rem; color:var(--muted,#888); font-weight:700; letter-spacing:1px; text-transform:uppercase; margin-bottom:5px; }
+        .modal-agregar input, .modal-agregar select, .modal-agregar textarea { width:100%; background:var(--surface,#222); border:1px solid var(--border,#333); border-radius:10px; padding:11px 13px; color:var(--text,#fff); font-family:'DM Sans',sans-serif; font-size:0.95rem; outline:none; margin-bottom:14px; }
+        .modal-agregar input:focus, .modal-agregar select:focus, .modal-agregar textarea:focus { border-color:var(--fire); }
+        .modal-agregar textarea { resize:vertical; min-height:60px; }
+        .canal-btns { display:grid; grid-template-columns:repeat(3,1fr); gap:8px; margin-bottom:14px; }
+        .canal-btn { padding:10px 6px; border:1px solid var(--border,#333); border-radius:10px; background:var(--surface,#222); color:var(--muted,#888); font-family:'DM Sans',sans-serif; font-size:0.78rem; font-weight:700; cursor:pointer; text-align:center; transition:all 0.2s; }
+        .canal-btn.active { border-color:var(--fire); color:var(--fire); background:rgba(220,38,38,0.1); }
+        .modal-agregar-acciones { display:flex; gap:10px; margin-top:4px; }
+        .modal-agregar-err { color:var(--fire); font-size:0.82rem; margin-bottom:10px; display:none; }
         .btn-modal { width: 100%; padding: 13px; border: none; border-radius: 10px; font-family: 'Bebas Neue', sans-serif; font-size: 1.1rem; letter-spacing: 1px; cursor: pointer; transition: opacity 0.2s; margin-bottom: 8px; }
         .btn-fire { background: var(--fire); color: #fff; }
         .btn-gray { background: var(--surface); color: var(--muted); }
@@ -140,22 +154,6 @@
 
         .edit-form { background: var(--black); border: 1px solid var(--fire); border-radius: 12px; padding: 14px; margin-top: 10px; display: none; }
         .edit-form.open { display: block; }
-        /* Modal agregar producto */
-        .modal-agregar-overlay { display:none; position:fixed; inset:0; background:rgba(0,0,0,0.7); z-index:9999; align-items:center; justify-content:center; padding:16px; }
-        .modal-agregar-overlay.open { display:flex; }
-        .modal-agregar-box { background:var(--card,#1a1a1a); border-radius:18px; padding:24px 20px; width:100%; max-width:420px; border:1px solid var(--fire); }
-        .modal-agregar-box h3 { margin:0 0 18px; font-size:1.1rem; color:var(--fire); }
-        .mag-row { margin-bottom:13px; }
-        .mag-row label { display:block; font-size:0.8rem; color:var(--muted,#888); margin-bottom:5px; font-weight:600; text-transform:uppercase; letter-spacing:.04em; }
-        .mag-row input, .mag-row select { width:100%; padding:10px 12px; border-radius:10px; border:1px solid var(--border2,#333); background:var(--black,#111); color:var(--white,#fff); font-size:0.95rem; box-sizing:border-box; }
-        .canal-btns { display:flex; gap:8px; flex-wrap:wrap; }
-        .canal-btn { flex:1; min-width:90px; padding:9px 6px; border-radius:10px; border:1px solid var(--border2,#333); background:var(--black,#111); color:var(--muted,#888); font-size:0.82rem; cursor:pointer; text-align:center; transition:all .15s; }
-        .canal-btn.active { border-color:var(--fire); background:var(--fire); color:#fff; font-weight:700; }
-        .mag-footer { display:flex; gap:10px; margin-top:18px; }
-        .mag-footer button { flex:1; padding:11px; border-radius:11px; border:none; cursor:pointer; font-weight:700; font-size:0.9rem; }
-        .mag-btn-cancel { background:var(--border2,#333); color:var(--muted,#888); }
-        .mag-btn-add { background:var(--fire); color:#fff; }
-        .mag-error { color:#f87171; font-size:0.82rem; margin-top:8px; display:none; }
         .edit-row { display: flex; gap: 8px; align-items: center; margin-bottom: 10px; }
         .edit-row label { font-size: 0.8rem; color: var(--muted); min-width: 60px; }
         .edit-row input { flex: 1; background: var(--surface); border: 1px solid var(--border); border-radius: 8px; padding: 8px 10px; color: var(--text); font-family: 'DM Sans', sans-serif; font-size: 0.9rem; outline: none; margin-bottom: 0; }
@@ -394,6 +392,39 @@
 </footer>
 
 <!-- MODAL ADMIN -->
+<!-- Modal agregar producto handroll -->
+<div class="modal-agregar-overlay" id="modal-agregar-handroll">
+    <div class="modal-agregar">
+        <h3>+ Agregar producto</h3>
+        <div class="modal-agregar-err" id="err-agregar-handroll">Completa los campos obligatorios.</div>
+        <label>Nombre *</label>
+        <input type="text" id="ag-hr-nombre" placeholder="Ej: Hand Roll Salmón" maxlength="60">
+        <label>Descripción <span style="font-weight:400;text-transform:none;">(opcional)</span></label>
+        <textarea id="ag-hr-desc" placeholder="Ej: Con palta y pepino" maxlength="80"></textarea>
+        <label>Categoría *</label>
+        <select id="ag-hr-cat">
+            <option value="handroll">🌯 Hand Roll</option>
+            <option value="jugo">🥤 Jugo natural</option>
+            <option value="bebida">🧃 Bebida</option>
+            <option value="agua">💧 Agua</option>
+        </select>
+        <label>Precio venta (CLP) *</label>
+        <input type="number" id="ag-hr-precio" placeholder="0" min="0" step="100">
+        <label>Costo unitario (CLP)</label>
+        <input type="number" id="ag-hr-costo" placeholder="0" min="0" step="100">
+        <label>Disponible en</label>
+        <div class="canal-btns">
+            <button type="button" class="canal-btn active" data-canal="ambos" onclick="selCanalHR(this,'modal-agregar-handroll')">🌐 Web y POS</button>
+            <button type="button" class="canal-btn" data-canal="web" onclick="selCanalHR(this,'modal-agregar-handroll')">💻 Solo web</button>
+            <button type="button" class="canal-btn" data-canal="pos" onclick="selCanalHR(this,'modal-agregar-handroll')">🖥️ Solo POS</button>
+        </div>
+        <div class="modal-agregar-acciones">
+            <button class="btn-modal btn-gray" type="button" onclick="cerrarModalAgregarHR()">Cancelar</button>
+            <button class="btn-modal btn-fire" type="button" onclick="confirmarAgregarHR()">+ AGREGAR</button>
+        </div>
+    </div>
+</div>
+
 <div class="modal-overlay" id="modal-overlay">
     <div class="modal">
         <div id="login-section">
@@ -1002,7 +1033,7 @@
 
         if (window.orbitaPagoFlow) {
             await window.orbitaPagoFlow.registrarWhatsapp({
-                sitio: 'fuente', pedidoBody, wspNumber: WSP_NUMBER, mensaje: msg
+                sitio: 'handroll', pedidoBody, wspNumber: WSP_NUMBER, mensaje: msg
             });
         } else {
             window.open("https://wa.me/" + WSP_NUMBER + "?text=" + encodeURIComponent(msg), '_blank');
@@ -1019,7 +1050,7 @@
     }
 
     // ── MERCADO PAGO ──
-    const MP_EDGE_URL = "https://ftyxipxsyzldofdyamqt.supabase.co/functions/v1/hyper-worker";
+    const MP_EDGE_URL = "https://uldqgxdmblhyqsnxenaz.supabase.co/functions/v1/hyper-worker";
 
     async function pagarConMP() {
         const totalUnidades = handrollsEnPedido.length + productos.reduce((a, p) => a + (p.categoria === 'handroll' ? 0 : (pedido[p.id] || 0)), 0);
@@ -1081,7 +1112,7 @@
         }
 
         await window.orbitaPagoFlow.iniciarPagoMP({
-            sitio: 'fuente',
+            sitio: 'handroll',
             items,
             pedidoBody,
             wspNumber: WSP_NUMBER,
@@ -1475,10 +1506,7 @@
                                     <label>Costo unitario</label>
                                     <input type="number" id="edit-costo-${p.id}" value="${Number(p.costo)||0}" step="100" min="0">
                                 </div>
-                                <div class="edit-row">
-                                    <label>Canal</label>
-                                    <select id="edit-canal-${p.id}" style="width:100%;padding:8px 10px;border-radius:8px;border:1px solid var(--border2,#333);background:var(--black,#111);color:var(--white,#fff);"><option value="ambos" ${(p.canal||'ambos')==='ambos'?'selected':''}>🌐 Web y POS</option><option value="web" ${p.canal==='web'?'selected':''}>💻 Solo web</option><option value="pos" ${p.canal==='pos'?'selected':''}>🖥️ Solo POS</option></select>
-                                </div>
+                                <div class="edit-row"><label>Canal</label><select id="edit-canal-${p.id}"><option value="ambos" ${(p.canal||'ambos')==='ambos'?'selected':''}>🌐 Web y POS</option><option value="web" ${p.canal==='web'?'selected':''}>💻 Solo web</option><option value="pos" ${p.canal==='pos'?'selected':''}>🖥️ Solo POS</option></select></div>
                                 <button class="btn-sm btn-fire" style="width:100%;padding:9px;margin-top:4px;" onclick="guardarProducto(${idx})">💾 GUARDAR</button>
                             </div>
                         </div>
@@ -1504,13 +1532,13 @@
         const p = productos[i];
         const nuevoNombre = document.getElementById('edit-nombre-' + p.id).value.trim();
         const nuevoPrecio = parseInt(document.getElementById('edit-precio-' + p.id).value);
-        const nuevoCosto = parseInt(document.getElementById('edit-costo-' + p.id).value) || 0;
-        const canal = document.getElementById('edit-canal-' + p.id)?.value || 'ambos';
+        const nuevoCosto  = parseInt(document.getElementById('edit-costo-' + p.id).value) || 0;
+        const nuevoCanal  = document.getElementById('edit-canal-' + p.id)?.value || 'ambos';
         if (!nuevoNombre || isNaN(nuevoPrecio) || nuevoPrecio < 0 || nuevoCosto < 0) { alert('Datos inválidos'); return; }
         productos[i].nombre = nuevoNombre;
         productos[i].precio = nuevoPrecio;
-        productos[i].costo = nuevoCosto;
-        productos[i].canal = canal;
+        productos[i].costo  = nuevoCosto;
+        productos[i].canal  = nuevoCanal;
         renderMenu();
         renderProductosAdmin();
         persistirCatalogoHandroll();
@@ -1532,7 +1560,9 @@
         document.getElementById('ag-hr-precio').value = '';
         document.getElementById('ag-hr-costo').value = '';
         document.getElementById('ag-hr-cat').value = 'handroll';
-        document.querySelectorAll('#modal-agregar-handroll .canal-btn').forEach(b => b.classList.toggle('active', b.dataset.canal === 'ambos'));
+        document.querySelectorAll('#modal-agregar-handroll .canal-btn').forEach(b => {
+            b.classList.toggle('active', b.dataset.canal === 'ambos');
+        });
         document.getElementById('err-agregar-handroll').style.display = 'none';
         document.getElementById('modal-agregar-handroll').classList.add('open');
     }
@@ -1703,50 +1733,5 @@
 </script>
 <script src="./orbita-pago-flow.js"></script>
 <script src="./orbita-pago-rapido.js"></script>
-
-  <!-- Modal agregar producto handroll -->
-  <div class="modal-agregar-overlay" id="modal-agregar-handroll">
-    <div class="modal-agregar-box">
-      <h3>+ Agregar producto</h3>
-      <div class="mag-row">
-        <label>Nombre *</label>
-        <input type="text" id="ag-hr-nombre" placeholder="Ej: Hand Roll Salmón">
-      </div>
-      <div class="mag-row">
-        <label>Descripción (opcional)</label>
-        <input type="text" id="ag-hr-desc" placeholder="Ej: Con palta y pepino">
-      </div>
-      <div class="mag-row">
-        <label>Categoría *</label>
-        <select id="ag-hr-cat">
-          <option value="handroll">🍣 Hand Roll</option>
-          <option value="jugo">🥤 Jugo</option>
-          <option value="bebida">🥤 Bebida</option>
-          <option value="agua">💧 Agua</option>
-        </select>
-      </div>
-      <div class="mag-row">
-        <label>Precio venta (CLP)</label>
-        <input type="number" id="ag-hr-precio" placeholder="0" min="0" step="100">
-      </div>
-      <div class="mag-row">
-        <label>Costo unitario (CLP)</label>
-        <input type="number" id="ag-hr-costo" placeholder="0" min="0" step="100">
-      </div>
-      <div class="mag-row">
-        <label>Disponible en</label>
-        <div class="canal-btns">
-          <button class="canal-btn active" data-canal="ambos" onclick="selCanalHR(this,'modal-agregar-handroll')">🌐 Web y POS</button>
-          <button class="canal-btn" data-canal="web" onclick="selCanalHR(this,'modal-agregar-handroll')">💻 Solo web</button>
-          <button class="canal-btn" data-canal="pos" onclick="selCanalHR(this,'modal-agregar-handroll')">🖥️ Solo POS</button>
-        </div>
-      </div>
-      <div class="mag-error" id="err-agregar-handroll"></div>
-      <div class="mag-footer">
-        <button class="mag-btn-cancel" onclick="cerrarModalAgregarHR()">Cancelar</button>
-        <button class="mag-btn-add" onclick="confirmarAgregarHR()">+ AGREGAR</button>
-      </div>
-    </div>
-  </div>
 </body>
 </html>
