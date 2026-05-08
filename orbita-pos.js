@@ -175,6 +175,14 @@
         estado.usuario     = data;
         estado.turnoInicio = new Date();
         errEl.textContent  = '';
+
+        // Guardar sesión para sobrevivir F5
+        sessionStorage.setItem('orbita_sesion', JSON.stringify({
+            usuario:     data,
+            local:       estado.local,
+            turnoInicio: estado.turnoInicio.toISOString(),
+        }));
+
         abrirPOS();
     };
 
@@ -385,14 +393,15 @@
         const items = estado.comanda.map(i => ({ id: i.id, nombre: i.nombre, precio: i.precio, qty: i.qty }));
 
         const { error } = await SB.from('pedidos').insert({
-            sitio:        estado.local,
-            nombre:       nombre,
-            total:        total,
-            items_json:   items,
-            estado:       'pagado',
-            tipo_entrega: tipo === 'local' ? 'local' : 'retiro',
-            origen:       'fisico',
-            cajero_id:    estado.usuario.id,
+            sitio:               estado.local,
+            nombre:              nombre,
+            total:               total,
+            items_json:          items,
+            estado:              'pagado',
+            tipo_entrega:        tipo === 'local' ? 'local' : 'retiro',
+            origen:              'fisico',
+            cajero_id:           estado.usuario.id,
+            metodo_pago_entrega: estado.metodoPago || 'efectivo',
         });
 
         cerrarModalCobro();
@@ -841,10 +850,14 @@
         const ventas   = (data || []).filter(p => p.estado !== 'anulado');
         const anuladas = (data || []).filter(p => p.estado === 'anulado');
 
-        const efectivo = ventas.filter(p => p.origen === 'fisico' && p.metodo_pago_entrega === 'efectivo').reduce((s, p) => s + (p.total || 0), 0);
-        const tarjeta  = ventas.filter(p => p.origen === 'fisico' && p.metodo_pago_entrega === 'transferencia').reduce((s, p) => s + (p.total || 0), 0);
-        const transfer = ventas.filter(p => p.origen === 'fisico' && !p.metodo_pago_entrega).reduce((s, p) => s + (p.total || 0), 0);
-        const online   = ventas.filter(p => p.origen === 'web').reduce((s, p) => s + (p.total || 0), 0);
+        // Efectivo: físicos + delivery pagado en efectivo al repartidor
+        const efectivo = ventas.filter(p => p.metodo_pago_entrega === 'efectivo').reduce((s, p) => s + (p.total || 0), 0);
+        // Tarjeta: físicos pagados con tarjeta en el local
+        const tarjeta  = ventas.filter(p => p.origen === 'fisico' && p.metodo_pago_entrega === 'tarjeta').reduce((s, p) => s + (p.total || 0), 0);
+        // Transferencia: físicos + delivery pagado por transferencia al repartidor
+        const transfer = ventas.filter(p => p.metodo_pago_entrega === 'transferencia').reduce((s, p) => s + (p.total || 0), 0);
+        // Online: pedidos web pagados con MercadoPago
+        const online   = ventas.filter(p => p.origen === 'web' && p.metodo_pago_entrega === 'online').reduce((s, p) => s + (p.total || 0), 0);
         const totalGeneral = ventas.reduce((s, p) => s + (p.total || 0), 0);
 
         document.getElementById('cierre-cajero').textContent     = estado.usuario.nombre;
@@ -879,10 +892,10 @@
             sitio:          estado.local,
             turno_inicio:   desde,
             turno_fin:      new Date().toISOString(),
-            total_efectivo: ventas.filter(p => p.origen === 'fisico' && p.metodo_pago_entrega === 'efectivo').reduce((s, p) => s + (p.total || 0), 0),
-            total_tarjeta:  ventas.filter(p => p.origen === 'fisico' && p.metodo_pago_entrega === 'transferencia').reduce((s, p) => s + (p.total || 0), 0),
-            total_transfer: ventas.filter(p => p.origen === 'fisico' && !p.metodo_pago_entrega).reduce((s, p) => s + (p.total || 0), 0),
-            total_online:   ventas.filter(p => p.origen === 'web').reduce((s, p) => s + (p.total || 0), 0),
+            total_efectivo: ventas.filter(p => p.metodo_pago_entrega === 'efectivo').reduce((s, p) => s + (p.total || 0), 0),
+            total_tarjeta:  ventas.filter(p => p.origen === 'fisico' && p.metodo_pago_entrega === 'tarjeta').reduce((s, p) => s + (p.total || 0), 0),
+            total_transfer: ventas.filter(p => p.metodo_pago_entrega === 'transferencia').reduce((s, p) => s + (p.total || 0), 0),
+            total_online:   ventas.filter(p => p.origen === 'web' && p.metodo_pago_entrega === 'online').reduce((s, p) => s + (p.total || 0), 0),
             total_ventas:   ventas.reduce((s, p) => s + (p.total || 0), 0),
             num_transacc:   ventas.length,
             num_anuladas:   anuladas.length,
@@ -893,6 +906,7 @@
 
         // Volver al login
         setTimeout(() => {
+            sessionStorage.removeItem('orbita_sesion');
             estado.usuario     = null;
             estado.turnoInicio = null;
             estado.comanda     = [];
@@ -907,6 +921,7 @@
     // ─── CERRAR SESIÓN ────────────────────────────────────────────────────────
     window.cerrarSesionPOS = function () {
         if (!confirm('¿Cerrar sesión? El turno no se guardará.')) return;
+        sessionStorage.removeItem('orbita_sesion');
         estado.usuario     = null;
         estado.turnoInicio = null;
         estado.comanda     = [];
@@ -919,6 +934,20 @@
 
     // ─── INIT ─────────────────────────────────────────────────────────────────
     document.addEventListener('DOMContentLoaded', () => {
+        // Restaurar sesión si el cajero hizo F5
+        const sesionGuardada = sessionStorage.getItem('orbita_sesion');
+        if (sesionGuardada) {
+            try {
+                const s = JSON.parse(sesionGuardada);
+                estado.usuario     = s.usuario;
+                estado.local       = s.local;
+                estado.turnoInicio = new Date(s.turnoInicio);
+                abrirPOS();
+                return;
+            } catch (e) {
+                sessionStorage.removeItem('orbita_sesion');
+            }
+        }
         cargarUsuarios();
         // Comanda vacía inicial
         renderComanda();
