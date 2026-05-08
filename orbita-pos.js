@@ -207,11 +207,16 @@
         document.getElementById('header-usuario').textContent =
             estado.usuario.nombre + (estado.usuario.rol === 'admin' ? ' ⭐' : '');
 
+        // Botón config solo visible para admin
+        const btnCfg = document.getElementById('btn-config');
+        if (btnCfg) btnCfg.style.display = estado.usuario.rol === 'admin' ? 'inline-block' : 'none';
+
         await cargarCatalogo();
         catActiva = CATS[estado.local][0].id;
         renderCatTabs();
         renderProductos();
         mostrarTabVenta();
+        iniciarBgPolling(); // badge y sonido siempre activos
     }
 
     // ─── CATÁLOGO ────────────────────────────────────────────────────────────
@@ -420,7 +425,42 @@
     };
 
     // ─── VISTA TABS ───────────────────────────────────────────────────────────
-    let autoRefreshInterval = null;
+    let autoRefreshInterval  = null;
+    let bgPollingInterval = null; // polling liviano siempre activo
+
+    // Polling de fondo: badge siempre, sonido solo cuando llega pedido nuevo
+    async function bgPolling() {
+        if (!estado.usuario || !estado.local) return;
+        const { data } = await SB
+            .from('pedidos')
+            .select('id, estado')
+            .eq('sitio', estado.local)
+            .in('estado', ['pendiente', 'pagado', 'whatsapp', 'en_cocina', 'listo', 'en_camino']);
+
+        if (!data) return;
+
+        const activos = data.filter(p =>
+            ['pendiente', 'pagado', 'whatsapp', 'en_cocina', 'listo'].includes(p.estado)
+        );
+
+        // Sonar solo si llega un pedido que no conocíamos (cualquier canal)
+        let hayNuevo = false;
+        data.forEach(p => {
+            if (!pedidosConocidos.has(p.id)) {
+                hayNuevo = true;
+            }
+            pedidosConocidos.add(p.id);
+        });
+
+        if (hayNuevo) notificarPedidoNuevo();
+        actualizarBadgePendientes(activos.length);
+    }
+
+    function iniciarBgPolling() {
+        if (bgPollingInterval) return;
+        bgPolling(); // primera ejecución inmediata
+        bgPollingInterval = setInterval(bgPolling, 8000);
+    }
 
     window.mostrarTabPedidos = function () {
         document.getElementById('vista-venta').classList.add('hidden');
@@ -428,7 +468,7 @@
         document.getElementById('btn-tab-pedidos').style.borderColor = 'var(--primary)';
         document.getElementById('btn-tab-venta').style.borderColor   = 'var(--border)';
         cargarPedidosWeb();
-        // Auto-refresh cada 8 segundos mientras la pestaña está activa
+        // Auto-refresh completo (renderiza lista) solo cuando está en esta pestaña
         if (!autoRefreshInterval) {
             autoRefreshInterval = setInterval(cargarPedidosWeb, 8000);
         }
@@ -501,10 +541,7 @@
         actualizarBadgePendientes(pendientesActivos);
 
         data.forEach(p => {
-            // Notificar si es un pedido que no conocíamos
-            if (!pedidosConocidos.has(p.id) && pedidosConocidos.size > 0) {
-                if (['pendiente','pagado','whatsapp'].includes(p.estado)) notificarPedidoNuevo(p);
-            }
+            // bgPolling maneja sonido y badge — aquí solo registramos ids conocidos
             pedidosConocidos.add(p.id);
             const items = Array.isArray(p.items_json)
                 ? p.items_json.map(i => `${i.qty ?? i.cantidad ?? '?'}x ${i.nombre}`).join(', ')
@@ -578,11 +615,11 @@
                 btn.onclick = () => marcarEnCamino(p);
                 container.appendChild(btn);
             } else {
-                // Retiro en local → entregado directo
+                // Retiro en local -> modal para validar codigo y cobrar
                 const btn = document.createElement('button');
                 btn.className = 'btn-accion btn-confirmar';
-                btn.textContent = '✅ Entregado';
-                btn.onclick = () => cambiarEstadoPedido(p.id, 'recibido', true);
+                btn.textContent = '📦 Entregar';
+                btn.onclick = () => abrirModalRetiro(p);
                 container.appendChild(btn);
             }
         }
@@ -907,6 +944,9 @@
         // Volver al login
         setTimeout(() => {
             sessionStorage.removeItem('orbita_sesion');
+            if (bgPollingInterval) { clearInterval(bgPollingInterval); bgPollingInterval = null; }
+            if (autoRefreshInterval) { clearInterval(autoRefreshInterval); autoRefreshInterval = null; }
+            pedidosConocidos.clear();
             estado.usuario     = null;
             estado.turnoInicio = null;
             estado.comanda     = [];
@@ -922,6 +962,9 @@
     window.cerrarSesionPOS = function () {
         if (!confirm('¿Cerrar sesión? El turno no se guardará.')) return;
         sessionStorage.removeItem('orbita_sesion');
+        if (bgPollingInterval) { clearInterval(bgPollingInterval); bgPollingInterval = null; }
+        if (autoRefreshInterval) { clearInterval(autoRefreshInterval); autoRefreshInterval = null; }
+        pedidosConocidos.clear();
         estado.usuario     = null;
         estado.turnoInicio = null;
         estado.comanda     = [];
@@ -951,6 +994,109 @@
         cargarUsuarios();
         // Comanda vacía inicial
         renderComanda();
+    });
+
+
+    // ─── MODAL RETIRO ─────────────────────────────────────────────────────────
+    let pedidoRetiroActual = null;
+
+    window.abrirModalRetiro = function (p) {
+        pedidoRetiroActual = p;
+        const esWeb = p.origen === 'web';
+
+        document.getElementById('retiro-nombre').textContent = p.nombre;
+
+        // Mostrar/ocultar sección de código según origen
+        // Web: el cliente tiene código → cajero lo valida
+        // Físico: no hay código, cajero solo confirma que el cliente retiró
+        const codigoSection = document.getElementById('retiro-codigo-section');
+        codigoSection.style.display = esWeb ? 'block' : 'none';
+        document.getElementById('retiro-codigo').value = '';
+        document.getElementById('retiro-codigo-error').style.display = 'none';
+
+        document.getElementById('modal-retiro').classList.remove('hidden');
+        if (esWeb) setTimeout(() => document.getElementById('retiro-codigo').focus(), 100);
+    };
+
+    window.cerrarModalRetiro = function () {
+        document.getElementById('modal-retiro').classList.add('hidden');
+        pedidoRetiroActual = null;
+    };
+
+    window.confirmarRetiro = async function () {
+        if (!pedidoRetiroActual) return;
+        const esWeb = pedidoRetiroActual.origen === 'web';
+
+        // Solo validar código en pedidos web
+        if (esWeb) {
+            const codigoIngresado = document.getElementById('retiro-codigo').value.trim();
+            const codigoCorrecto  = String(pedidoRetiroActual.codigo_entrega || '');
+            const errEl           = document.getElementById('retiro-codigo-error');
+            if (codigoIngresado !== codigoCorrecto) {
+                errEl.style.display = 'block';
+                document.getElementById('retiro-codigo').focus();
+                return;
+            }
+            errEl.style.display = 'none';
+        }
+
+        const { error } = await SB.from('pedidos')
+            .update({ estado: 'recibido' })
+            .eq('id', pedidoRetiroActual.id);
+
+        if (error) { toast('Error al confirmar retiro', 'err'); return; }
+
+        toast('✅ Retirado', 'ok');
+        cerrarModalRetiro();
+        cargarPedidosWeb();
+    };
+
+    // Cerrar retiro con click fuera
+    document.getElementById('modal-retiro')?.addEventListener('click', function(e) {
+        if (e.target === this) cerrarModalRetiro();
+    });
+
+    // ─── CONFIGURACIÓN (admin) ────────────────────────────────────────────────
+    window.abrirConfig = async function () {
+        // Cargar valores actuales de pos_config
+        const { data } = await SB.from('pos_config').select('clave, valor_text');
+        if (data) {
+            const map = {};
+            data.forEach(r => { map[r.clave] = r.valor_text; });
+            const r = document.getElementById('cfg-wsp-repartidor');
+            const l = document.getElementById('cfg-wsp-local');
+            const e = document.getElementById('cfg-email');
+            if (r) r.value = map['wsp_repartidor'] || '';
+            if (l) l.value = map['wsp_local']      || '';
+            if (e) e.value = map['email_contacto'] || '';
+        }
+        document.getElementById('modal-config').classList.remove('hidden');
+    };
+
+    window.cerrarConfig = function () {
+        document.getElementById('modal-config').classList.add('hidden');
+    };
+
+    window.guardarConfig = async function () {
+        const campos = [
+            { clave: 'wsp_repartidor', id: 'cfg-wsp-repartidor' },
+            { clave: 'wsp_local',      id: 'cfg-wsp-local' },
+            { clave: 'email_contacto', id: 'cfg-email' },
+        ];
+
+        for (const c of campos) {
+            const val = document.getElementById(c.id)?.value.trim() || '';
+            await SB.from('pos_config')
+                .upsert({ clave: c.clave, valor_text: val }, { onConflict: 'clave' });
+        }
+
+        toast('Configuración guardada ✅', 'ok');
+        cerrarConfig();
+    };
+
+    // Cerrar config con click fuera
+    document.getElementById('modal-config')?.addEventListener('click', function(e) {
+        if (e.target === this) cerrarConfig();
     });
 
 })();
