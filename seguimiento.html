@@ -469,7 +469,8 @@
   // ── Paso en la barra ────────────────────────────────────────────────────
   function pasoDelivery(estado) {
     if (['pendiente','pagado','whatsapp'].includes(estado)) return 0;
-    if (estado === 'en_cocina' || estado === 'listo')       return 1;
+    if (estado === 'en_cocina')                             return 1;
+    if (estado === 'listo')                                 return 2;
     if (estado === 'en_camino')                             return 2;
     if (estado === 'recibido')                              return 3;
     return 0;
