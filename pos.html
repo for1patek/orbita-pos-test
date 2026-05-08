@@ -240,6 +240,7 @@
             <button class="header-btn" onclick="mostrarTabPedidos()" id="btn-tab-pedidos">📋 Pedidos web</button>
             <button class="header-btn" onclick="mostrarTabVenta()" id="btn-tab-venta">🛒 Nueva venta</button>
             <button class="header-btn" onclick="abrirHistorial()" id="btn-tab-historial">🕐 Historial</button>
+            <button class="header-btn" id="btn-config" onclick="abrirConfig()" style="display:none;">⚙️</button>
             <button class="header-btn" onclick="abrirCierreTurno()">🔒 Cerrar turno</button>
             <button class="header-btn danger" onclick="cerrarSesionPOS()">Salir</button>
         </div>
@@ -392,6 +393,63 @@
 <!-- ══════════════════════════════════════════════
      TOAST
 ══════════════════════════════════════════════ -->
+
+
+<!-- ══════════════════════════════════════════════
+     MODAL: CONFIRMAR RETIRO
+══════════════════════════════════════════════ -->
+<div class="modal-overlay hidden" id="modal-retiro">
+    <div class="modal-card" style="max-width:380px;text-align:left;">
+        <div class="modal-titulo">📦 CONFIRMAR RETIRO</div>
+        <div class="modal-cliente" id="retiro-nombre">—</div>
+
+        <div style="margin-bottom:20px;">
+            <!-- Solo visible para pedidos web (cliente tiene código) -->
+            <div id="retiro-codigo-section">
+                <label style="font-size:0.75rem;letter-spacing:2px;text-transform:uppercase;color:var(--muted);display:block;margin-bottom:6px;">Código del cliente</label>
+                <input id="retiro-codigo" type="text" maxlength="4" placeholder="1234"
+                    style="width:100%;background:var(--surface);border:1px solid var(--border);border-radius:10px;padding:10px 14px;color:var(--text);font-family:'DM Sans',sans-serif;font-size:1.1rem;text-align:center;letter-spacing:6px;">
+                <div id="retiro-codigo-error" style="color:var(--red);font-size:0.8rem;margin-top:4px;display:none;">❌ Código incorrecto</div>
+            </div>
+        </div>
+
+        <div class="modal-acciones">
+            <button class="btn-modal-cancel" onclick="cerrarModalRetiro()">Cancelar</button>
+            <button class="btn-modal-confirm" onclick="confirmarRetiro()">✅ RETIRADO</button>
+        </div>
+    </div>
+</div>
+
+<!-- ══════════════════════════════════════════════
+     MODAL: CONFIGURACIÓN (solo admin)
+══════════════════════════════════════════════ -->
+<div class="modal-overlay hidden" id="modal-config">
+    <div class="modal-card" style="max-width:420px;text-align:left;">
+        <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:20px;">
+            <div class="modal-titulo" style="margin-bottom:0;">⚙️ CONFIGURACIÓN</div>
+            <button onclick="cerrarConfig()" style="background:none;border:none;color:var(--muted);font-size:1.4rem;cursor:pointer;line-height:1;">✕</button>
+        </div>
+        <div style="display:flex;flex-direction:column;gap:18px;">
+            <div>
+                <label style="font-size:0.78rem;letter-spacing:2px;text-transform:uppercase;color:var(--muted);display:block;margin-bottom:8px;">🛵 Número repartidor (WhatsApp)</label>
+                <input id="cfg-wsp-repartidor" type="tel" placeholder="+56912345678"
+                    style="width:100%;background:var(--surface);border:1px solid var(--border);border-radius:10px;padding:10px 14px;color:var(--text);font-family:'DM Sans',sans-serif;font-size:0.95rem;">
+            </div>
+            <div>
+                <label style="font-size:0.78rem;letter-spacing:2px;text-transform:uppercase;color:var(--muted);display:block;margin-bottom:8px;">📞 Número del local (WhatsApp)</label>
+                <input id="cfg-wsp-local" type="tel" placeholder="+56912345678"
+                    style="width:100%;background:var(--surface);border:1px solid var(--border);border-radius:10px;padding:10px 14px;color:var(--text);font-family:'DM Sans',sans-serif;font-size:0.95rem;">
+            </div>
+            <div>
+                <label style="font-size:0.78rem;letter-spacing:2px;text-transform:uppercase;color:var(--muted);display:block;margin-bottom:8px;">📧 Correo de contacto</label>
+                <input id="cfg-email" type="email" placeholder="contacto@orbita.cl"
+                    style="width:100%;background:var(--surface);border:1px solid var(--border);border-radius:10px;padding:10px 14px;color:var(--text);font-family:'DM Sans',sans-serif;font-size:0.95rem;">
+            </div>
+        </div>
+        <button class="btn-modal-confirm" style="margin-top:24px;" onclick="guardarConfig()">GUARDAR</button>
+    </div>
+</div>
+
 <div class="toast" id="toast"></div>
 
 <!-- ══════════════════════════════════════════════
