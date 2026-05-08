@@ -388,12 +388,10 @@
             sitio:        estado.local,
             nombre:       nombre,
             total:        total,
-            costo_total:  costo,
             items_json:   items,
             estado:       'pagado',
-            tipo_entrega: tipo,
-            metodo_pago:  estado.metodoPago,
-            origen:       'pos',
+            tipo_entrega: tipo === 'local' ? 'local' : 'retiro',
+            origen:       'fisico',
             cajero_id:    estado.usuario.id,
         });
 
@@ -519,7 +517,7 @@
                     <span class="badge-estado ${badgeClass}">${badgeLabel}</span>
                 </div>
                 <div class="pedido-web-items">${items}</div>
-                ${esDelivery && p.direccion ? `<div class="pedido-web-dir">📍 ${p.direccion}</div>` : ''}
+                ${esDelivery && p.direccion_entrega ? `<div class="pedido-web-dir">📍 ${p.direccion_entrega}</div>` : ''}
                 <div class="pedido-web-total">${fmt(p.total)}</div>
                 <div class="pedido-web-actions" id="acciones-${p.id}"></div>
             `;
@@ -591,6 +589,17 @@
         const { error } = await SB.from('pedidos').update({ estado: estadoNuevo }).eq('id', id);
         if (error) { toast('Error al actualizar pedido', 'err'); return; }
         toast('Pedido actualizado ✅', 'ok');
+        // Disparar push notification al cliente (silencioso — no bloquea el flujo)
+        try {
+            fetch(`${window.orbitaAuth.url}/functions/v1/send-push`, {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                    'Authorization': `Bearer ${window.orbitaAuth.anonKey}`
+                },
+                body: JSON.stringify({ pedido_id: id, estado_nuevo: estadoNuevo })
+            }).catch(() => {}); // silencioso si falla
+        } catch(e) {}
         if (recargar) cargarPedidosWeb();
     }
 
@@ -624,7 +633,7 @@
                 const msg = encodeURIComponent(
                     `🛵 PEDIDO LISTO — ${localNombre}\n\n` +
                     `👤 Cliente: ${p.nombre}\n` +
-                    `📍 Dirección: ${p.direccion || p.direccion_entrega || 'Sin dirección'}\n\n` +
+                    `📍 Dirección: ${p.direccion_entrega || 'Sin dirección'}\n\n` +
                     `📋 Pedido:\n${items}\n\n` +
                     `💰 Total: ${fmt(p.total)}\n` +
                     `🔑 Código de entrega: ${codigo}\n\n` +
@@ -682,20 +691,18 @@
         const desde = estado.turnoInicio.toISOString();
         const { data } = await SB
             .from('pedidos')
-            .select('total, metodo_pago, estado, origen')
+            .select('total, metodo_pago_entrega, estado, origen')
             .eq('sitio', estado.local)
             .gte('creado_at', desde);
 
         const ventas   = (data || []).filter(p => p.estado !== 'anulado');
         const anuladas = (data || []).filter(p => p.estado === 'anulado');
 
-        const sum = (mp) => ventas.filter(p => p.metodo_pago === mp || (mp === 'online' && p.origen === 'web' && p.estado === 'pagado')).reduce((s, p) => s + (p.total || 0), 0);
-
-        const efectivo    = sum('efectivo');
-        const tarjeta     = sum('tarjeta');
-        const transfer    = sum('transferencia');
-        const online      = ventas.filter(p => p.origen === 'web').reduce((s, p) => s + (p.total || 0), 0);
-        const totalGeneral = efectivo + tarjeta + transfer + online;
+        const efectivo = ventas.filter(p => p.origen === 'fisico' && p.metodo_pago_entrega === 'efectivo').reduce((s, p) => s + (p.total || 0), 0);
+        const tarjeta  = ventas.filter(p => p.origen === 'fisico' && p.metodo_pago_entrega === 'transferencia').reduce((s, p) => s + (p.total || 0), 0);
+        const transfer = ventas.filter(p => p.origen === 'fisico' && !p.metodo_pago_entrega).reduce((s, p) => s + (p.total || 0), 0);
+        const online   = ventas.filter(p => p.origen === 'web').reduce((s, p) => s + (p.total || 0), 0);
+        const totalGeneral = ventas.reduce((s, p) => s + (p.total || 0), 0);
 
         document.getElementById('cierre-cajero').textContent     = estado.usuario.nombre;
         document.getElementById('cierre-total-monto').textContent = fmt(totalGeneral);
@@ -717,22 +724,21 @@
         const desde = estado.turnoInicio.toISOString();
         const { data } = await SB
             .from('pedidos')
-            .select('total, metodo_pago, estado, origen')
+            .select('total, metodo_pago_entrega, estado, origen')
             .eq('sitio', estado.local)
             .gte('creado_at', desde);
 
         const ventas   = (data || []).filter(p => p.estado !== 'anulado');
         const anuladas = (data || []).filter(p => p.estado === 'anulado');
-        const sum = (mp) => ventas.filter(p => p.metodo_pago === mp).reduce((s, p) => s + (p.total || 0), 0);
 
         await SB.from('cierres_turno').insert({
             cajero_id:      estado.usuario.id,
             sitio:          estado.local,
             turno_inicio:   desde,
             turno_fin:      new Date().toISOString(),
-            total_efectivo: sum('efectivo'),
-            total_tarjeta:  sum('tarjeta'),
-            total_transfer: sum('transferencia'),
+            total_efectivo: ventas.filter(p => p.origen === 'fisico' && p.metodo_pago_entrega === 'efectivo').reduce((s, p) => s + (p.total || 0), 0),
+            total_tarjeta:  ventas.filter(p => p.origen === 'fisico' && p.metodo_pago_entrega === 'transferencia').reduce((s, p) => s + (p.total || 0), 0),
+            total_transfer: ventas.filter(p => p.origen === 'fisico' && !p.metodo_pago_entrega).reduce((s, p) => s + (p.total || 0), 0),
             total_online:   ventas.filter(p => p.origen === 'web').reduce((s, p) => s + (p.total || 0), 0),
             total_ventas:   ventas.reduce((s, p) => s + (p.total || 0), 0),
             num_transacc:   ventas.length,
