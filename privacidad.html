@@ -109,11 +109,14 @@
 
             <h3>Datos de Pago</h3>
             <ul>
-                <li>Número de tarjeta de crédito/débito</li>
-                <li>Fecha de vencimiento</li>
-                <li>Código de seguridad (CVV)</li>
+                <li>Últimos 4 dígitos de la tarjeta (para identificarla)</li>
+                <li>Marca de la tarjeta (Visa, Mastercard, etc.)</li>
                 <li>Método de pago preferido (MercadoPago/WhatsApp)</li>
             </ul>
+            <div class="highlight">
+                <strong>Importante:</strong> Nunca almacenamos el número completo de tu tarjeta, fecha de vencimiento ni código CVV. 
+                Estos datos son procesados exclusivamente por MercadoPago de forma segura.
+            </div>
 
             <h3>Datos de Uso</h3>
             <ul>
@@ -132,7 +135,7 @@
             <ul>
                 <li><strong>Procesamiento de pagos:</strong> Para ejecutar cargos automáticos cuando usas Pago Rápido</li>
                 <li><strong>Personalización:</strong> Para recordar tus preferencias y facilitar futuros pedidos</li>
-                <li><strong>Comunicación:</strong> Para confirmar pedidos y enviarte notificaciones importantes</li>
+                <li><strong>Comunicación:</strong> Para confirmar pedidos y notificarte cuando tu pedido es recibido y procesado</li>
                 <li><strong>Mejora del servicio:</strong> Para analizar tendencias y optimizar nuestra oferta</li>
                 <li><strong>Seguridad:</strong> Para prevenir fraudes y proteger tu cuenta</li>
             </ul>
@@ -144,16 +147,16 @@
                 <li><strong>Encriptación de datos:</strong> Todos los datos sensibles están codificados usando algoritmos estándar de encriptación</li>
                 <li><strong>Acceso restringido:</strong> El acceso a la información está limitado a personal autorizado únicamente</li>
                 <li><strong>Conexiones seguras:</strong> Utilizamos protocolos HTTPS para todas las transmisiones de datos</li>
-                <li><strong>Autenticación de dos factores:</strong> Se requiere PIN de 4 dígitos para autorizar cada transacción</li>
+                <li><strong>Autenticación por PIN:</strong> Se requiere PIN de 4 dígitos para autorizar cada transacción, añadiendo una capa adicional de seguridad</li>
                 <li><strong>Protección de datos financieros:</strong> Los números de tarjeta se almacenan de forma parcial (solo últimos 4 dígitos visibles)</li>
             </ul>
 
             <h3>Infraestructura y Almacenamiento</h3>
             <ul>
                 <li><strong>Servidores seguros:</strong> Los datos se alojan en infraestructura con protección de acceso</li>
-                <li><strong>Copias de seguridad:</strong> Implementamos sistemas de backup regular para protección contra pérdida de datos</li>
-                <li><strong>Monitoreo continuo:</strong> Mantenemos supervisión activa de accesos y actividades del sistema</li>
-                <li><strong>Actualizaciones regulares:</strong> Los sistemas de seguridad se mantienen actualizados continuamente</li>
+                <li><strong>Copias de seguridad:</strong> La infraestructura de Supabase incluye sistemas de backup para protección contra pérdida de datos</li>
+                <li><strong>Soporte técnico especializado:</strong> Contamos con un profesional técnico de confianza que atiende cualquier incidente de seguridad de manera prioritaria</li>
+                <li><strong>Actualizaciones:</strong> Los sistemas de seguridad se mantienen actualizados según sea necesario</li>
             </ul>
 
             <h3>Compromiso de Integridad</h3>
@@ -200,14 +203,14 @@
                 <li><strong>Acceso:</strong> Puedes solicitar una copia de tus datos personales en cualquier momento</li>
                 <li><strong>Rectificación:</strong> Puedes corregir información incorrecta sin costo</li>
                 <li><strong>Supresión:</strong> Puedes solicitar la eliminación de tu cuenta y todos tus datos</li>
-                <li><strong>Portabilidad:</strong> Puedes solicitar tus datos en formato digital para llevarlos a otro servicio</li>
-                <li><strong>Limitación:</strong> Puedes limitar el procesamiento de tus datos cuando lo consideres necesario</li>
+                <li><strong>Portabilidad:</strong> Puedes exportar o imprimir tus datos personales desde tu perfil en cualquier momento</li>
+                <li><strong>Limitación:</strong> Puedes eliminar tu tarjeta guardada y seguir pagando con MercadoPago directamente o por WhatsApp, sin que almacenemos datos de pago</li>
             </ul>
 
             <h3>Derechos como Consumidor (Ley 19.496)</h3>
             <ul>
-                <li><strong>Garantía legal:</strong> Derecho a garantía de 6 meses en productos nuevos con fallas</li>
-                <li><strong>Derecho a retracto:</strong> 10 días para arrepentirte de compras online (comercio electrónico)</li>
+                <li><strong>Garantía legal:</strong> En caso de que un producto llegue en mal estado o no corresponda a lo pedido, lo cambiamos por el mismo producto u otro de igual o menor valor. Por tratarse de comida preparada, la garantía aplica al momento de la entrega</li>
+                <li><strong>Derecho a retracto:</strong> Dado que comercializamos productos alimenticios preparados al momento, el derecho a retracto de 10 días no aplica según la excepción de la Ley 19.496 para bienes que se deterioran rápidamente. Sin embargo, cualquier problema con tu pedido lo gestionamos lo antes posible</li>
                 <li><strong>Información clara:</strong> Derecho a recibir toda la información sobre productos y precios</li>
                 <li><strong>Contratos claros:</strong> Cláusulas ambiguas se interpretan a tu favor</li>
                 <li><strong>Medio de pago libre:</strong> No podemos condicionar a nuestro medio de pago exclusivo</li>
@@ -217,19 +220,10 @@
             <h3>Derechos en Comercio Electrónico</h3>
             <ul>
                 <li><strong>Confirmación escrita:</strong> Derecho a recibir confirmación por escrito de tu compra</li>
-                <li><strong>Información de envío:</strong> Derecho a conocer costo total y tiempo de entrega</li>
-                <li><strong>Protección de datos financieros:</strong> Bloqueo permanente de tarjetas si lo solicitas</li>
+                <li><strong>Información de envío:</strong> Derecho a conocer costo total y tiempo de entrega estimado, informado al confirmar el pedido</li>
+                <li><strong>Protección de datos financieros:</strong> Puedes eliminar tu tarjeta guardada en cualquier momento desde tu perfil</li>
                 <li><strong>Seguridad en transacciones:</strong> Todas las transacciones deben ser seguras</li>
                 <li><strong>Acceso a historial:</strong> Derecho a consultar todas tus compras y transacciones</li>
-            </ul>
-
-            <h3>Cómo Ejercer Tus Derechos</h3>
-            <ul>
-                <li><strong>Comunicación escrita:</strong> Envía tu solicitud por correo electrónico a privacidad@orbita.cl</li>
-                <li><strong>Respuesta oportuna:</strong> Responderemos dentro del plazo legal establecido</li>
-                <li><strong>Información detallada:</strong> Especifica claramente qué derecho deseas ejercer</li>
-                <li><strong>Documentación:</strong> Adjunta los documentos que respalden tu solicitud cuando corresponda</li>
-                <li><strong>Seguimiento:</strong> Puedes solicitar estado de tu solicitud en cualquier momento</li>
             </ul>
 
             <h3>Cómo Ejercer Tus Derechos</h3>
@@ -244,18 +238,16 @@
             
             <ul>
                 <li><strong>Datos de cuenta:</strong> Los mantenemos mientras tengas una cuenta activa</li>
-                <li><strong>Datos de pago:</strong> Se eliminan automáticamente después de 7 años de inactividad</li>
+                <li><strong>Datos de pago:</strong> Se conservan mientras la cuenta esté activa. Puedes solicitar su eliminación en cualquier momento escribiéndonos a privacidad@orbita.cl</li>
                 <li><strong>Historial de pedidos:</strong> Se conserva durante 5 años para fines fiscales</li>
-                <li><strong>Registros de acceso:</strong> Se eliminan después de 2 años</li>
+                <li><strong>Registros de acceso:</strong> Se conservan en la infraestructura de Supabase según sus políticas de retención</li>
             </ul>
 
             <h2>7. Cookies y Tecnologías Similares</h2>
             
             <ul>
-                <li>Usamos cookies esenciales para el funcionamiento del sitio</li>
-                <li>Las cookies nos recuerdan tus preferencias de sesión</li>
-                <li>Usamos localStorage para guardar tus datos de registro localmente</li>
-                <li>Puedes eliminar tus datos locales borrando el caché de tu navegador</li>
+                <li>Usamos cookies esenciales para el funcionamiento del sitio y para recordar tus preferencias de sesión</li>
+                <li>Puedes eliminar estos datos locales borrando el caché de tu navegador</li>
             </ul>
 
             <h2>8. Menores de Edad</h2>
@@ -279,23 +271,11 @@
                 <li><strong>Privacidad garantizada:</strong> Cumplimos con todas las medidas de seguridad descritas en esta política</li>
             </ul>
 
-            <h3>Compromiso de Igualdad</h3>
-            <div class="highlight" style="background: rgba(0,158,227,0.1); border-left-color: #009ee3;">
-                <p><strong>Nuestra filosofía de servicio:</strong></p>
-                <ul style="margin-top: 10px;">
-                    <li>Trato igualitario para todos los usuarios sin importar la edad</li>
-                    <li>Protección de datos consistente para toda nuestra comunidad</li>
-                    <li>Acceso universal a nuestros servicios y beneficios</li>
-                    <li>Mejora continua del servicio para todos</li>
-                </ul>
-            </div>
-
             <h2>9. Cambios a Esta Política</h2>
             
             <ul>
                 <li>Podemos actualizar esta política periódicamente</li>
-                <li>Notificaremos cambios importantes por correo electrónico</li>
-                <li>La fecha de última actualización siempre estará visible en la parte superior</li>
+                <li>La fecha de última actualización siempre estará visible en la parte superior de esta página</li>
                 <li>El uso continuado del servicio constituye aceptación de los cambios</li>
             </ul>
 
@@ -309,34 +289,33 @@
             <h3>Procedimiento para Reclamos</h3>
             <ul>
                 <li><strong>Recepción:</strong> Todos los reclamos se reciben por correo electrónico a privacidad@orbita.cl</li>
-                <li><strong>Registro:</strong> Cada reclamo se registra con número de caso y fecha de recepción</li>
+                <li><strong>Registro:</strong> Cada reclamo recibido por correo queda registrado con fecha, lo que nos permite hacer seguimiento</li>
                 <li><strong>Plazo de respuesta:</strong> Máximo 15 días hábiles según ley chilena</li>
                 <li><strong>Respuesta escrita:</strong> Toda respuesta se envía por correo electrónico con detalle de resolución</li>
-                <li><strong>Seguimiento:</strong> Puedes consultar estado de tu reclamo en cualquier momento</li>
+                <li><strong>Seguimiento:</strong> Puedes escribirnos en cualquier momento para consultar el estado de tu reclamo</li>
             </ul>
 
             <h3>Reclamos Relacionados con Pago</h3>
             <ul>
-                <li><strong>Cargos no autorizados:</strong> Si detectas cargos incorrectos, te reembolsamos inmediatamente</li>
-                <li><strong>Doble cobro:</strong> Investigamos y corregimos cualquier duplicidad en cargos</li>
+                <li><strong>Cargos no autorizados:</strong> Si detectas cargos incorrectos, iniciamos el proceso de revisión lo antes posible y gestionamos el reembolso a través de MercadoPago según sus plazos de operación</li>
+                <li><strong>Doble cobro:</strong> Si el cliente nos notifica una duplicidad en el cobro, investigamos y gestionamos la corrección a través de MercadoPago</li>
                 <li><strong>Fallas en pago rápido:</strong> Si el pago automático falla, puedes usar métodos tradicionales sin costo adicional</li>
-                <li><strong>Devoluciones:</strong> Procesamos devoluciones según política de cada local</li>
+                <li><strong>Devoluciones de dinero:</strong> Solo aplican en caso de errores de cobro o cargos incorrectos, gestionados a través de MercadoPago</li>
             </ul>
 
             <h3>Reclamos por Calidad del Servicio</h3>
             <ul>
-                <li><strong>Productos incorrectos:</strong> Si recibes productos equivocados, los reemplazamos sin costo</li>
-                <li><strong>Tiempos de entrega:</strong> Si el pedido se retrasa injustificadamente, recibes compensación</li>
-                <li><strong>Información incorrecta:</strong> Si la información del producto no corresponde, tienes derecho a devolución</li>
-                <li><strong>Incumplimientos:</strong> Si no cumplimos lo prometido, recibes compensación proporcional</li>
+                <li><strong>Productos incorrectos:</strong> Si el cliente nos notifica que recibió productos equivocados, los reemplazamos sin costo adicional</li>
+                <li><strong>Tiempos de entrega:</strong> Si el pedido se retrasa, nos comunicamos contigo lo antes posible para informarte y coordinar una solución</li>
+                <li><strong>Información incorrecta:</strong> Si la información del producto no corresponde a lo recibido, tienes derecho a cambio por el mismo producto u otro de igual o menor valor</li>
+                <li><strong>Incumplimientos:</strong> Si no cumplimos lo prometido, buscamos una solución justa mediante acuerdo directo contigo</li>
             </ul>
 
             <h3>Medios de Solución</h3>
             <ul>
                 <li><strong>Diálogo directo:</strong> Preferimos resolver por acuerdo mutuo antes de procedimientos formales</li>
-                <li><strong>Compensación inmediata:</strong> Para problemas menores, ofrecemos solución inmediata</li>
+                <li><strong>Solución justa:</strong> Para problemas menores, buscamos una resolución razonable para ambas partes</li>
                 <li><strong>Mejora continua:</strong> Cada reclamo se usa para mejorar nuestros procesos</li>
-                <li><strong>Escalación:</strong> Para casos complejos, seguimos protocolos de escalación formal</li>
             </ul>
 
             <h3>Plazos Legales Garantizados</h3>
@@ -345,8 +324,8 @@
                 <ul style="margin-top: 10px;">
                     <li><strong>Respuesta inicial:</strong> Máximo 5 días hábiles</li>
                     <li><strong>Resolución completa:</strong> Máximo 15 días hábiles (Ley 19.496)</li>
-                    <li><strong>Reembolsos:</strong> Máximo 10 días hábiles desde resolución</li>
-                    <li><strong>Devoluciones:</strong> Inmediatas para productos defectuosos</li>
+                    <li><strong>Reembolsos de dinero:</strong> Solo aplican en errores de cobro o cargos duplicados, gestionados a través de MercadoPago según sus plazos</li>
+                    <li><strong>Cambio de producto:</strong> Lo antes posible ante productos defectuosos o incorrectos, por el mismo producto u otro de igual o menor valor</li>
                 </ul>
             </div>
 
@@ -354,23 +333,20 @@
             
             <div class="contact-box">
                 <h3>Canal Oficial de Atención</h3>
-                <p><strong>Departamento de Atención al Cliente y Reclamos</strong></p>
+                <p><strong>Atención directa al cliente</strong></p>
                 <p><strong>Correo electrónico:</strong> privacidad@orbita.cl</p>
                 <p><strong>Teléfono:</strong> +56 9 XXXX XXXX</p>
-                <p><strong>Dirección postal:</strong> Por definir, Frutillar, Chile</p>
-                <p><strong>Horario de atención:</strong> Lunes a viernes, 9:00 - 18:00 hrs</p>
+                <p><strong>Horario de atención:</strong> Su solicitud será atendida lo antes posible</p>
                 
                 <div class="highlight" style="background: rgba(255,77,0,0.1); border-left-color: var(--fire); margin-top: 20px;">
-                    <p><strong>Protocolo de atención:</strong></p>
-                    <p>Todas las consultas y reclamos son atendidos por personal capacitado. 
-                    Para asuntos urgentes, marcar el correo con el asunto "URGENTE - RECLAMO" 
-                    para recibir prioridad en la respuesta.</p>
+                    <p><strong>Nuestra forma de atender:</strong></p>
+                    <p>Preferimos resolver cualquier problema de manera directa y personal, ya sea por teléfono o presencialmente en el local. 
+                    Para consultas por escrito, puedes escribirnos al correo indicando el asunto "URGENTE - RECLAMO" si necesitas prioridad en la respuesta.</p>
                 </div>
                 
                 <p style="margin-top: 20px;">
                     <strong>Tiempo de respuesta estándar:</strong> 24-48 horas hábiles<br>
-                    <strong>Reclamos:</strong> Máximo 15 días hábiles<br>
-                    <strong>Asuntos urgentes:</strong> 4-6 horas hábiles
+                    <strong>Reclamos:</strong> Máximo 15 días hábiles
                 </p>
             </div>
 
@@ -398,11 +374,11 @@
 
             <h3 id="que-es-encriptacion">¿Qué es la Encriptación?</h3>
             <div class="highlight">
-                <strong>Encriptación</strong> es como traducir tus datos a un idioma secreto que solo Órbita puede entender.
+                <strong>Encriptación</strong> es como traducir tus datos a un idioma secreto que solo el sistema autorizado puede entender.
             </div>
             <ul>
                 <li><strong>Tu tarjeta "1234..."</strong> se convierte en "xK9#mP2@qZ..."</li>
-                <li><strong>Solo nosotros tenemos la "llave"</strong> para volver a traducirlo</li>
+                <li><strong>Solo el sistema autorizado tiene la "llave"</strong> para volver a traducirlo</li>
                 <li><strong>Si alguien roba los datos,</strong> solo ve símbolos sin sentido</li>
             </ul>
             <p style="font-size: 0.9rem; color: var(--muted);">
@@ -413,17 +389,17 @@
             <h3 id="que-son-auditorias">¿Qué son las Auditorías de Seguridad?</h3>
             <div class="highlight">
                 <strong>¡Importante!</strong> No tiene nada que ver con hablar con tus padres. 
-                Son revisiones técnicas que hacen expertos en seguridad informática.
+                Son revisiones técnicas que hace nuestro profesional de confianza en seguridad informática.
             </div>
             <ul>
-                <li><strong>Expertos externos</strong> revisan nuestros sistemas como detectives</li>
-                <li><strong>Buscan debilidades</strong> antes de que las encuentren los malos</li>
-                <li><strong>Simulan ataques</strong> para probar nuestras defensas</li>
-                <li><strong>Nos dan recomendaciones</strong> para mejorar la seguridad</li>
+                <li><strong>Revisión técnica:</strong> Nuestro programador especialista revisa y mantiene la seguridad del sistema</li>
+                <li><strong>Respuesta ante incidentes:</strong> Ante cualquier problema de seguridad, contamos con soporte técnico especializado disponible</li>
+                <li><strong>Actualizaciones:</strong> La encriptación y protocolos de seguridad se mantienen actualizados</li>
+                <li><strong>Resolución oportuna:</strong> Cualquier vulnerabilidad detectada se aborda de manera prioritaria</li>
             </ul>
             <p style="font-size: 0.9rem; color: var(--muted);">
-                <strong>Ejemplo práctico:</strong> Es como contratar a un experto en cerraduras que prueba 
-                todas tus puertas y ventanas para asegurarse de que nadie pueda entrar.
+                <strong>Ejemplo práctico:</strong> Es como tener un electricista de confianza: no está en casa todo el día, 
+                pero cuando algo falla, lo llamamos de inmediato y lo resuelve rápido.
             </p>
 
             <h3>Otros Términos Comunes</h3>
@@ -431,17 +407,17 @@
             <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(250px, 1fr)); gap: 20px; margin: 20px 0;">
                 <div style="background: var(--card); padding: 20px; border-radius: 12px; border: 1px solid var(--border);">
                     <h4 style="color: var(--fire); margin-bottom: 10px;">Firewall</h4>
-                    <p style="font-size: 0.9rem;">Como un guardián de seguridad que revisa todo lo que entra y sale de nuestros servidores, bloqueando lo sospechoso.</p>
+                    <p style="font-size: 0.9rem;">Como un guardián de seguridad que revisa todo lo que entra y sale de los servidores, bloqueando lo sospechoso. Nuestra infraestructura (Supabase y Vercel) incluye protección de este tipo.</p>
                 </div>
                 
                 <div style="background: var(--card); padding: 20px; border-radius: 12px; border: 1px solid var(--border);">
                     <h4 style="color: var(--fire); margin-bottom: 10px;">Tokenización</h4>
-                    <p style="font-size: 0.9rem;">Reemplazar tu número de tarjeta por un código temporal. Así nunca guardamos tu tarjeta real.</p>
+                    <p style="font-size: 0.9rem;">MercadoPago reemplaza tu número de tarjeta por un código temporal. Así ni nosotros ni nadie más tiene acceso a tu número real.</p>
                 </div>
                 
                 <div style="background: var(--card); padding: 20px; border-radius: 12px; border: 1px solid var(--border);">
                     <h4 style="color: var(--fire); margin-bottom: 10px;">PCI DSS</h4>
-                    <p style="font-size: 0.9rem;">Normas de seguridad internacionales que debemos seguir para manejar tarjetas de crédito de forma segura.</p>
+                    <p style="font-size: 0.9rem;">Normas internacionales de seguridad para tarjetas de crédito. MercadoPago, nuestro procesador de pagos, cumple con esta certificación, lo que protege tus datos financieros.</p>
                 </div>
                 
                 <div style="background: var(--card); padding: 20px; border-radius: 12px; border: 1px solid var(--border);">
