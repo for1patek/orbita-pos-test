@@ -3,127 +3,131 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Confirmar Entrega · Órbita 300</title>
+    <title>Confirmar Entrega · Órbita</title>
     <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>🛵</text></svg>">
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link href="https://fonts.googleapis.com/css2?family=Bebas+Neue&family=DM+Sans:wght@300;400;500;700&display=swap" rel="stylesheet">
     <style>
         :root {
-            --primary: #8B1A1A;
+            --fire:    #ff4d00;
             --green:   #22c55e;
             --red:     #ef4444;
-            --gold:    #C4922A;
-            --bg:      #0f0f0f;
+            --gold:    #f59e0b;
+            --bg:      #0a0a0a;
             --card:    #1a1a1a;
-            --border:  #2e2e2e;
+            --border:  #2a2a2a;
             --text:    #f0f0f0;
-            --muted:   #888;
+            --muted:   #666;
             --surface: #222;
         }
         * { margin: 0; padding: 0; box-sizing: border-box; }
-        body { background: var(--bg); color: var(--text); font-family: 'DM Sans', sans-serif; min-height: 100dvh; display: flex; align-items: center; justify-content: center; padding: 20px; }
-
-        .container { width: 100%; max-width: 360px; text-align: center; }
-        .logo { font-family: 'Bebas Neue', sans-serif; font-size: 2rem; color: var(--primary); letter-spacing: 3px; margin-bottom: 4px; }
-        .logo-sub { font-size: 0.75rem; letter-spacing: 3px; text-transform: uppercase; color: var(--muted); margin-bottom: 28px; }
-
-        .card { background: var(--card); border: 1px solid var(--border); border-radius: 20px; padding: 28px 24px; }
-
-        /* Estados */
-        .estado-cargando .icono::after { content: '⏳'; }
-        .estado-listo    .icono::after { content: '🛵'; }
-        .estado-ok       .icono::after { content: '✅'; }
-        .estado-error    .icono::after { content: '❌'; }
-        .estado-ya       .icono::after { content: '✔️'; }
-
-        .icono { font-size: 3.5rem; margin-bottom: 16px; display: block; }
-        .titulo { font-family: 'Bebas Neue', sans-serif; font-size: 1.6rem; letter-spacing: 2px; margin-bottom: 8px; }
-        .subtitulo { font-size: 0.88rem; color: var(--muted); margin-bottom: 20px; line-height: 1.5; }
-
-        .pedido-card { background: var(--surface); border-radius: 14px; padding: 16px; text-align: left; margin-bottom: 20px; }
+        body {
+            background: var(--bg);
+            color: var(--text);
+            font-family: 'DM Sans', sans-serif;
+            min-height: 100dvh;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            padding: 20px;
+        }
+        .container { width: 100%; max-width: 380px; }
+        .logo { font-family: 'Bebas Neue', sans-serif; font-size: 2rem; color: var(--fire); letter-spacing: 3px; text-align: center; margin-bottom: 4px; }
+        .logo-sub { font-size: 0.75rem; letter-spacing: 3px; text-transform: uppercase; color: var(--muted); text-align: center; margin-bottom: 24px; }
+        .card { background: var(--card); border: 1px solid var(--border); border-radius: 20px; padding: 28px 24px; margin-bottom: 12px; }
+        .icono { font-size: 3.2rem; text-align: center; display: block; margin-bottom: 14px; }
+        .titulo { font-family: 'Bebas Neue', sans-serif; font-size: 1.6rem; letter-spacing: 2px; text-align: center; margin-bottom: 6px; }
+        .subtitulo { font-size: 0.88rem; color: var(--muted); text-align: center; margin-bottom: 20px; line-height: 1.5; }
+        .pedido-card { background: var(--surface); border-radius: 14px; padding: 16px; text-align: left; margin-bottom: 18px; }
         .pedido-row { display: flex; justify-content: space-between; align-items: baseline; margin-bottom: 6px; }
         .pedido-label { font-size: 0.75rem; color: var(--muted); text-transform: uppercase; letter-spacing: 1px; }
         .pedido-valor { font-size: 0.9rem; font-weight: 700; }
         .pedido-dir { font-size: 0.82rem; color: #60a5fa; margin-top: 4px; }
-        .pedido-items { font-size: 0.82rem; color: var(--muted); margin-top: 8px; line-height: 1.6; border-top: 1px solid var(--border); padding-top: 8px; }
-        .pedido-total { font-family: 'Bebas Neue', sans-serif; font-size: 1.6rem; color: var(--gold); margin-top: 8px; }
-
+        .pedido-items { font-size: 0.82rem; color: var(--muted); margin-top: 8px; line-height: 1.6; border-top: 1px solid var(--border); padding-top: 8px; white-space: pre-line; }
+        .pedido-total { font-family: 'Bebas Neue', sans-serif; font-size: 1.5rem; color: var(--gold); margin-top: 8px; }
+        .gps-status { display: flex; align-items: center; gap: 10px; background: var(--surface); border: 1px solid var(--border); border-radius: 12px; padding: 12px 16px; margin-bottom: 18px; font-size: 0.85rem; color: var(--muted); }
+        .gps-dot { width: 10px; height: 10px; border-radius: 50%; background: var(--muted); flex-shrink: 0; transition: background 0.3s; }
+        .gps-dot.activo { background: var(--green); animation: ping 1.5s ease-in-out infinite; }
+        .gps-dot.error  { background: var(--red); }
+        @keyframes ping { 0%,100%{opacity:1;transform:scale(1)} 50%{opacity:0.5;transform:scale(0.7)} }
+        .campo-label { display: block; font-size: 0.78rem; color: var(--muted); text-transform: uppercase; letter-spacing: 1px; margin-bottom: 8px; }
+        .input-codigo { width: 100%; padding: 14px; border-radius: 12px; border: 1px solid var(--border); background: var(--surface); color: var(--text); font-size: 1.8rem; text-align: center; letter-spacing: 10px; font-family: 'Bebas Neue', sans-serif; margin-bottom: 16px; outline: none; transition: border-color 0.2s; }
+        .input-codigo:focus { border-color: var(--fire); }
+        .metodo-btns { display: flex; gap: 10px; margin-bottom: 18px; }
+        .btn-metodo { flex: 1; padding: 12px; border-radius: 12px; border: 2px solid var(--border); background: var(--surface); color: var(--muted); font-family: 'DM Sans', sans-serif; font-size: 0.9rem; font-weight: 700; cursor: pointer; transition: all 0.15s; }
+        .btn-metodo.selected { border-color: var(--green); color: var(--green); background: #0a2a14; }
         .btn-confirmar { width: 100%; padding: 18px; border: none; border-radius: 14px; background: var(--green); color: #fff; font-family: 'Bebas Neue', sans-serif; font-size: 1.5rem; letter-spacing: 2px; cursor: pointer; transition: all 0.2s; }
         .btn-confirmar:hover { opacity: 0.9; transform: scale(0.99); }
         .btn-confirmar:disabled { background: var(--surface); color: var(--muted); cursor: not-allowed; transform: none; }
-
-        .msg-ok    { color: var(--green); font-weight: 700; font-size: 1rem; }
-        .msg-error { color: var(--red);   font-weight: 700; font-size: 0.9rem; }
-
-        #estado-ya-entregado { display: none; }
+        .msg-ok    { color: var(--green); font-weight: 700; font-size: 0.95rem; text-align: center; }
+        .msg-error { color: var(--red);   font-weight: 700; font-size: 0.9rem;  text-align: center; }
+        #msg-confirmar { margin-top: 12px; min-height: 20px; }
+        .hidden { display: none !important; }
     </style>
 </head>
 <body>
 <div class="container">
-    <div class="logo">ÓRBITA 300</div>
+    <div class="logo">ÓRBITA</div>
     <div class="logo-sub">Confirmación de entrega</div>
 
-    <!-- Cargando -->
-    <div class="card estado-cargando" id="vista-cargando">
-        <span class="icono"></span>
+    <div class="card" id="vista-cargando">
+        <span class="icono">⏳</span>
         <div class="titulo">Cargando pedido…</div>
     </div>
 
-    <!-- Listo para confirmar -->
-    <div class="card estado-listo hidden" id="vista-listo">
-        <span class="icono"></span>
+    <div class="card hidden" id="vista-listo">
+        <span class="icono">🛵</span>
         <div class="titulo">¿Entregaste este pedido?</div>
-        <div class="subtitulo">Revisa los datos antes de confirmar.</div>
+        <div class="subtitulo">Revisa los datos y confirma la entrega.</div>
 
         <div class="pedido-card">
             <div class="pedido-row">
                 <span class="pedido-label">Cliente</span>
                 <span class="pedido-valor" id="ent-nombre">—</span>
             </div>
-            <div class="pedido-dir" id="ent-dir"></div>
+            <div class="pedido-dir"   id="ent-dir"></div>
             <div class="pedido-items" id="ent-items"></div>
             <div class="pedido-total" id="ent-total"></div>
         </div>
 
-        <!-- Código de confirmación -->
-        <div style="margin-bottom:16px;">
-            <label style="display:block;font-size:0.78rem;color:var(--muted);text-transform:uppercase;letter-spacing:1px;margin-bottom:8px;">Código del cliente</label>
-            <input id="input-codigo" type="number" maxlength="4" placeholder="0000"
-                style="width:100%;padding:14px;border-radius:12px;border:1px solid var(--border);background:var(--surface);color:var(--text);font-size:1.5rem;text-align:center;letter-spacing:8px;font-family:'Bebas Neue',sans-serif;">
+        <div class="gps-status">
+            <div class="gps-dot" id="gps-dot"></div>
+            <span id="gps-texto">Activando GPS…</span>
         </div>
 
-        <!-- Método de pago -->
-        <div style="margin-bottom:16px;">
-            <label style="display:block;font-size:0.78rem;color:var(--muted);text-transform:uppercase;letter-spacing:1px;margin-bottom:8px;">Método de pago recibido</label>
-            <div style="display:flex;gap:10px;">
-                <button id="btn-efectivo" onclick="selMetodo('efectivo')" style="flex:1;padding:12px;border-radius:12px;border:2px solid var(--border);background:var(--surface);color:var(--muted);font-weight:700;cursor:pointer;transition:all .15s;">💵 Efectivo</button>
-                <button id="btn-transferencia" onclick="selMetodo('transferencia')" style="flex:1;padding:12px;border-radius:12px;border:2px solid var(--border);background:var(--surface);color:var(--muted);font-weight:700;cursor:pointer;transition:all .15s;">🏦 Transferencia</button>
+        <div id="bloque-codigo">
+            <label class="campo-label">Código del cliente</label>
+            <input id="input-codigo" class="input-codigo" type="number" placeholder="0000">
+        </div>
+
+        <div id="bloque-metodo">
+            <label class="campo-label">Método de pago recibido</label>
+            <div class="metodo-btns">
+                <button class="btn-metodo" id="btn-efectivo"      onclick="selMetodo('efectivo')">💵 Efectivo</button>
+                <button class="btn-metodo" id="btn-transferencia" onclick="selMetodo('transferencia')">🏦 Transferencia</button>
             </div>
         </div>
 
         <button class="btn-confirmar" id="btn-confirmar" onclick="confirmarEntrega()">
             ✅ CONFIRMAR ENTREGA
         </button>
-        <div id="msg-confirmar" style="margin-top:12px;min-height:20px;"></div>
+        <div id="msg-confirmar"></div>
     </div>
 
-    <!-- Ya entregado -->
-    <div class="card estado-ya hidden" id="vista-ya">
-        <span class="icono"></span>
+    <div class="card hidden" id="vista-ya">
+        <span class="icono">✔️</span>
         <div class="titulo">Ya confirmado</div>
-        <div class="subtitulo">Este pedido ya fue marcado como entregado anteriormente.</div>
+        <div class="subtitulo">Este pedido ya fue marcado como entregado.</div>
     </div>
 
-    <!-- Error -->
-    <div class="card estado-error hidden" id="vista-error">
-        <span class="icono"></span>
+    <div class="card hidden" id="vista-error">
+        <span class="icono">❌</span>
         <div class="titulo">Pedido no encontrado</div>
         <div class="subtitulo">El link puede ser inválido o el pedido fue anulado. Contacta al local.</div>
     </div>
 
-    <!-- Confirmado exitosamente -->
-    <div class="card estado-ok hidden" id="vista-ok">
-        <span class="icono"></span>
+    <div class="card hidden" id="vista-ok">
+        <span class="icono">✅</span>
         <div class="titulo">¡Entrega confirmada!</div>
         <div class="subtitulo msg-ok">El pedido fue marcado como recibido. ¡Gracias! 🛵</div>
     </div>
@@ -133,105 +137,142 @@
 <script src="./orbita-auth.js"></script>
 <script>
 (async function () {
-    const SB = supabase.createClient(window.orbitaAuth.url, window.orbitaAuth.anonKey);
-    function fmt(n) { return '$' + Math.round(n).toLocaleString('es-CL'); }
+    'use strict';
 
+    const SB  = supabase.createClient(window.orbitaAuth.url, window.orbitaAuth.anonKey);
+    const fmt = n => '$' + Math.round(n || 0).toLocaleString('es-CL');
+
+    const VISTAS = ['vista-cargando','vista-listo','vista-ya','vista-error','vista-ok'];
     function show(id) {
-        ['vista-cargando','vista-listo','vista-ya','vista-error','vista-ok'].forEach(v => {
-            document.getElementById(v).classList.add('hidden');
-        });
-        document.getElementById(id).classList.remove('hidden');
+        VISTAS.forEach(v => document.getElementById(v).classList.add('hidden'));
+        document.getElementById(id)?.classList.remove('hidden');
     }
 
-    // Obtener id del pedido desde la URL
-    const params = new URLSearchParams(window.location.search);
+    const params   = new URLSearchParams(window.location.search);
     const pedidoId = params.get('id');
-
     if (!pedidoId) { show('vista-error'); return; }
 
-    // Cargar pedido
     const { data: pedido, error } = await SB
         .from('pedidos')
-        .select('*')
+        .select('id, nombre, estado, tipo_entrega, origen, items_json, total, codigo_entrega, direccion_entrega, metodo_pago_entrega')
         .eq('id', pedidoId)
         .single();
 
-    if (error || !pedido) { show('vista-error'); return; }
+    if (error || !pedido)                                { show('vista-error'); return; }
+    if (pedido.estado === 'recibido')                    { show('vista-ya');    return; }
+    if (['anulado','rechazado'].includes(pedido.estado)) { show('vista-error'); return; }
 
-    // Si ya fue recibido
-    if (pedido.estado === 'recibido') { show('vista-ya'); return; }
-
-    // Si fue anulado o rechazado
-    if (pedido.estado === 'anulado' || pedido.estado === 'rechazado') { show('vista-error'); return; }
-
-    // Guardar referencia global al pedido
-    window.pedido = pedido;
-    // Mostrar datos del pedido
+    // Poblar resumen
     document.getElementById('ent-nombre').textContent = pedido.nombre || '—';
-    document.getElementById('ent-dir').textContent    = pedido.direccion || '';
+    document.getElementById('ent-dir').textContent    = pedido.direccion_entrega || '';
     const items = Array.isArray(pedido.items_json)
-        ? pedido.items_json.map(i => `${i.qty}x ${i.nombre}`).join('\n')
+        ? pedido.items_json.map(i => `${i.qty || 1}x ${i.nombre}`).join('\n')
         : '—';
-    document.getElementById('ent-items').textContent  = items;
-    document.getElementById('ent-total').textContent  = fmt(pedido.total || 0) + ' · pagado ✅';
-    // Ocultar campo código si no aplica
+    document.getElementById('ent-items').textContent = items;
+    document.getElementById('ent-total').textContent = fmt(pedido.total) + ' · pagado ✅';
+
     if (!pedido.codigo_entrega) {
-        document.getElementById('input-codigo').closest('div').style.display = 'none';
+        document.getElementById('bloque-codigo').style.display = 'none';
     }
+
+    // Si es pedido web (ya pagó online), ocultar selector de método de pago
+    let metodoPagoSeleccionado = null;
+    if (pedido.origen === 'web') {
+        document.getElementById('bloque-metodo').style.display = 'none';
+        metodoPagoSeleccionado = 'online';
+    }
+
     show('vista-listo');
 
-    // Método de pago seleccionado
-    let metodoPagoSeleccionado = null;
-    window.selMetodo = function(metodo) {
+    // ── GPS en tiempo real ────────────────────────────────────────────────────
+    const gpsDot   = document.getElementById('gps-dot');
+    const gpsTexto = document.getElementById('gps-texto');
+    let watchId    = null;
+    let gpsActivo  = false;
+
+    function setGPS(estado, texto) {
+        gpsDot.className = 'gps-dot' + (estado === 'activo' ? ' activo' : estado === 'error' ? ' error' : '');
+        gpsTexto.textContent = texto;
+    }
+
+    async function enviarUbicacion(lat, lng) {
+        await SB.from('repartidor_location').upsert(
+            { pedido_id: pedido.id, lat, lng, updated_at: new Date().toISOString() },
+            { onConflict: 'pedido_id' }
+        );
+    }
+
+    if ('geolocation' in navigator) {
+        setGPS('', 'Solicitando permiso GPS…');
+        watchId = navigator.geolocation.watchPosition(
+            async (pos) => {
+                if (!gpsActivo) {
+                    gpsActivo = true;
+                    setGPS('activo', 'GPS activo — ubicación compartida en vivo');
+                }
+                await enviarUbicacion(pos.coords.latitude, pos.coords.longitude);
+            },
+            (err) => {
+                setGPS('error', err.code === 1
+                    ? 'GPS denegado — el cliente no verá el mapa en vivo'
+                    : 'GPS no disponible en este dispositivo');
+            },
+            { enableHighAccuracy: true, maximumAge: 10000, timeout: 15000 }
+        );
+    } else {
+        setGPS('error', 'GPS no soportado en este dispositivo');
+    }
+
+    function detenerGPS() {
+        if (watchId !== null) navigator.geolocation.clearWatch(watchId);
+    }
+    window.addEventListener('beforeunload', detenerGPS);
+
+    // ── Método de pago ────────────────────────────────────────────────────────
+    window.selMetodo = function (metodo) {
         metodoPagoSeleccionado = metodo;
         ['efectivo','transferencia'].forEach(m => {
-            const btn = document.getElementById('btn-' + m);
-            btn.style.borderColor = m === metodo ? '#22c55e' : 'var(--border)';
-            btn.style.color = m === metodo ? '#22c55e' : 'var(--muted)';
-            btn.style.background = m === metodo ? '#0a2a14' : 'var(--surface)';
+            document.getElementById('btn-' + m).classList.toggle('selected', m === metodo);
         });
     };
 
-    // Confirmar entrega
+    // ── Confirmar entrega ─────────────────────────────────────────────────────
     window.confirmarEntrega = async function () {
         const btn = document.getElementById('btn-confirmar');
         const msg = document.getElementById('msg-confirmar');
 
-        // Validar código si el pedido lo tiene
         if (pedido.codigo_entrega) {
-            const codigoIngresado = document.getElementById('input-codigo').value.trim();
-            if (codigoIngresado !== pedido.codigo_entrega) {
-                msg.innerHTML = '<span class="msg-error">❌ Código incorrecto. Pídele el código al cliente.</span>';
+            const ingresado = String(document.getElementById('input-codigo').value).trim();
+            if (ingresado !== String(pedido.codigo_entrega).trim()) {
+                msg.innerHTML = '<p class="msg-error">❌ Código incorrecto. Pídele el código al cliente.</p>';
                 return;
             }
         }
 
-        // Validar método de pago (solo si no está ya pagado online)
-        if (pedido.estado !== 'recibido' && !metodoPagoSeleccionado && pedido.metodo_pago !== 'mercadopago') {
-            msg.innerHTML = '<span class="msg-error">Selecciona el método de pago.</span>';
+        if (!metodoPagoSeleccionado) {
+            msg.innerHTML = '<p class="msg-error">Selecciona el método de pago recibido.</p>';
             return;
         }
 
-        btn.disabled = true;
+        btn.disabled    = true;
         btn.textContent = 'Confirmando…';
 
         const { error: err } = await SB
             .from('pedidos')
-            .update({
-                estado: 'recibido',
-                metodo_pago_entrega: metodoPagoSeleccionado || pedido.metodo_pago || 'online'
-            })
+            .update({ estado: 'recibido', metodo_pago_entrega: metodoPagoSeleccionado })
             .eq('id', pedidoId);
 
         if (err) {
-            btn.disabled = false;
+            btn.disabled    = false;
             btn.textContent = '✅ CONFIRMAR ENTREGA';
-            msg.innerHTML = '<span class="msg-error">Error al confirmar. Intenta de nuevo.</span>';
+            msg.innerHTML   = '<p class="msg-error">Error al confirmar. Intenta de nuevo.</p>';
             return;
         }
 
+        detenerGPS();
         show('vista-ok');
     };
+
 })();
 </script>
 </body>
