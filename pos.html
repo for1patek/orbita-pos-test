@@ -239,6 +239,7 @@
         <div class="pos-header-right">
             <button class="header-btn" onclick="mostrarTabPedidos()" id="btn-tab-pedidos">📋 Pedidos web</button>
             <button class="header-btn" onclick="mostrarTabVenta()" id="btn-tab-venta">🛒 Nueva venta</button>
+            <button class="header-btn" onclick="abrirHistorial()" id="btn-tab-historial">🕐 Historial</button>
             <button class="header-btn" onclick="abrirCierreTurno()">🔒 Cerrar turno</button>
             <button class="header-btn danger" onclick="cerrarSesionPOS()">Salir</button>
         </div>
@@ -339,8 +340,32 @@
 </div>
 
 <!-- ══════════════════════════════════════════════
-     MODAL: CIERRE DE TURNO
+     MODAL: HISTORIAL DE PEDIDOS
 ══════════════════════════════════════════════ -->
+<div class="modal-overlay hidden" id="modal-historial">
+    <div class="modal-card" style="max-width:500px;max-height:80dvh;overflow-y:auto;text-align:left;">
+        <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:20px;">
+            <div class="modal-titulo" style="margin-bottom:0;">🕐 HISTORIAL DEL DÍA</div>
+            <button onclick="cerrarHistorial()" style="background:none;border:none;color:var(--muted);font-size:1.4rem;cursor:pointer;line-height:1;">✕</button>
+        </div>
+        <div id="historial-lista">
+            <div style="color:var(--muted);text-align:center;padding:20px;">Cargando…</div>
+        </div>
+    </div>
+</div>
+
+<!-- ══════════════════════════════════════════════
+     MODAL: DETALLE PEDIDO HISTORIAL
+══════════════════════════════════════════════ -->
+<div class="modal-overlay hidden" id="modal-detalle-pedido">
+    <div class="modal-card" style="max-width:420px;text-align:left;">
+        <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:20px;">
+            <div class="modal-titulo" style="margin-bottom:0;">DETALLE PEDIDO</div>
+            <button onclick="cerrarDetallePedido()" style="background:none;border:none;color:var(--muted);font-size:1.4rem;cursor:pointer;line-height:1;">✕</button>
+        </div>
+        <div id="detalle-pedido-contenido"></div>
+    </div>
+</div>
 <div class="modal-overlay hidden" id="modal-cierre">
     <div class="modal-card" style="max-width:440px;">
         <div class="modal-titulo">🔒 CIERRE DE TURNO</div>
