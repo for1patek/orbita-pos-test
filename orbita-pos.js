@@ -411,12 +411,7 @@
     };
 
     // ─── VISTA TABS ───────────────────────────────────────────────────────────
-    window.mostrarTabVenta = function () {
-        document.getElementById('vista-venta').classList.remove('hidden');
-        document.getElementById('vista-pedidos').classList.add('hidden');
-        document.getElementById('btn-tab-venta').style.borderColor = 'var(--primary)';
-        document.getElementById('btn-tab-pedidos').style.borderColor = 'var(--border)';
-    };
+    let autoRefreshInterval = null;
 
     window.mostrarTabPedidos = function () {
         document.getElementById('vista-venta').classList.add('hidden');
@@ -424,6 +419,22 @@
         document.getElementById('btn-tab-pedidos').style.borderColor = 'var(--primary)';
         document.getElementById('btn-tab-venta').style.borderColor   = 'var(--border)';
         cargarPedidosWeb();
+        // Auto-refresh cada 8 segundos mientras la pestaña está activa
+        if (!autoRefreshInterval) {
+            autoRefreshInterval = setInterval(cargarPedidosWeb, 8000);
+        }
+    };
+
+    window.mostrarTabVenta = function () {
+        document.getElementById('vista-venta').classList.remove('hidden');
+        document.getElementById('vista-pedidos').classList.add('hidden');
+        document.getElementById('btn-tab-venta').style.borderColor   = 'var(--primary)';
+        document.getElementById('btn-tab-pedidos').style.borderColor = 'var(--border)';
+        // Detener auto-refresh cuando no está en pedidos web
+        if (autoRefreshInterval) {
+            clearInterval(autoRefreshInterval);
+            autoRefreshInterval = null;
+        }
     };
 
     // ─── PEDIDOS WEB ──────────────────────────────────────────────────────────
@@ -685,7 +696,139 @@
         cerrarModalAnular();
     };
 
-    // ─── CIERRE DE TURNO ──────────────────────────────────────────────────────
+    // ─── HISTORIAL ────────────────────────────────────────────────────────────
+    const ESTADO_LABEL = {
+        pendiente:  'Pendiente',
+        pagado:     'Pagado',
+        whatsapp:   'WhatsApp',
+        en_cocina:  'En cocina',
+        listo:      'Listo',
+        en_camino:  'En camino',
+        recibido:   'Entregado ✅',
+        rechazado:  'Rechazado ❌',
+        anulado:    'Anulado ❌',
+        fisico:     'Físico',
+    };
+
+    const ORIGEN_LABEL = {
+        web:       '🌐 Web',
+        whatsapp:  '💬 WhatsApp',
+        fisico:    '🏠 Físico',
+    };
+
+    window.abrirHistorial = async function () {
+        document.getElementById('modal-historial').classList.remove('hidden');
+        const lista = document.getElementById('historial-lista');
+        lista.innerHTML = '<div style="color:var(--muted);text-align:center;padding:20px;">Cargando…</div>';
+
+        const hoy = new Date();
+        hoy.setHours(0, 0, 0, 0);
+
+        const { data, error } = await SB
+            .from('pedidos')
+            .select('id, nombre, estado, origen, tipo_entrega, total, items_json, creado_at, metodo_pago_entrega')
+            .eq('sitio', estado.local)
+            .gte('creado_at', hoy.toISOString())
+            .order('creado_at', { ascending: false });
+
+        if (error || !data || data.length === 0) {
+            lista.innerHTML = '<div style="color:var(--muted);text-align:center;padding:30px;">Sin pedidos hoy</div>';
+            return;
+        }
+
+        lista.innerHTML = '';
+        data.forEach(p => {
+            const hora  = new Date(p.creado_at).toLocaleTimeString('es-CL', { hour: '2-digit', minute: '2-digit' });
+            const estadoLabel  = ESTADO_LABEL[p.estado]  || p.estado;
+            const origenLabel  = ORIGEN_LABEL[p.origen]  || p.origen;
+            const estadoColor  = ['recibido'].includes(p.estado) ? 'var(--green)'
+                               : ['anulado','rechazado'].includes(p.estado) ? 'var(--red)'
+                               : 'var(--gold)';
+
+            const row = document.createElement('div');
+            row.style.cssText = 'display:flex;justify-content:space-between;align-items:center;padding:12px 14px;border-bottom:1px solid var(--border);cursor:pointer;border-radius:10px;transition:background 0.15s;';
+            row.innerHTML = `
+                <div>
+                    <div style="font-weight:700;font-size:0.9rem;">${p.nombre || '—'}</div>
+                    <div style="font-size:0.75rem;color:var(--muted);margin-top:2px;">${hora} · ${origenLabel}</div>
+                </div>
+                <div style="text-align:right;">
+                    <div style="font-family:'Bebas Neue',sans-serif;font-size:1.1rem;color:var(--gold);">${fmt(p.total)}</div>
+                    <div style="font-size:0.72rem;color:${estadoColor};font-weight:700;">${estadoLabel}</div>
+                </div>
+            `;
+            row.onmouseenter = () => row.style.background = 'var(--surface)';
+            row.onmouseleave = () => row.style.background = 'transparent';
+            row.onclick = () => abrirDetallePedido(p);
+            lista.appendChild(row);
+        });
+    };
+
+    window.cerrarHistorial = function () {
+        document.getElementById('modal-historial').classList.add('hidden');
+    };
+
+    window.abrirDetallePedido = function (p) {
+        const hora  = new Date(p.creado_at).toLocaleTimeString('es-CL', { hour: '2-digit', minute: '2-digit' });
+        const items = Array.isArray(p.items_json)
+            ? p.items_json.map(i => `
+                <div style="display:flex;justify-content:space-between;padding:6px 0;border-bottom:1px solid var(--border);font-size:0.88rem;">
+                    <span><span style="color:var(--muted);">${i.qty || 1}×</span> ${i.nombre}</span>
+                    <span style="color:var(--gold);">${fmt((i.precio || 0) * (i.qty || 1))}</span>
+                </div>`).join('')
+            : '<div style="color:var(--muted);">Sin detalle</div>';
+
+        const metodoPago = p.metodo_pago_entrega
+            ? { efectivo: '💵 Efectivo', transferencia: '🏦 Transferencia', online: '🌐 Online' }[p.metodo_pago_entrega] || p.metodo_pago_entrega
+            : '—';
+
+        document.getElementById('detalle-pedido-contenido').innerHTML = `
+            <div style="background:var(--surface);border-radius:12px;padding:16px;margin-bottom:16px;">
+                <div style="display:flex;justify-content:space-between;margin-bottom:8px;">
+                    <span style="color:var(--muted);font-size:0.75rem;text-transform:uppercase;letter-spacing:1px;">Cliente</span>
+                    <span style="font-weight:700;">${p.nombre || '—'}</span>
+                </div>
+                <div style="display:flex;justify-content:space-between;margin-bottom:8px;">
+                    <span style="color:var(--muted);font-size:0.75rem;text-transform:uppercase;letter-spacing:1px;">Hora</span>
+                    <span>${hora}</span>
+                </div>
+                <div style="display:flex;justify-content:space-between;margin-bottom:8px;">
+                    <span style="color:var(--muted);font-size:0.75rem;text-transform:uppercase;letter-spacing:1px;">Origen</span>
+                    <span>${ORIGEN_LABEL[p.origen] || p.origen}</span>
+                </div>
+                <div style="display:flex;justify-content:space-between;margin-bottom:8px;">
+                    <span style="color:var(--muted);font-size:0.75rem;text-transform:uppercase;letter-spacing:1px;">Tipo</span>
+                    <span>${p.tipo_entrega || '—'}</span>
+                </div>
+                <div style="display:flex;justify-content:space-between;margin-bottom:8px;">
+                    <span style="color:var(--muted);font-size:0.75rem;text-transform:uppercase;letter-spacing:1px;">Pago</span>
+                    <span>${metodoPago}</span>
+                </div>
+                <div style="display:flex;justify-content:space-between;">
+                    <span style="color:var(--muted);font-size:0.75rem;text-transform:uppercase;letter-spacing:1px;">Estado</span>
+                    <span style="font-weight:700;">${ESTADO_LABEL[p.estado] || p.estado}</span>
+                </div>
+            </div>
+            <div style="margin-bottom:12px;">${items}</div>
+            <div style="display:flex;justify-content:space-between;font-family:'Bebas Neue',sans-serif;font-size:1.4rem;color:var(--gold);padding-top:10px;border-top:1px solid var(--border);">
+                <span>TOTAL</span>
+                <span>${fmt(p.total)}</span>
+            </div>
+        `;
+        document.getElementById('modal-detalle-pedido').classList.remove('hidden');
+    };
+
+    window.cerrarDetallePedido = function () {
+        document.getElementById('modal-detalle-pedido').classList.add('hidden');
+    };
+
+    // Cerrar modales historial con click fuera
+    document.getElementById('modal-historial').addEventListener('click', function(e) {
+        if (e.target === this) cerrarHistorial();
+    });
+    document.getElementById('modal-detalle-pedido').addEventListener('click', function(e) {
+        if (e.target === this) cerrarDetallePedido();
+    });
     window.abrirCierreTurno = async function () {
         // Traer ventas del turno actual (desde turnoInicio)
         const desde = estado.turnoInicio.toISOString();
