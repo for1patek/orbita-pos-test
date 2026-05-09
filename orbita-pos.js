@@ -653,7 +653,7 @@
                 whatsapp:  'WhatsApp',
                 en_cocina: 'En cocina 🍳',
                 listo:     'Listo ✅',
-                en_camino: 'En camino 🛵',
+                en_camino: 'Despachado 🛵',
                 pendiente: 'Pendiente',
             }[p.estado] || p.estado;
 
@@ -685,7 +685,7 @@
         if (p.estado === 'pendiente' || p.estado === 'whatsapp' || p.estado === 'pagado') {
             const btn = document.createElement('button');
             btn.className = 'btn-accion btn-despachar';
-            btn.textContent = '🍳 En cocina';
+            btn.textContent = '🍳 Enviar a cocina';
             btn.onclick = () => cambiarEstadoPedido(p.id, 'en_cocina', true);
             container.appendChild(btn);
         }
@@ -695,7 +695,7 @@
             const btn = document.createElement('button');
             btn.className = 'btn-accion btn-confirmar';
             btn.style.background = '#b8860b';
-            btn.textContent = '✅ Listo';
+            btn.textContent = '✅ Marcar como listo';
             btn.onclick = () => marcarListo(p);
             container.appendChild(btn);
         }
@@ -705,7 +705,7 @@
             if (esDelivery) {
                 const btn = document.createElement('button');
                 btn.className = 'btn-accion btn-despachar';
-                btn.textContent = '🛵 En camino';
+                btn.textContent = '🛵 Despachar';
                 btn.onclick = () => marcarEnCamino(p);
                 container.appendChild(btn);
             } else {
@@ -843,7 +843,7 @@
         whatsapp:   'WhatsApp',
         en_cocina:  'En cocina',
         listo:      'Listo',
-        en_camino:  'En camino',
+        en_camino:  'Despachado',
         recibido:   'Entregado ✅',
         rechazado:  'Rechazado ❌',
         anulado:    'Anulado ❌',
