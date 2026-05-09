@@ -6,6 +6,69 @@
 (function () {
     'use strict';
 
+    // ─── Llave admin por URL (?k=orbita_8h3k2p_2026) ────────────────────────
+    const POS_ADMIN_KEY = new URLSearchParams(window.location.search).get('k') === 'orbita_8h3k2p_2026';
+    let posAdminDesbloqueado = false;
+
+    if (POS_ADMIN_KEY) {
+        // Mostrar banner al cargar
+        const banner = document.createElement('div');
+        banner.id = 'pos-admin-banner';
+        banner.style.cssText = 'position:fixed;top:0;left:0;right:0;z-index:9999;padding:10px 14px;font-family:DM Sans,sans-serif;font-size:0.88rem;text-align:center;background:rgba(17,17,17,0.96);color:#fff;border-bottom:2px solid #8B1A1A;';
+        banner.innerHTML = 'Modo admin activo — <button onclick="abrirAdminLogin()" style="margin-left:8px;padding:4px 12px;background:var(--primary,#8B1A1A);border:none;border-radius:6px;color:#fff;font-size:0.82rem;cursor:pointer;font-family:DM Sans,sans-serif;font-weight:700;">Ingresar credenciales</button>';
+        document.body.insertBefore(banner, document.body.firstChild);
+        document.body.style.paddingTop = '44px';
+    }
+
+    window.abrirAdminLogin = function () {
+        document.getElementById('admin-login-email').value = '';
+        document.getElementById('admin-login-pass').value = '';
+        document.getElementById('admin-login-error').style.display = 'none';
+        document.getElementById('modal-admin-login').classList.remove('hidden');
+        setTimeout(() => document.getElementById('admin-login-email').focus(), 100);
+    };
+
+    window.cerrarAdminLogin = function () {
+        document.getElementById('modal-admin-login').classList.add('hidden');
+    };
+
+    window.verificarAdminLogin = async function () {
+        const email    = document.getElementById('admin-login-email').value.trim();
+        const password = document.getElementById('admin-login-pass').value;
+        const errDiv   = document.getElementById('admin-login-error');
+        errDiv.style.display = 'none';
+        if (!email || !password) {
+            errDiv.textContent = 'Ingresa email y contraseña.';
+            errDiv.style.display = 'block';
+            return;
+        }
+        try {
+            const result = await window.orbitaAuth.signIn(email, password);
+            if (!result || result.error) {
+                errDiv.textContent = result?.error?.message || 'Credenciales incorrectas';
+                errDiv.style.display = 'block';
+                document.getElementById('admin-login-pass').value = '';
+                return;
+            }
+            posAdminDesbloqueado = true;
+            cerrarAdminLogin();
+            // Actualizar banner
+            const banner = document.getElementById('pos-admin-banner');
+            if (banner) banner.innerHTML = '🔑 Modo admin activo';
+            // Mostrar botón usuarios si ya hay sesión POS activa
+            const btnUsr = document.getElementById('btn-usuarios');
+            if (btnUsr) btnUsr.style.display = 'inline-block';
+        } catch(e) {
+            errDiv.textContent = e.message || 'Error al iniciar sesión';
+            errDiv.style.display = 'block';
+            document.getElementById('admin-login-pass').value = '';
+        }
+    };
+
+    document.getElementById('modal-admin-login')?.addEventListener('click', function(e) {
+        if (e.target === this) cerrarAdminLogin();
+    });
+
     // ─── Supabase ────────────────────────────────────────────────────────────
     const SB = supabase.createClient(
         window.orbitaAuth.url,
@@ -207,9 +270,12 @@
         document.getElementById('header-usuario').textContent =
             estado.usuario.nombre + (estado.usuario.rol === 'admin' ? ' ⭐' : '');
 
-        // Botón config solo visible para admin
+        // Botón config solo visible para admin (por rol)
         const btnCfg = document.getElementById('btn-config');
         if (btnCfg) btnCfg.style.display = estado.usuario.rol === 'admin' ? 'inline-block' : 'none';
+        // Botón usuarios visible solo si se autenticó con la llave admin
+        const btnUsr = document.getElementById('btn-usuarios');
+        if (btnUsr) btnUsr.style.display = posAdminDesbloqueado ? 'inline-block' : 'none';
 
         await cargarCatalogo();
         catActiva = CATS[estado.local][0].id;
@@ -1110,6 +1176,157 @@
     // Cerrar config con click fuera
     document.getElementById('modal-config')?.addEventListener('click', function(e) {
         if (e.target === this) cerrarConfig();
+    });
+
+    // ── GESTIÓN DE USUARIOS ──────────────────────────────────────────────────
+
+    window.abrirUsuarios = async function () {
+        document.getElementById('modal-usuarios').classList.remove('hidden');
+        cancelarFormUsuario();
+        await renderListaUsuarios();
+    };
+
+    window.cerrarUsuarios = function () {
+        document.getElementById('modal-usuarios').classList.add('hidden');
+    };
+
+    async function renderListaUsuarios() {
+        const lista = document.getElementById('usuarios-lista');
+        lista.innerHTML = '<div style="color:var(--muted);font-size:0.85rem;text-align:center;padding:20px;">Cargando…</div>';
+        try {
+            const { data, error } = await SB
+                .from('pos_usuarios')
+                .select('id,nombre,rol,sitio,activo')
+                .order('nombre');
+            if (error) throw error;
+            if (!data.length) {
+                lista.innerHTML = '<div style="color:var(--muted);font-size:0.85rem;text-align:center;padding:20px;">Sin usuarios</div>';
+                return;
+            }
+            lista.innerHTML = data.map(u => `
+                <div style="background:var(--surface);border:1px solid var(--border);border-radius:12px;padding:12px 14px;display:flex;align-items:center;gap:10px;">
+                    <div style="flex:1;min-width:0;">
+                        <div style="font-weight:700;font-size:0.9rem;${!u.activo ? 'color:var(--muted);text-decoration:line-through;' : ''}">${u.nombre}</div>
+                        <div style="font-size:0.75rem;color:var(--muted);margin-top:2px;">
+                            ${u.rol === 'admin' ? '⭐ Admin' : '👤 Cajero'} · 
+                            ${u.sitio === 'cafe' ? '☕ Café' : u.sitio === 'fuente' ? '🌭 Fuente' : '🔀 Ambos'}
+                            ${!u.activo ? ' · <span style="color:var(--red);">Inactivo</span>' : ''}
+                        </div>
+                    </div>
+                    <button onclick="editarUsuario('${u.id}','${u.nombre}','${u.rol}','${u.sitio}',${u.activo})"
+                        style="padding:6px 10px;border:1px solid var(--border);border-radius:8px;background:var(--card);color:var(--muted);font-size:0.75rem;cursor:pointer;">✏️</button>
+                    <button onclick="toggleActivoUsuario('${u.id}',${u.activo})"
+                        style="padding:6px 10px;border:1px solid ${u.activo ? 'var(--red)' : 'var(--green)'};border-radius:8px;background:var(--card);color:${u.activo ? 'var(--red)' : 'var(--green)'};font-size:0.75rem;cursor:pointer;">${u.activo ? '🚫' : '✅'}</button>
+                    <button onclick="eliminarUsuario('${u.id}','${u.nombre}')"
+                        style="padding:6px 10px;border:1px solid var(--red);border-radius:8px;background:var(--card);color:var(--red);font-size:0.75rem;cursor:pointer;">🗑️</button>
+                </div>
+            `).join('');
+        } catch(e) {
+            lista.innerHTML = '<div style="color:var(--red);font-size:0.85rem;text-align:center;padding:20px;">Error cargando usuarios</div>';
+        }
+    }
+
+    window.nuevoUsuario = function () {
+        document.getElementById('usr-id').value = '';
+        document.getElementById('usr-nombre').value = '';
+        document.getElementById('usr-rol').value = 'cajero';
+        document.getElementById('usr-sitio').value = estado.local; // default al local actual
+        document.getElementById('usr-pin').value = '';
+        document.getElementById('usr-pin').placeholder = 'PIN (4 dígitos)';
+        document.getElementById('usuarios-form-titulo').textContent = 'NUEVO USUARIO';
+        document.getElementById('btn-nuevo-usuario').style.display = 'none';
+        document.getElementById('usuarios-form').style.display = 'block';
+        document.getElementById('usr-nombre').focus();
+    };
+
+    window.editarUsuario = function (id, nombre, rol, sitio, activo) {
+        document.getElementById('usr-id').value = id;
+        document.getElementById('usr-nombre').value = nombre;
+        document.getElementById('usr-rol').value = rol;
+        document.getElementById('usr-sitio').value = sitio;
+        document.getElementById('usr-pin').value = '';
+        document.getElementById('usr-pin').placeholder = 'Nuevo PIN (dejar vacío para no cambiar)';
+        document.getElementById('usuarios-form-titulo').textContent = 'EDITAR USUARIO';
+        document.getElementById('btn-nuevo-usuario').style.display = 'none';
+        document.getElementById('usuarios-form').style.display = 'block';
+        document.getElementById('usr-nombre').focus();
+    };
+
+    window.cancelarFormUsuario = function () {
+        document.getElementById('usr-id').value = '';
+        document.getElementById('usr-nombre').value = '';
+        document.getElementById('usr-pin').value = '';
+        document.getElementById('usuarios-form-titulo').textContent = 'NUEVO USUARIO';
+        document.getElementById('btn-nuevo-usuario').style.display = 'block';
+        document.getElementById('usuarios-form').style.display = 'none';
+    };
+
+    window.guardarUsuario = async function () {
+        const id     = document.getElementById('usr-id').value;
+        const nombre = document.getElementById('usr-nombre').value.trim();
+        const rol    = document.getElementById('usr-rol').value;
+        const sitio  = document.getElementById('usr-sitio').value;
+        const pin    = document.getElementById('usr-pin').value.trim();
+
+        if (!nombre) { toast('Ingresa un nombre', 'err'); return; }
+        if (!id && (!pin || !/^\d{4}$/.test(pin))) { toast('PIN debe ser 4 dígitos numéricos', 'err'); return; }
+        if (pin && !/^\d{4}$/.test(pin)) { toast('PIN debe ser 4 dígitos numéricos', 'err'); return; }
+
+        try {
+            let pin_hash = null;
+            if (pin) {
+                const buf = await crypto.subtle.digest('SHA-256', new TextEncoder().encode(pin));
+                pin_hash = Array.from(new Uint8Array(buf)).map(b => b.toString(16).padStart(2,'0')).join('');
+            }
+
+            if (id) {
+                // Editar
+                const upd = { nombre, rol, sitio };
+                if (pin_hash) upd.pin_hash = pin_hash;
+                const { error } = await SB.from('pos_usuarios').update(upd).eq('id', id);
+                if (error) throw error;
+                toast('Usuario actualizado ✅', 'ok');
+            } else {
+                // Crear
+                const { error } = await SB.from('pos_usuarios').insert({ nombre, rol, sitio, pin_hash, activo: true });
+                if (error) throw error;
+                toast('Usuario creado ✅', 'ok');
+            }
+
+            cancelarFormUsuario();
+            await renderListaUsuarios();
+        } catch(e) {
+            toast('Error guardando usuario', 'err');
+            console.error(e);
+        }
+    };
+
+    window.toggleActivoUsuario = async function (id, activo) {
+        try {
+            const { error } = await SB.from('pos_usuarios').update({ activo: !activo }).eq('id', id);
+            if (error) throw error;
+            toast(activo ? 'Usuario desactivado' : 'Usuario activado ✅', activo ? 'err' : 'ok');
+            await renderListaUsuarios();
+        } catch(e) {
+            toast('Error actualizando usuario', 'err');
+        }
+    };
+
+    window.eliminarUsuario = async function (id, nombre) {
+        if (!confirm(`¿Eliminar a ${nombre}? Esta acción no se puede deshacer.`)) return;
+        try {
+            const { error } = await SB.from('pos_usuarios').delete().eq('id', id);
+            if (error) throw error;
+            toast('Usuario eliminado', 'ok');
+            await renderListaUsuarios();
+        } catch(e) {
+            toast('Error eliminando usuario', 'err');
+        }
+    };
+
+    // Cerrar modal usuarios con click fuera
+    document.getElementById('modal-usuarios')?.addEventListener('click', function(e) {
+        if (e.target === this) cerrarUsuarios();
     });
 
 })();
