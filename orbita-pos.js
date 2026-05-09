@@ -270,10 +270,9 @@
         document.getElementById('header-usuario').textContent =
             estado.usuario.nombre + (estado.usuario.rol === 'admin' ? ' ⭐' : '');
 
-        // Botón config solo visible para admin (por rol)
+        // Botones config y usuarios: solo visibles en modo admin (llave URL)
         const btnCfg = document.getElementById('btn-config');
-        if (btnCfg) btnCfg.style.display = estado.usuario.rol === 'admin' ? 'inline-block' : 'none';
-        // Botón usuarios visible solo si se autenticó con la llave admin
+        if (btnCfg) btnCfg.style.display = posAdminDesbloqueado ? 'inline-block' : 'none';
         const btnUsr = document.getElementById('btn-usuarios');
         if (btnUsr) btnUsr.style.display = posAdminDesbloqueado ? 'inline-block' : 'none';
 
