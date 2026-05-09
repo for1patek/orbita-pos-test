@@ -14,10 +14,10 @@
         // Mostrar banner al cargar
         const banner = document.createElement('div');
         banner.id = 'pos-admin-banner';
-        banner.style.cssText = 'position:fixed;top:0;left:0;right:0;z-index:9999;padding:10px 14px;font-family:DM Sans,sans-serif;font-size:0.88rem;text-align:center;background:rgba(17,17,17,0.96);color:#fff;border-bottom:2px solid #8B1A1A;';
-        banner.innerHTML = 'Modo admin activo — <button onclick="abrirAdminLogin()" style="margin-left:8px;padding:4px 12px;background:var(--primary,#8B1A1A);border:none;border-radius:6px;color:#fff;font-size:0.82rem;cursor:pointer;font-family:DM Sans,sans-serif;font-weight:700;">Ingresar credenciales</button>';
+        banner.style.cssText = 'position:fixed;top:0;left:0;right:0;z-index:9999;padding:12px 14px;font-family:DM Sans,sans-serif;font-size:0.95rem;text-align:center;background:rgba(17,17,17,0.96);color:#fff;border-bottom:2px solid #C4922A;';
+        banner.innerHTML = 'Modo admin activo — <button onclick="abrirAdminLogin()" style="margin-left:8px;padding:4px 12px;background:#C4922A;border:none;border-radius:6px;color:#fff;font-size:0.85rem;cursor:pointer;font-family:DM Sans,sans-serif;font-weight:700;">Ingresar credenciales</button>';
         document.body.insertBefore(banner, document.body.firstChild);
-        document.body.style.paddingTop = '44px';
+        document.body.style.paddingTop = '54px';
     }
 
     window.abrirAdminLogin = function () {
@@ -54,8 +54,10 @@
             cerrarAdminLogin();
             // Actualizar banner
             const banner = document.getElementById('pos-admin-banner');
-            if (banner) banner.innerHTML = '🔑 Modo admin activo';
-            // Mostrar botón usuarios si ya hay sesión POS activa
+            if (banner) banner.innerHTML = '🔑 Modo admin activo — <button onclick="abrirUsuarios()" style="margin-left:8px;padding:4px 12px;background:#C4922A;border:none;border-radius:6px;color:#fff;font-size:0.82rem;cursor:pointer;font-family:DM Sans,sans-serif;font-weight:700;">Gestionar usuarios</button>';
+            // Mostrar botones ⚙️ y 🔑 si ya hay sesión POS activa
+            const btnCfg2 = document.getElementById('btn-config');
+            if (btnCfg2) btnCfg2.style.display = 'inline-block';
             const btnUsr = document.getElementById('btn-usuarios');
             if (btnUsr) btnUsr.style.display = 'inline-block';
         } catch(e) {
@@ -171,13 +173,24 @@
             const btn = document.createElement('button');
             btn.className = 'usuario-btn';
             btn.textContent = u.nombre + (u.rol === 'admin' ? ' ⭐' : '');
-            btn.onclick = () => {
+            btn.onclick = async () => {
                 document.querySelectorAll('.usuario-btn').forEach(b => b.classList.remove('selected'));
                 btn.classList.add('selected');
                 usuarioSeleccionado = u;
                 pinBuffer = '';
                 actualizarPinDisplay();
                 document.getElementById('login-error').textContent = '';
+                // En modo admin, entra directo sin PIN
+                if (posAdminDesbloqueado) {
+                    estado.usuario = u;
+                    estado.turnoInicio = new Date();
+                    sessionStorage.setItem('orbita_sesion', JSON.stringify({
+                        usuario: u,
+                        local: estado.local,
+                        turnoInicio: estado.turnoInicio.toISOString(),
+                    }));
+                    await abrirPOS();
+                }
             };
             grid.appendChild(btn);
         });
