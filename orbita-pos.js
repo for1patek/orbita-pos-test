@@ -18,6 +18,9 @@
         banner.innerHTML = 'Modo admin activo — <button onclick="abrirAdminLogin()" style="margin-left:8px;padding:4px 12px;background:#C4922A;border:none;border-radius:6px;color:#fff;font-size:0.85rem;cursor:pointer;font-family:DM Sans,sans-serif;font-weight:700;">Ingresar credenciales</button>';
         document.body.insertBefore(banner, document.body.firstChild);
         document.body.style.paddingTop = '54px';
+        // Ajustar altura del POS para que no quede cortado por el banner
+        const posEl = document.getElementById('pantalla-pos');
+        if (posEl) posEl.style.height = 'calc(100dvh - 54px)';
     }
 
     window.abrirAdminLogin = function () {
