@@ -241,6 +241,7 @@
             <button class="header-btn" onclick="mostrarTabVenta()" id="btn-tab-venta">🛒 Nueva venta</button>
             <button class="header-btn" onclick="abrirHistorial()" id="btn-tab-historial">🕐 Historial</button>
             <button class="header-btn" id="btn-config" onclick="abrirConfig()" style="display:none;">⚙️</button>
+            <button class="header-btn" id="btn-usuarios" onclick="abrirUsuarios()" style="display:none;">🔑</button>
             <button class="header-btn" onclick="abrirCierreTurno()">🔒 Cerrar turno</button>
             <button class="header-btn danger" onclick="cerrarSesionPOS()">Salir</button>
         </div>
@@ -455,6 +456,72 @@
 <!-- ══════════════════════════════════════════════
      SCRIPTS
 ══════════════════════════════════════════════ -->
+<!-- ══════════════════════════════════════════════
+     MODAL: GESTIÓN DE USUARIOS (solo admin)
+══════════════════════════════════════════════ -->
+<div class="modal-overlay hidden" id="modal-usuarios">
+    <div class="modal-card" style="max-width:480px;text-align:left;max-height:85dvh;display:flex;flex-direction:column;">
+        <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:20px;flex-shrink:0;">
+            <div class="modal-titulo" style="margin-bottom:0;">🔑 USUARIOS DEL POS</div>
+            <button onclick="cerrarUsuarios()" style="background:none;border:none;color:var(--muted);font-size:1.4rem;cursor:pointer;line-height:1;">✕</button>
+        </div>
+
+        <!-- Lista de usuarios -->
+        <div id="usuarios-lista" style="flex:1;overflow-y:auto;margin-bottom:16px;display:flex;flex-direction:column;gap:10px;">
+            <div style="color:var(--muted);font-size:0.85rem;text-align:center;padding:20px;">Cargando…</div>
+        </div>
+
+        <!-- Formulario crear/editar -->
+        <div id="usuarios-form" style="border-top:1px solid var(--border);padding-top:16px;flex-shrink:0;">
+            <div style="font-size:0.75rem;letter-spacing:2px;text-transform:uppercase;color:var(--muted);margin-bottom:12px;" id="usuarios-form-titulo">NUEVO USUARIO</div>
+            <input type="hidden" id="usr-id">
+            <div style="display:flex;flex-direction:column;gap:10px;">
+                <input class="campo-input" id="usr-nombre" type="text" placeholder="Nombre" maxlength="30" autocomplete="off">
+                <div style="display:flex;gap:10px;">
+                    <select class="campo-select" id="usr-rol">
+                        <option value="cajero">Cajero</option>
+                        <option value="admin">Admin</option>
+                    </select>
+                    <select class="campo-select" id="usr-sitio">
+                        <option value="cafe">☕ Café</option>
+                        <option value="fuente">🌭 Fuente</option>
+                        <option value="ambos">Ambos</option>
+                    </select>
+                </div>
+                <input class="campo-input" id="usr-pin" type="password" placeholder="PIN (4 dígitos)" maxlength="4" autocomplete="off">
+                <div style="display:flex;gap:8px;">
+                    <button class="btn-modal-cancel" style="flex:1;" onclick="cancelarFormUsuario()">Cancelar</button>
+                    <button class="btn-modal-confirm" style="flex:2;font-size:1rem;padding:12px;" onclick="guardarUsuario()">GUARDAR</button>
+                </div>
+            </div>
+        </div>
+
+        <button onclick="nuevoUsuario()" id="btn-nuevo-usuario"
+            style="margin-top:12px;width:100%;padding:12px;border:1px dashed var(--border);border-radius:12px;background:transparent;color:var(--muted);font-family:'DM Sans',sans-serif;font-size:0.88rem;font-weight:700;cursor:pointer;flex-shrink:0;">
+            + Nuevo usuario
+        </button>
+    </div>
+</div>
+
+<!-- ══════════════════════════════════════════════
+     MODAL: CREDENCIALES ADMIN (llave URL)
+══════════════════════════════════════════════ -->
+<div class="modal-overlay hidden" id="modal-admin-login">
+    <div class="modal-card" style="max-width:360px;text-align:left;">
+        <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:20px;">
+            <div class="modal-titulo" style="margin-bottom:0;">🔐 MODO ADMIN</div>
+            <button onclick="cerrarAdminLogin()" style="background:none;border:none;color:var(--muted);font-size:1.4rem;cursor:pointer;line-height:1;">✕</button>
+        </div>
+        <div style="display:flex;flex-direction:column;gap:10px;">
+            <input class="campo-input" id="admin-login-email" type="email" placeholder="Email" autocomplete="username">
+            <input class="campo-input" id="admin-login-pass" type="password" placeholder="Contraseña" autocomplete="current-password"
+                onkeydown="if(event.key==='Enter') verificarAdminLogin()">
+            <div id="admin-login-error" style="color:var(--red);font-size:0.82rem;display:none;"></div>
+            <button class="btn-modal-confirm" style="font-size:1rem;padding:12px;" onclick="verificarAdminLogin()">INGRESAR</button>
+        </div>
+    </div>
+</div>
+
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/dist/umd/supabase.js"></script>
 <script src="./orbita-auth.js"></script>
 <script src="./orbita-productos.js"></script>
