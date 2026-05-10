@@ -504,6 +504,24 @@
 </div>
 
 <!-- ══════════════════════════════════════════════
+     MODAL: OPCIONES DE PRODUCTO
+══════════════════════════════════════════════ -->
+<div class="modal-overlay hidden" id="modal-opciones">
+    <div class="modal-card" style="max-width:440px;text-align:left;max-height:85dvh;display:flex;flex-direction:column;">
+        <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:6px;flex-shrink:0;">
+            <div class="modal-titulo" style="margin-bottom:0;" id="opciones-titulo">OPCIONES</div>
+            <button onclick="cerrarOpciones()" style="background:none;border:none;color:var(--muted);font-size:1.4rem;cursor:pointer;line-height:1;">✕</button>
+        </div>
+        <div style="font-size:0.85rem;color:var(--muted);margin-bottom:18px;flex-shrink:0;" id="opciones-subtitulo"></div>
+        <div id="opciones-contenido" style="flex:1;overflow-y:auto;display:flex;flex-direction:column;gap:14px;"></div>
+        <div style="margin-top:18px;flex-shrink:0;">
+            <div id="opciones-resumen" style="font-size:0.82rem;color:var(--muted);margin-bottom:10px;min-height:18px;"></div>
+            <button class="btn-modal-confirm" style="width:100%;font-size:1rem;padding:14px;" onclick="confirmarOpciones()">AGREGAR A COMANDA</button>
+        </div>
+    </div>
+</div>
+
+<!-- ══════════════════════════════════════════════
      MODAL: CREDENCIALES ADMIN (llave URL)
 ══════════════════════════════════════════════ -->
 <div class="modal-overlay hidden" id="modal-admin-login">
