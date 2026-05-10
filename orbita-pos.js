@@ -1390,6 +1390,7 @@
             if (cat === 'handroll') return true;                             // salsa
         }
         if (prod.categoria === 'handroll' || cat === 'handroll') return true; // handroll en cualquier sitio
+        if (cat === 'jugo' || prod.categoria === 'jugo') return true;             // jugos: azúcar
         return false;
     }
 
@@ -1493,6 +1494,22 @@
                 </div>` : ''}`;
         }
 
+        // ── JUGO: azúcar ──────────────────────────────────────────────────────
+        if (cat === 'jugo') {
+            contenido.innerHTML = `
+                <div>
+                    <div style="font-size:0.75rem;letter-spacing:2px;text-transform:uppercase;color:var(--muted);margin-bottom:10px;">AZÚCAR</div>
+                    <div style="display:flex;gap:10px;flex-wrap:wrap;">
+                        ${[{id:'con',label:'🍬 Con azúcar'},{id:'sin',label:'🚫 Sin azúcar'},{id:'endulzante',label:'🌿 Endulzante'}].map(a => `
+                            <button class="opt-btn-opciones" data-grupo="azucar" data-val="${a.id}"
+                                onclick="selOpcion('azucar','${a.id}')"
+                                style="flex:1;min-width:90px;padding:14px 10px;border:1px solid var(--border);border-radius:12px;background:var(--surface);color:var(--text);font-family:'DM Sans',sans-serif;font-size:0.88rem;font-weight:700;cursor:pointer;text-align:center;">
+                                ${a.label}
+                            </button>`).join('')}
+                    </div>
+                </div>`;
+        }
+
         document.getElementById('modal-opciones').classList.remove('hidden');
     }
 
@@ -1552,6 +1569,7 @@
     function actualizarResumenOpciones() {
         const s = opcionesState.selecciones;
         const partes = [];
+        if (s.azucar) partes.push(s.azucar === 'con' ? 'Con azúcar' : s.azucar === 'sin' ? 'Sin azúcar' : 'Endulzante');
         if (s.grano) partes.push(s.grano);
         if (s.leche) partes.push(s.leche === 'sin_lactosa' ? 'Sin lactosa' : 'Leche entera');
         if (s.salsa) partes.push(s.salsa === 'sin_salsa' ? 'Sin salsa' : s.salsa === 'agridulce' ? 'Agridulce' : 'Soya');
@@ -1583,6 +1601,9 @@
         if (cat === 'handroll' && !selecciones.salsa) {
             toast('Elige la salsa', 'err'); return;
         }
+        if (cat === 'jugo' && !selecciones.azucar) {
+            toast('Elige la opción de azúcar', 'err'); return;
+        }
         if ((cat === 'sandwich' || cat === 'completo') && !selecciones.receta) {
             toast('Elige una opción', 'err'); return;
         }
@@ -1592,6 +1613,7 @@
 
         // Armar nombre con detalle
         let detalle = '';
+        if (selecciones.azucar) detalle = selecciones.azucar === 'con' ? 'Con azúcar' : selecciones.azucar === 'sin' ? 'Sin azúcar' : 'Endulzante';
         if (selecciones.grano) detalle = selecciones.grano;
         if (selecciones.leche) detalle += (detalle ? ' · ' : '') + (selecciones.leche === 'sin_lactosa' ? 'Sin lactosa' : 'Leche entera');
         if (selecciones.salsa) detalle = selecciones.salsa === 'sin_salsa' ? 'Sin salsa' : selecciones.salsa === 'agridulce' ? 'Agridulce +$500' : 'Soya';
