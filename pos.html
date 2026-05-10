@@ -73,6 +73,21 @@
         .cat-tabs { display: flex; gap: 6px; padding: 10px 12px; overflow-x: auto; flex-shrink: 0; border-bottom: 1px solid var(--border); scrollbar-width: none; }
         .cat-tabs::-webkit-scrollbar { display: none; }
         .pedidos-web-list::-webkit-scrollbar { width: 5px; }
+        #opciones-contenido::-webkit-scrollbar { width: 5px; }
+        #opciones-contenido::-webkit-scrollbar-track { background: #1a1a1a; border-radius: 5px; }
+        #opciones-contenido::-webkit-scrollbar-thumb { background: #555; border-radius: 5px; }
+        #opciones-contenido::-webkit-scrollbar-thumb:hover { background: #777; }
+        #opciones-contenido { scrollbar-width: thin; scrollbar-color: #555 #1a1a1a; }
+        #editar-items-lista::-webkit-scrollbar { width: 5px; }
+        #editar-items-lista::-webkit-scrollbar-track { background: #1a1a1a; border-radius: 5px; }
+        #editar-items-lista::-webkit-scrollbar-thumb { background: #555; border-radius: 5px; }
+        #editar-items-lista::-webkit-scrollbar-thumb:hover { background: #777; }
+        #editar-items-lista { scrollbar-width: thin; scrollbar-color: #555 #1a1a1a; }
+        #usuarios-lista::-webkit-scrollbar { width: 5px; }
+        #usuarios-lista::-webkit-scrollbar-track { background: #1a1a1a; border-radius: 5px; }
+        #usuarios-lista::-webkit-scrollbar-thumb { background: #555; border-radius: 5px; }
+        #usuarios-lista::-webkit-scrollbar-thumb:hover { background: #777; }
+        #usuarios-lista { scrollbar-width: thin; scrollbar-color: #555 #1a1a1a; }
         .pedidos-web-list::-webkit-scrollbar-track { background: #1a1a1a; border-radius: 5px; }
         .pedidos-web-list::-webkit-scrollbar-thumb { background: #555; border-radius: 5px; }
         .pedidos-web-list::-webkit-scrollbar-thumb:hover { background: #777; }
@@ -540,7 +555,7 @@
             <button onclick="cerrarOpciones()" style="background:none;border:none;color:var(--muted);font-size:1.4rem;cursor:pointer;line-height:1;">✕</button>
         </div>
         <div style="font-size:0.85rem;color:var(--muted);margin-bottom:18px;flex-shrink:0;" id="opciones-subtitulo"></div>
-        <div id="opciones-contenido" style="flex:1;overflow-y:auto;display:flex;flex-direction:column;gap:14px;"></div>
+        <div id="opciones-contenido" style="flex:1;overflow-y:auto;display:flex;flex-direction:column;gap:14px;padding-right:10px;"></div>
         <div style="margin-top:18px;flex-shrink:0;">
             <div id="opciones-resumen" style="font-size:0.82rem;color:var(--muted);margin-bottom:10px;min-height:18px;"></div>
             <button class="btn-modal-confirm" style="width:100%;font-size:1rem;padding:14px;" onclick="confirmarOpciones()">AGREGAR A COMANDA</button>
