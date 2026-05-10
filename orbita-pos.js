@@ -96,7 +96,7 @@
     const CATS = {
         cafe: [
             { id: 'cafe',   label: '☕ Cafés' },
-            { id: 'pastel', label: '🍰 Pastelería' },
+            { id: 'pasteleria', label: '🍰 Pastelería' },
             { id: 'jugo',   label: '🥤 Jugos' },
             { id: 'bebida', label: '🥤 Bebidas/Aguas' },
         ],
