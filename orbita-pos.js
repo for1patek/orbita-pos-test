@@ -1705,10 +1705,10 @@
         const extrasHTML = INGREDIENTES_FUENTE.filter(i => !base.has(i.id)).map(celdaExtra).join('');
 
         // Mantener estado del extras-bar si ya estaba abierto
-        const extrasAbierto = document.getElementById('extras-bar')?.style.display === 'block';
+        const extrasAbierto = document.getElementById('extras-bar')?.style.display === 'grid';
 
         grid.innerHTML = `
-            ${baseHTML}
+            <div style="display:grid;grid-template-columns:1fr 1fr;gap:0 16px;">${baseHTML}</div>
             <div style="margin-top:10px;">
                 <button onclick="toggleExtrasBar()" id="btn-extras-bar"
                     style="width:100%;padding:8px;border:1px dashed var(--border);border-radius:10px;background:transparent;
