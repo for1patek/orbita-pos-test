@@ -322,6 +322,13 @@
       <div class="estado-titulo" id="estado-titulo">Confirmando...</div>
       <div class="estado-sub"   id="estado-sub"></div>
 
+      <!-- Mensaje contacto (visible solo en estados editables) -->
+      <div id="msg-contacto" style="display:none;margin-top:16px;padding:12px 14px;border-radius:12px;background:rgba(255,255,255,0.05);border:1px solid rgba(255,255,255,0.1);font-size:0.8rem;color:rgba(255,255,255,0.6);text-align:center;line-height:1.5;">
+        ¿Te equivocaste en algo? <br>
+        <a href="https://wa.me/56971019691?text=Hola, quiero modificar mi pedido" target="_blank"
+          style="color:#25D366;font-weight:700;text-decoration:none;">📲 Escríbenos por WhatsApp</a>
+      </div>
+
       <!-- Barra delivery -->
       <div id="barra-delivery">
         <div class="progress-bar">
@@ -513,6 +520,13 @@
     document.getElementById('estado-icono').textContent  = cfg.icono;
     document.getElementById('estado-titulo').textContent = cfg.titulo;
     document.getElementById('estado-sub').textContent    = cfg.sub;
+
+    // Mensaje de contacto: solo en estados donde aún se puede modificar
+    const msgContacto = document.getElementById('msg-contacto');
+    if (msgContacto) {
+      msgContacto.style.display = ['pendiente','pagado','whatsapp','en_cocina'].includes(p.estado)
+        ? 'block' : 'none';
+    }
 
     // Código de entrega
     const codigoBox  = document.getElementById('codigo-box');
