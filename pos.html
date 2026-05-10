@@ -504,6 +504,33 @@
 </div>
 
 <!-- ══════════════════════════════════════════════
+     MODAL: EDITAR PEDIDO
+══════════════════════════════════════════════ -->
+<div class="modal-overlay hidden" id="modal-editar-pedido">
+    <div class="modal-card" style="max-width:480px;text-align:left;max-height:85dvh;display:flex;flex-direction:column;">
+        <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:6px;flex-shrink:0;">
+            <div class="modal-titulo" style="margin-bottom:0;">✏️ EDITAR PEDIDO</div>
+            <button onclick="cerrarEditarPedido()" style="background:none;border:none;color:var(--muted);font-size:1.4rem;cursor:pointer;line-height:1;">✕</button>
+        </div>
+        <div style="font-size:0.85rem;color:var(--muted);margin-bottom:16px;flex-shrink:0;" id="editar-pedido-subtitulo"></div>
+
+        <!-- Items editables -->
+        <div id="editar-items-lista" style="flex:1;overflow-y:auto;display:flex;flex-direction:column;gap:8px;margin-bottom:16px;"></div>
+
+        <!-- Total -->
+        <div style="display:flex;justify-content:space-between;align-items:center;padding:12px 0;border-top:1px solid var(--border);border-bottom:1px solid var(--border);margin-bottom:16px;flex-shrink:0;">
+            <span style="font-size:0.85rem;color:var(--muted);">TOTAL</span>
+            <span style="font-size:1.2rem;font-weight:800;" id="editar-total">$0</span>
+        </div>
+
+        <div style="display:flex;gap:8px;flex-shrink:0;">
+            <button class="btn-modal-cancel" style="flex:1;" onclick="cerrarEditarPedido()">Cancelar</button>
+            <button class="btn-modal-confirm" style="flex:2;font-size:1rem;padding:12px;" onclick="guardarEdicionPedido()">GUARDAR CAMBIOS</button>
+        </div>
+    </div>
+</div>
+
+<!-- ══════════════════════════════════════════════
      MODAL: OPCIONES DE PRODUCTO
 ══════════════════════════════════════════════ -->
 <div class="modal-overlay hidden" id="modal-opciones">
