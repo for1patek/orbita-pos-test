@@ -385,7 +385,7 @@
                 <div class="prod-precio ${sinPrecio ? 'sin-precio' : ''}">${sinPrecio ? 'Sin precio' : fmt(p.precio)}</div>
             `;
             if (!sinPrecio) {
-                card.onclick = () => agregarAComanda(p);
+                card.onclick = () => clickProducto(p);
             } else {
                 card.style.opacity = '0.5';
                 card.style.cursor  = 'not-allowed';
@@ -430,6 +430,7 @@
                 </div>
                 <div class="item-info">
                     <div class="item-nombre">${item.nombre}</div>
+                    ${item.detalle ? `<div style="font-size:0.72rem;color:var(--muted);margin-top:2px;">${item.detalle}</div>` : ''}
                 </div>
                 <div class="item-subtotal">${fmt(sub)}</div>
             `;
@@ -489,7 +490,7 @@
         const total  = estado.comanda.reduce((s, i) => s + i.precio * i.qty, 0);
         const costo  = estado.comanda.reduce((s, i) => s + (i.costo || 0) * i.qty, 0);
 
-        const items = estado.comanda.map(i => ({ id: i.id, nombre: i.nombre, precio: i.precio, qty: i.qty }));
+        const items = estado.comanda.map(i => ({ id: i.id, nombre: i.nombre, detalle: i.detalle || null, precio: i.precio, qty: i.qty }));
 
         const { error } = await SB.from('pedidos').insert({
             sitio:               estado.local,
@@ -1343,5 +1344,284 @@
     document.getElementById('modal-usuarios')?.addEventListener('click', function(e) {
         if (e.target === this) cerrarUsuarios();
     });
+
+    // ── OPCIONES DE PRODUCTO ─────────────────────────────────────────────────
+
+    // Recetas predeterminadas
+    const RECETA_SANDWICH = {
+        'Italiano':  ['palta', 'tomate', 'mayo'],
+        'Chacarero': ['tomate', 'porotos', 'aji', 'mayo'],
+        'Luco':      ['queso', 'mayo'],
+    };
+    const RECETA_COMPLETO = {
+        'Italiano':  ['tomate', 'palta', 'mayo'],
+        'Completo':  ['tomate', 'chucrut', 'mayo'],
+        'Dinámico':  ['palta', 'tomate', 'americana', 'mayo', 'chucrut'],
+    };
+
+    // Todos los ingredientes disponibles
+    const INGREDIENTES_FUENTE = [
+        { id: 'palta',     nombre: 'Palta' },
+        { id: 'tomate',    nombre: 'Tomate' },
+        { id: 'mayo',      nombre: 'Mayonesa' },
+        { id: 'chucrut',   nombre: 'Chucrut' },
+        { id: 'queso',     nombre: 'Queso' },
+        { id: 'porotos',   nombre: 'Porotos verdes' },
+        { id: 'aji',       nombre: 'Ají verde' },
+        { id: 'americana', nombre: 'Americana' },
+        { id: 'lechuga',   nombre: 'Lechuga' },
+        { id: 'cebolla',   nombre: 'Cebolla' },
+        { id: 'pepino',    nombre: 'Pepinillos' },
+    ];
+
+    const BEBIDAS_FUENTE = [
+        'Coca-Cola','Coca-Cola sin azúcar','Pepsi','Kem',
+        'Bilz','Pap','Fanta','Sprite','Agua con gas','Agua sin gas'
+    ];
+
+    let opcionesState = null; // producto actual en el modal
+
+    // Determina si un producto necesita modal de opciones
+    function necesitaOpciones(prod) {
+        const cat = prod.cat || prod.categoria || '';
+        if (estado.local === 'cafe' && cat === 'cafe') return true;          // elegir grano
+        if (estado.local === 'fuente') {
+            if (cat === 'sandwich' || cat === 'completo') return true;       // receta + ingredientes + bebida
+            if (cat === 'handroll') return true;                             // salsa
+        }
+        if (prod.categoria === 'handroll' || cat === 'handroll') return true; // handroll en cualquier sitio
+        return false;
+    }
+
+    function clickProducto(prod) {
+        if (!necesitaOpciones(prod)) {
+            agregarAComanda(prod);
+            return;
+        }
+        abrirOpciones(prod);
+    }
+
+    function abrirOpciones(prod) {
+        const cat = prod.cat || prod.categoria || '';
+        opcionesState = { prod, cat, selecciones: {} };
+
+        document.getElementById('opciones-titulo').textContent = prod.nombre.toUpperCase();
+        document.getElementById('opciones-subtitulo').textContent = fmt(prod.precio);
+        document.getElementById('opciones-resumen').textContent = '';
+
+        const contenido = document.getElementById('opciones-contenido');
+        contenido.innerHTML = '';
+
+        // ── CAFÉ: elegir grano (y leche si aplica) ───────────────────────────
+        const CAFES_CON_LECHE = ['c_cortado','c_latte','c_capuchino','c_mocachino','c_chocolate'];
+        const llevaleche = CAFES_CON_LECHE.includes(prod.id);
+        if (cat === 'cafe') {
+            contenido.innerHTML = `
+                <div>
+                    <div style="font-size:0.75rem;letter-spacing:2px;text-transform:uppercase;color:var(--muted);margin-bottom:10px;">TIPO DE GRANO</div>
+                    <div style="display:flex;gap:10px;">
+                        ${['Napoli','Armonía'].map(g => `
+                            <button class="opt-btn-opciones" data-grupo="grano" data-val="${g}"
+                                onclick="selOpcion('grano','${g}')"
+                                style="flex:1;padding:14px;border:1px solid var(--border);border-radius:12px;background:var(--surface);color:var(--text);font-family:'DM Sans',sans-serif;font-size:0.9rem;font-weight:700;cursor:pointer;">
+                                ${g === 'Napoli' ? '☕ Napoli' : '🌿 Armonía'}<br>
+                                <span style="font-size:0.72rem;color:var(--muted);font-weight:400;">${g === 'Napoli' ? 'Intenso' : 'Suave'}</span>
+                            </button>`).join('')}
+                    </div>
+                </div>
+                ${llevaleche ? `
+                <div>
+                    <div style="font-size:0.75rem;letter-spacing:2px;text-transform:uppercase;color:var(--muted);margin-bottom:10px;">TIPO DE LECHE</div>
+                    <div style="display:flex;gap:10px;">
+                        ${[{id:'entera',label:'🥛 Entera',desc:'Estándar'},{id:'sin_lactosa',label:'🌿 Sin lactosa',desc:'Descremada'}].map(l => `
+                            <button class="opt-btn-opciones" data-grupo="leche" data-val="${l.id}"
+                                onclick="selOpcion('leche','${l.id}')"
+                                style="flex:1;padding:14px;border:1px solid var(--border);border-radius:12px;background:var(--surface);color:var(--text);font-family:'DM Sans',sans-serif;font-size:0.9rem;font-weight:700;cursor:pointer;">
+                                ${l.label}<br>
+                                <span style="font-size:0.72rem;color:var(--muted);font-weight:400;">${l.desc}</span>
+                            </button>`).join('')}
+                    </div>
+                </div>` : ''}`;
+        }
+
+        // ── HANDROLL: elegir salsa ────────────────────────────────────────────
+        if (cat === 'handroll') {
+            contenido.innerHTML = `
+                <div>
+                    <div style="font-size:0.75rem;letter-spacing:2px;text-transform:uppercase;color:var(--muted);margin-bottom:10px;">SALSA</div>
+                    <div style="display:flex;gap:10px;flex-wrap:wrap;">
+                        ${[{id:'soya',label:'🫙 Soya',desc:'Gratis'},{id:'agridulce',label:'🍯 Agridulce',desc:'+$500'},{id:'sin_salsa',label:'Sin salsa',desc:''}].map(s => `
+                            <button class="opt-btn-opciones" data-grupo="salsa" data-val="${s.id}"
+                                onclick="selOpcion('salsa','${s.id}')"
+                                style="flex:1;min-width:90px;padding:14px 10px;border:1px solid var(--border);border-radius:12px;background:var(--surface);color:var(--text);font-family:'DM Sans',sans-serif;font-size:0.88rem;font-weight:700;cursor:pointer;text-align:center;">
+                                ${s.label}${s.desc ? `<br><span style="font-size:0.72rem;color:var(--muted);font-weight:400;">${s.desc}</span>` : ''}
+                            </button>`).join('')}
+                    </div>
+                </div>`;
+        }
+
+        // ── SANDWICH / COMPLETO / HAMBURGUESA ────────────────────────────────
+        if (cat === 'sandwich' || cat === 'completo') {
+            const recetas = cat === 'completo' ? RECETA_COMPLETO : RECETA_SANDWICH;
+            const opciones = Object.keys(recetas);
+            opcionesState.ingr = {}; // ingredientes seleccionados
+
+            contenido.innerHTML = `
+                <div>
+                    <div style="font-size:0.75rem;letter-spacing:2px;text-transform:uppercase;color:var(--muted);margin-bottom:10px;">ELIGE UNA OPCIÓN</div>
+                    <div style="display:flex;gap:8px;flex-wrap:wrap;">
+                        ${opciones.map(op => `
+                            <button class="opt-btn-opciones" data-grupo="receta" data-val="${op}"
+                                onclick="selReceta('${op}')"
+                                style="flex:1;min-width:90px;padding:12px 8px;border:1px solid var(--border);border-radius:12px;background:var(--surface);color:var(--text);font-family:'DM Sans',sans-serif;font-size:0.88rem;font-weight:700;cursor:pointer;text-align:center;">
+                                ${op}
+                            </button>`).join('')}
+                    </div>
+                </div>
+                <div id="opciones-ingredientes" style="display:none;">
+                    <div style="font-size:0.75rem;letter-spacing:2px;text-transform:uppercase;color:var(--muted);margin-bottom:10px;">INGREDIENTES <span style="font-weight:400;text-transform:none;font-size:0.72rem;">(quita o agrega)</span></div>
+                    <div id="ingredientes-grid" style="display:flex;flex-wrap:wrap;gap:8px;"></div>
+                </div>
+                ${prod.bebida ? `
+                <div id="opciones-bebida">
+                    <div style="font-size:0.75rem;letter-spacing:2px;text-transform:uppercase;color:var(--muted);margin-bottom:10px;">BEBIDA DEL COMBO</div>
+                    <select id="sel-bebida" onchange="selOpcion('bebida',this.value)"
+                        style="width:100%;padding:12px;border:1px solid var(--border);border-radius:12px;background:var(--surface);color:var(--text);font-family:'DM Sans',sans-serif;font-size:0.9rem;outline:none;">
+                        <option value="">— Elige una bebida —</option>
+                        ${BEBIDAS_FUENTE.map(b => `<option value="${b}">${b}</option>`).join('')}
+                    </select>
+                </div>` : ''}`;
+        }
+
+        document.getElementById('modal-opciones').classList.remove('hidden');
+    }
+
+    window.selOpcion = function(grupo, val) {
+        opcionesState.selecciones[grupo] = val;
+        // Highlight botón seleccionado
+        document.querySelectorAll(`[data-grupo="${grupo}"]`).forEach(btn => {
+            btn.style.background = btn.dataset.val === val ? 'var(--primary)' : 'var(--surface)';
+            btn.style.color = btn.dataset.val === val ? '#fff' : 'var(--text)';
+            btn.style.borderColor = btn.dataset.val === val ? 'var(--primary)' : 'var(--border)';
+        });
+        actualizarResumenOpciones();
+    };
+
+    window.selReceta = function(opcion) {
+        const cat = opcionesState.cat;
+        const recetas = cat === 'completo' ? RECETA_COMPLETO : RECETA_SANDWICH;
+        opcionesState.selecciones.receta = opcion;
+        // Cargar ingredientes base de la receta
+        opcionesState.ingr = {};
+        (recetas[opcion] || []).forEach(id => { opcionesState.ingr[id] = true; });
+
+        // Highlight receta
+        document.querySelectorAll('[data-grupo="receta"]').forEach(btn => {
+            btn.style.background = btn.dataset.val === opcion ? 'var(--primary)' : 'var(--surface)';
+            btn.style.color = btn.dataset.val === opcion ? '#fff' : 'var(--text)';
+            btn.style.borderColor = btn.dataset.val === opcion ? 'var(--primary)' : 'var(--border)';
+        });
+
+        // Mostrar ingredientes
+        document.getElementById('opciones-ingredientes').style.display = 'block';
+        renderIngredientesOpciones();
+        actualizarResumenOpciones();
+    };
+
+    function renderIngredientesOpciones() {
+        const grid = document.getElementById('ingredientes-grid');
+        if (!grid) return;
+        grid.innerHTML = INGREDIENTES_FUENTE.map(ing => {
+            const activo = !!opcionesState.ingr[ing.id];
+            return `<button onclick="toggleIngrediente('${ing.id}')" id="ing-btn-${ing.id}"
+                style="padding:8px 14px;border:1px solid ${activo ? 'var(--primary)' : 'var(--border)'};border-radius:20px;
+                background:${activo ? 'var(--primary)' : 'var(--surface)'};color:${activo ? '#fff' : 'var(--muted)'};
+                font-family:'DM Sans',sans-serif;font-size:0.82rem;font-weight:600;cursor:pointer;">
+                ${activo ? '✓ ' : ''}${ing.nombre}
+            </button>`;
+        }).join('');
+    }
+
+    window.toggleIngrediente = function(id) {
+        opcionesState.ingr[id] = !opcionesState.ingr[id];
+        if (!opcionesState.ingr[id]) delete opcionesState.ingr[id];
+        renderIngredientesOpciones();
+        actualizarResumenOpciones();
+    };
+
+    function actualizarResumenOpciones() {
+        const s = opcionesState.selecciones;
+        const partes = [];
+        if (s.grano) partes.push(s.grano);
+        if (s.leche) partes.push(s.leche === 'sin_lactosa' ? 'Sin lactosa' : 'Leche entera');
+        if (s.salsa) partes.push(s.salsa === 'sin_salsa' ? 'Sin salsa' : s.salsa === 'agridulce' ? 'Agridulce' : 'Soya');
+        if (s.receta) partes.push(s.receta);
+        if (opcionesState.ingr) {
+            const ings = INGREDIENTES_FUENTE.filter(i => opcionesState.ingr[i.id]).map(i => i.nombre);
+            if (ings.length) partes.push(ings.join(', '));
+        }
+        if (s.bebida) partes.push('🥤 ' + s.bebida);
+        document.getElementById('opciones-resumen').textContent = partes.join(' · ');
+    }
+
+    window.cerrarOpciones = function() {
+        document.getElementById('modal-opciones').classList.add('hidden');
+        opcionesState = null;
+    };
+
+    window.confirmarOpciones = function() {
+        const { prod, cat, selecciones, ingr } = opcionesState;
+
+        // Validaciones
+        if (cat === 'cafe' && !selecciones.grano) {
+            toast('Elige el tipo de grano', 'err'); return;
+        }
+        const CAFES_CON_LECHE_V = ['c_cortado','c_latte','c_capuchino','c_mocachino','c_chocolate'];
+        if (cat === 'cafe' && CAFES_CON_LECHE_V.includes(prod.id) && !selecciones.leche) {
+            toast('Elige el tipo de leche', 'err'); return;
+        }
+        if (cat === 'handroll' && !selecciones.salsa) {
+            toast('Elige la salsa', 'err'); return;
+        }
+        if ((cat === 'sandwich' || cat === 'completo') && !selecciones.receta) {
+            toast('Elige una opción', 'err'); return;
+        }
+        if (prod.bebida && !selecciones.bebida) {
+            toast('Elige la bebida del combo', 'err'); return;
+        }
+
+        // Armar nombre con detalle
+        let detalle = '';
+        if (selecciones.grano) detalle = selecciones.grano;
+        if (selecciones.leche) detalle += (detalle ? ' · ' : '') + (selecciones.leche === 'sin_lactosa' ? 'Sin lactosa' : 'Leche entera');
+        if (selecciones.salsa) detalle = selecciones.salsa === 'sin_salsa' ? 'Sin salsa' : selecciones.salsa === 'agridulce' ? 'Agridulce +$500' : 'Soya';
+        if (selecciones.receta) {
+            const ings = INGREDIENTES_FUENTE.filter(i => ingr && ingr[i.id]).map(i => i.nombre).join(', ');
+            detalle = selecciones.receta + (ings ? ' · ' + ings : '');
+        }
+        if (selecciones.bebida) detalle += (detalle ? ' · ' : '') + '🥤 ' + selecciones.bebida;
+
+        // Precio: handroll agridulce suma $500
+        let precio = prod.precio;
+        if (selecciones.salsa === 'agridulce') precio += 500;
+
+        const uid = prod.id + '_' + Date.now();
+        estado.comanda.push({
+            id: uid,
+            nombre: prod.nombre,
+            detalle,
+            precio,
+            costo: prod.costo || 0,
+            qty: 1
+        });
+        renderComanda();
+        cerrarOpciones();
+        toast(prod.nombre + ' agregado ✓', 'ok');
+    };
+
+    document.getElementById('modal-opciones')?.addEventListener('click', function(e) {
+        if (e.target === this) cerrarOpciones();
+    });
+
 
 })();
