@@ -727,6 +727,16 @@
             container.appendChild(info);
         }
 
+        // Editar disponible en pendiente, pagado, whatsapp, en_cocina
+        if (['pendiente','pagado','whatsapp','en_cocina'].includes(p.estado)) {
+            const btnEdit = document.createElement('button');
+            btnEdit.className = 'btn-accion';
+            btnEdit.style.cssText = 'background:var(--surface);border:1px solid var(--border);color:var(--text);';
+            btnEdit.textContent = '✏️ Editar';
+            btnEdit.onclick = () => abrirEditarPedido(p);
+            container.appendChild(btnEdit);
+        }
+
         // Anular disponible en todos los estados activos
         if (!['recibido','anulado'].includes(p.estado)) {
             const btnAnul = document.createElement('button');
@@ -1193,6 +1203,105 @@
     document.getElementById('modal-config')?.addEventListener('click', function(e) {
         if (e.target === this) cerrarConfig();
     });
+
+    // ── EDITAR PEDIDO ────────────────────────────────────────────────────────
+
+    let editarPedidoState = null; // { pedido, items }
+
+    window.abrirEditarPedido = function(p) {
+        // Clonar items para editar sin afectar el original
+        const items = (Array.isArray(p.items_json) ? p.items_json : []).map(i => ({
+            id:      i.id || i.nombre,
+            nombre:  i.nombre,
+            detalle: i.detalle || '',
+            precio:  Number(i.precio) || 0,
+            qty:     Number(i.qty || i.cantidad) || 1,
+        }));
+        editarPedidoState = { pedido: p, items };
+
+        document.getElementById('editar-pedido-subtitulo').textContent =
+            `${p.nombre || 'Sin nombre'} · #${p.id} · ${p.tipo_entrega}`;
+
+        renderEditarItems();
+        document.getElementById('modal-editar-pedido').classList.remove('hidden');
+    };
+
+    window.cerrarEditarPedido = function() {
+        document.getElementById('modal-editar-pedido').classList.add('hidden');
+        editarPedidoState = null;
+    };
+
+    function renderEditarItems() {
+        const lista = document.getElementById('editar-items-lista');
+        const { items } = editarPedidoState;
+
+        if (!items.length) {
+            lista.innerHTML = '<div style="color:var(--muted);font-size:0.85rem;padding:12px 0;">Sin items</div>';
+            actualizarTotalEditar();
+            return;
+        }
+
+        lista.innerHTML = items.map((item, idx) => `
+            <div style="background:var(--surface);border:1px solid var(--border);border-radius:12px;padding:12px 14px;display:flex;align-items:center;gap:10px;">
+                <div style="flex:1;min-width:0;">
+                    <div style="font-weight:700;font-size:0.88rem;">${item.nombre}</div>
+                    ${item.detalle ? `<div style="font-size:0.72rem;color:var(--muted);margin-top:2px;">${item.detalle}</div>` : ''}
+                    <div style="font-size:0.82rem;color:var(--muted);margin-top:2px;">${fmt(item.precio)} c/u</div>
+                </div>
+                <div style="display:flex;align-items:center;gap:6px;">
+                    <button onclick="editarQty(${idx},-1)"
+                        style="width:28px;height:28px;border-radius:50%;border:1px solid var(--border);background:var(--card);color:var(--text);font-size:1rem;cursor:pointer;display:flex;align-items:center;justify-content:center;">−</button>
+                    <span style="min-width:20px;text-align:center;font-weight:700;">${item.qty}</span>
+                    <button onclick="editarQty(${idx},1)"
+                        style="width:28px;height:28px;border-radius:50%;border:1px solid var(--border);background:var(--card);color:var(--text);font-size:1rem;cursor:pointer;display:flex;align-items:center;justify-content:center;">+</button>
+                </div>
+                <div style="font-weight:700;min-width:60px;text-align:right;">${fmt(item.precio * item.qty)}</div>
+                <button onclick="eliminarItemEditar(${idx})"
+                    style="padding:4px 8px;border:1px solid var(--red);border-radius:8px;background:transparent;color:var(--red);font-size:0.75rem;cursor:pointer;">✕</button>
+            </div>
+        `).join('');
+
+        actualizarTotalEditar();
+    }
+
+    window.editarQty = function(idx, delta) {
+        editarPedidoState.items[idx].qty = Math.max(1, editarPedidoState.items[idx].qty + delta);
+        renderEditarItems();
+    };
+
+    window.eliminarItemEditar = function(idx) {
+        editarPedidoState.items.splice(idx, 1);
+        renderEditarItems();
+    };
+
+    function actualizarTotalEditar() {
+        const total = editarPedidoState.items.reduce((s, i) => s + i.precio * i.qty, 0);
+        document.getElementById('editar-total').textContent = fmt(total);
+    }
+
+    window.guardarEdicionPedido = async function() {
+        const { pedido, items } = editarPedidoState;
+        if (!items.length) { toast('El pedido no puede quedar sin items', 'err'); return; }
+
+        const total = items.reduce((s, i) => s + i.precio * i.qty, 0);
+        try {
+            const { error } = await SB.from('pedidos')
+                .update({ items_json: items, total })
+                .eq('id', pedido.id);
+            if (error) throw error;
+            toast('Pedido actualizado ✅', 'ok');
+            cerrarEditarPedido();
+            cargarPedidosWeb();
+        } catch(e) {
+            toast('Error al guardar', 'err');
+            console.error(e);
+        }
+    };
+
+    document.getElementById('modal-editar-pedido')?.addEventListener('click', function(e) {
+        if (e.target === this) cerrarEditarPedido();
+    });
+
 
     // ── GESTIÓN DE USUARIOS ──────────────────────────────────────────────────
 
