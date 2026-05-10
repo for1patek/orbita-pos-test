@@ -1,1649 +1,549 @@
-/**
- * orbita-pos.js — Lógica del Punto de Venta Órbita 300
- * Requiere: supabase-js → orbita-auth.js → orbita-productos.js → este archivo
- */
-
-(function () {
-    'use strict';
-
-    // ─── Llave admin por URL (?k=orbita_8h3k2p_2026) ────────────────────────
-    const POS_ADMIN_KEY = new URLSearchParams(window.location.search).get('k') === 'orbita_8h3k2p_2026';
-    let posAdminDesbloqueado = false;
-
-    if (POS_ADMIN_KEY) {
-        // Mostrar banner al cargar
-        const banner = document.createElement('div');
-        banner.id = 'pos-admin-banner';
-        banner.style.cssText = 'position:fixed;top:0;left:0;right:0;z-index:9999;padding:12px 14px;font-family:DM Sans,sans-serif;font-size:0.95rem;text-align:center;background:rgba(17,17,17,0.96);color:#fff;border-bottom:2px solid #C4922A;';
-        banner.innerHTML = 'Modo admin activo — <button onclick="abrirAdminLogin()" style="margin-left:8px;padding:4px 12px;background:#C4922A;border:none;border-radius:6px;color:#fff;font-size:0.85rem;cursor:pointer;font-family:DM Sans,sans-serif;font-weight:700;">Ingresar credenciales</button>';
-        document.body.insertBefore(banner, document.body.firstChild);
-        document.body.style.paddingTop = '54px';
-        // Ajustar altura del POS para que no quede cortado por el banner
-        const posEl = document.getElementById('pantalla-pos');
-        if (posEl) posEl.style.height = 'calc(100dvh - 54px)';
-    }
-
-    window.abrirAdminLogin = function () {
-        document.getElementById('admin-login-email').value = '';
-        document.getElementById('admin-login-pass').value = '';
-        document.getElementById('admin-login-error').style.display = 'none';
-        document.getElementById('modal-admin-login').classList.remove('hidden');
-        setTimeout(() => document.getElementById('admin-login-email').focus(), 100);
-    };
-
-    window.cerrarAdminLogin = function () {
-        document.getElementById('modal-admin-login').classList.add('hidden');
-    };
-
-    window.verificarAdminLogin = async function () {
-        const email    = document.getElementById('admin-login-email').value.trim();
-        const password = document.getElementById('admin-login-pass').value;
-        const errDiv   = document.getElementById('admin-login-error');
-        errDiv.style.display = 'none';
-        if (!email || !password) {
-            errDiv.textContent = 'Ingresa email y contraseña.';
-            errDiv.style.display = 'block';
-            return;
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>POS · Órbita 300</title>
+    <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>🛒</text></svg>">
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link href="https://fonts.googleapis.com/css2?family=Bebas+Neue&family=DM+Sans:wght@300;400;500;700&display=swap" rel="stylesheet">
+    <style>
+        :root {
+            --primary:  #8B1A1A;
+            --accent:   #A0522D;
+            --gold:     #C4922A;
+            --bg:       #0f0f0f;
+            --card:     #1a1a1a;
+            --border:   #2e2e2e;
+            --text:     #f0f0f0;
+            --muted:    #888;
+            --surface:  #222;
+            --green:    #22c55e;
+            --red:      #ef4444;
+            --yellow:   #f59e0b;
+            --blue:     #3b82f6;
         }
-        try {
-            const result = await window.orbitaAuth.signIn(email, password);
-            if (!result || result.error) {
-                errDiv.textContent = result?.error?.message || 'Credenciales incorrectas';
-                errDiv.style.display = 'block';
-                document.getElementById('admin-login-pass').value = '';
-                return;
-            }
-            posAdminDesbloqueado = true;
-            cerrarAdminLogin();
-            // Actualizar banner
-            const banner = document.getElementById('pos-admin-banner');
-            if (banner) banner.innerHTML = '🔑 Modo admin activo — <button onclick="abrirUsuarios()" style="margin-left:8px;padding:4px 12px;background:#C4922A;border:none;border-radius:6px;color:#fff;font-size:0.82rem;cursor:pointer;font-family:DM Sans,sans-serif;font-weight:700;">Gestionar usuarios</button>';
-            // Mostrar botones ⚙️ y 🔑 si ya hay sesión POS activa
-            const btnCfg2 = document.getElementById('btn-config');
-            if (btnCfg2) btnCfg2.style.display = 'inline-block';
-            const btnUsr = document.getElementById('btn-usuarios');
-            if (btnUsr) btnUsr.style.display = 'inline-block';
-        } catch(e) {
-            errDiv.textContent = e.message || 'Error al iniciar sesión';
-            errDiv.style.display = 'block';
-            document.getElementById('admin-login-pass').value = '';
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        body { background: var(--bg); color: var(--text); font-family: 'DM Sans', sans-serif; height: 100dvh; overflow: hidden; }
+
+        /* ── LOGIN ── */
+        #pantalla-login {
+            display: flex; flex-direction: column; align-items: center;
+            min-height: 100dvh; height: auto; gap: 12px; padding: 20px 20px 32px;
+            overflow-y: auto; position: absolute; inset: 0; overflow-x: hidden;
         }
-    };
+        .login-logo { font-family: 'Bebas Neue', sans-serif; font-size: 2.8rem; color: var(--primary); letter-spacing: 3px; }
+        .login-sub  { font-size: 0.8rem; letter-spacing: 4px; text-transform: uppercase; color: var(--muted); margin-top: -18px; }
+        .login-card { background: var(--card); border: 1px solid var(--border); border-radius: 16px; padding: 20px 20px; width: 100%; max-width: 360px; }
+        .login-card h2 { font-size: 1rem; font-weight: 700; margin-bottom: 20px; text-align: center; color: var(--muted); letter-spacing: 2px; text-transform: uppercase; }
+        .local-select { display: flex; gap: 10px; margin-bottom: 20px; }
+        .local-btn { flex: 1; padding: 12px 8px; border: 2px solid var(--border); border-radius: 12px; background: var(--surface); color: var(--muted); font-family: 'DM Sans', sans-serif; font-size: 0.9rem; font-weight: 700; cursor: pointer; transition: all 0.2s; }
+        .local-btn.active { border-color: var(--primary); color: var(--text); background: var(--local-bg, #1a1a1a); }
+        .usuario-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; margin-bottom: 20px; }
+        .usuario-btn { padding: 14px 8px; border: 1px solid var(--border); border-radius: 12px; background: var(--surface); color: var(--text); font-family: 'DM Sans', sans-serif; font-size: 0.88rem; font-weight: 600; cursor: pointer; transition: all 0.2s; text-align: center; }
+        .usuario-btn:hover { border-color: var(--primary); }
+        .usuario-btn.selected { border-color: var(--gold); background: #2a1e00; }
+        .pin-display { background: var(--surface); border: 1px solid var(--border); border-radius: 12px; padding: 10px; text-align: center; font-size: 1.5rem; letter-spacing: 10px; margin-bottom: 10px; min-height: 48px; color: var(--text); }
+        .pin-grid { display: grid; grid-template-columns: repeat(3,1fr); gap: 10px; }
+        .pin-btn { padding: 13px; border: 1px solid var(--border); border-radius: 12px; background: var(--surface); color: var(--text); font-family: 'Bebas Neue', sans-serif; font-size: 1.5rem; cursor: pointer; transition: all 0.15s; }
+        .pin-btn:hover { background: var(--card); border-color: var(--primary); }
+        .pin-btn.del { color: var(--red); }
+        .pin-btn.enter { background: var(--primary); border-color: var(--primary); color: #fff; }
+        .pin-btn.enter:hover { background: #a01f1f; }
+        .login-error { color: var(--red); font-size: 0.82rem; text-align: center; min-height: 20px; margin-top: -4px; }
 
-    document.getElementById('modal-admin-login')?.addEventListener('click', function(e) {
-        if (e.target === this) cerrarAdminLogin();
-    });
+        /* ── LAYOUT POS ── */
+        #pantalla-pos { display: none; height: 100dvh; flex-direction: column; }
+        #pantalla-pedidos-web { display: flex; flex-direction: column; flex: 1; min-height: 0; overflow: hidden; }
+        .pos-header { display: flex; align-items: center; justify-content: space-between; padding: 10px 16px; background: var(--card); border-bottom: 1px solid var(--border); flex-shrink: 0; }
+        .pos-header-left { display: flex; align-items: center; gap: 12px; }
+        .pos-titulo { font-family: 'Bebas Neue', sans-serif; font-size: 1.4rem; letter-spacing: 2px; color: var(--primary); }
+        .pos-local-badge { background: var(--surface); border: 1px solid var(--border); border-radius: 20px; padding: 4px 12px; font-size: 0.75rem; font-weight: 700; color: var(--muted); letter-spacing: 1px; text-transform: uppercase; }
+        .pos-usuario-badge { font-size: 0.8rem; color: var(--muted); }
+        .pos-header-right { display: flex; gap: 10px; align-items: center; }
+        .header-btn { padding: 8px 14px; border: 1px solid var(--border); border-radius: 10px; background: var(--surface); color: var(--muted); font-family: 'DM Sans', sans-serif; font-size: 0.8rem; font-weight: 700; cursor: pointer; transition: all 0.2s; }
+        .header-btn:hover { border-color: var(--primary); color: var(--text); }
+        .header-btn.danger { border-color: var(--red); color: var(--red); }
 
-    // ─── Supabase ────────────────────────────────────────────────────────────
-    const SB = supabase.createClient(
-        window.orbitaAuth.url,
-        window.orbitaAuth.anonKey
-    );
+        .pos-body { display: flex; flex: 1; overflow: hidden; }
 
-    // ─── Estado global ───────────────────────────────────────────────────────
-    let estado = {
-        local:       'cafe',       // 'cafe' | 'fuente'
-        usuario:     null,         // { id, nombre, rol }
-        turnoInicio: null,         // Date
-        comanda:     [],           // [{ id, nombre, precio, costo, qty }]
-        metodoPago:  'efectivo',
-        pedidoAnularId: null,
-        catalogoCafe:   [],
-        catalogoFuente: [],
-    };
+        /* ── PANEL IZQUIERDO: MENÚ ── */
+        .panel-menu { flex: 1.4; display: flex; flex-direction: column; border-right: 1px solid var(--border); overflow: hidden; min-height: 0; height: 100%; }
+        .tabs-locales { display: none; } /* se muestra si hay pedidos web */
+        .cat-tabs { display: flex; gap: 6px; padding: 10px 12px; overflow-x: auto; flex-shrink: 0; border-bottom: 1px solid var(--border); scrollbar-width: none; }
+        .cat-tabs::-webkit-scrollbar { display: none; }
+        .pedidos-web-list::-webkit-scrollbar { width: 5px; }
+        .pedidos-web-list::-webkit-scrollbar-track { background: #1a1a1a; border-radius: 5px; }
+        .pedidos-web-list::-webkit-scrollbar-thumb { background: #555; border-radius: 5px; }
+        .pedidos-web-list::-webkit-scrollbar-thumb:hover { background: #777; }
+        .pedidos-web-list { scrollbar-width: thin; scrollbar-color: #555 #1a1a1a; }
+        .cat-tab { padding: 8px 14px; border: 1px solid var(--border); border-radius: 20px; background: var(--surface); color: var(--muted); font-size: 0.8rem; font-weight: 700; cursor: pointer; white-space: nowrap; transition: all 0.2s; flex-shrink: 0; }
+        .cat-tab.active { background: var(--primary); border-color: var(--primary); color: #fff; }
+        .productos-grid { flex: 1; overflow-y: auto; padding: 12px; display: grid; grid-template-columns: repeat(auto-fill, minmax(140px, 1fr)); gap: 10px; align-content: start; }
+        .producto-card { background: var(--card); border: 1px solid var(--border); border-radius: 14px; padding: 14px 12px; cursor: pointer; transition: all 0.15s; text-align: left; }
+        .producto-card:hover { border-color: var(--primary); transform: translateY(-1px); }
+        .producto-card:active { transform: scale(0.97); }
+        .prod-nombre { font-size: 0.88rem; font-weight: 700; color: var(--text); line-height: 1.3; margin-bottom: 4px; }
+        .prod-desc { font-size: 0.72rem; color: var(--muted); margin-bottom: 8px; line-height: 1.3; }
+        .prod-precio { font-family: 'Bebas Neue', sans-serif; font-size: 1.1rem; color: var(--gold); }
+        .prod-precio.sin-precio { color: var(--red); font-size: 0.75rem; font-family: 'DM Sans', sans-serif; font-weight: 700; }
 
-    // ─── Categorías por local ─────────────────────────────────────────────────
-    const CATS = {
-        cafe: [
-            { id: 'cafe',   label: '☕ Cafés' },
-            { id: 'pasteleria', label: '🍰 Pastelería' },
-            { id: 'jugo',   label: '🥤 Jugos' },
-            { id: 'bebida', label: '🥤 Bebidas/Aguas' },
-        ],
-        fuente: [
-            { id: 'sandwich', label: '🍔 Sándwiches' },
-            { id: 'handroll', label: '🍣 Hand Roll' },
-            { id: 'completo', label: '🌭 Completos' },
-            { id: 'extra',    label: '🍟 Papas' },
-            { id: 'jugo',     label: '🍹 Jugos' },
-            { id: 'bebida',   label: '🥤 Bebidas/Aguas' },
-        ],
-    };
-    let catActiva = 'cafe';
+        /* pedidos web */
+        .pedidos-web-list { flex: 1; overflow-y: auto; padding: 12px; display: flex; flex-direction: column; gap: 10px; min-height: 0; }
+        .pedido-web-card { background: var(--card); border: 1px solid var(--border); border-radius: 14px; padding: 14px; }
+        .pedido-web-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 8px; }
+        .pedido-web-nombre { font-weight: 700; font-size: 0.95rem; }
+        .badge-estado { padding: 4px 10px; border-radius: 20px; font-size: 0.72rem; font-weight: 700; text-transform: uppercase; letter-spacing: 1px; }
+        .badge-pagado    { background: #14532d; color: #86efac; }
+        .badge-whatsapp  { background: #1a3a00; color: #a3e635; }
+        .badge-en-camino { background: #1e3a5f; color: #93c5fd; }
+        .badge-en-cocina { background: #3a2000; color: #fb923c; }
+        .badge-listo     { background: #14532d; color: #86efac; }
+        .badge-pendiente { background: #1e2a1e; color: #86efac; }
+        .pedido-web-items { font-size: 0.82rem; color: var(--muted); margin-bottom: 10px; line-height: 1.6; }
+        .pedido-web-total { font-family: 'Bebas Neue', sans-serif; font-size: 1.2rem; color: var(--gold); margin-bottom: 10px; }
+        .pedido-web-dir { font-size: 0.78rem; color: var(--blue); margin-bottom: 10px; }
+        .pedido-web-actions { display: flex; gap: 8px; }
+        .btn-accion { flex: 1; padding: 10px; border-radius: 10px; border: none; font-family: 'DM Sans', sans-serif; font-size: 0.82rem; font-weight: 700; cursor: pointer; transition: all 0.15s; }
+        .btn-confirmar  { background: var(--green); color: #fff; }
+        .btn-despachar  { background: var(--blue); color: #fff; }
+        .btn-anular-web { background: #2a0808; border: 1px solid var(--red); color: var(--red); }
 
-    // ─── Temas de color por local ─────────────────────────────────────────────
-    const TEMAS = {
-        cafe:   { primary: '#8B1A1A', accent: '#A0522D', activeBg: '#2a0808' },
-        fuente: { primary: '#b8860b', accent: '#8B6914', activeBg: '#2a1e00' },
-    };
+        /* ── PANEL DERECHO: COMANDA ── */
+        .panel-comanda { width: 320px; flex-shrink: 0; display: flex; flex-direction: column; overflow: hidden; }
+        .comanda-header { padding: 12px 14px; border-bottom: 1px solid var(--border); flex-shrink: 0; }
+        .comanda-titulo { font-family: 'Bebas Neue', sans-serif; font-size: 1.1rem; letter-spacing: 2px; color: var(--muted); margin-bottom: 10px; }
+        .comanda-campos { display: flex; flex-direction: column; gap: 8px; }
+        .campo-row { display: flex; gap: 8px; }
+        .campo-input { flex: 1; background: var(--surface); border: 1px solid var(--border); border-radius: 10px; padding: 10px 12px; color: var(--text); font-family: 'DM Sans', sans-serif; font-size: 0.88rem; outline: none; transition: border-color 0.2s; }
+        .campo-input:focus { border-color: var(--primary); }
+        .campo-input::placeholder { color: var(--muted); }
+        .campo-select { flex: 1; background: var(--surface); border: 1px solid var(--border); border-radius: 10px; padding: 10px 12px; color: var(--text); font-family: 'DM Sans', sans-serif; font-size: 0.88rem; outline: none; cursor: pointer; }
+        .comanda-items { flex: 1; overflow-y: auto; padding: 10px 14px; }
+        .comanda-vacia { color: var(--muted); font-size: 0.85rem; text-align: center; padding: 30px 0; }
+        .comanda-item { display: flex; align-items: center; gap: 10px; padding: 8px 0; border-bottom: 1px solid var(--border); }
+        .item-qty-ctrl { display: flex; align-items: center; gap: 6px; }
+        .qty-btn { width: 26px; height: 26px; border-radius: 50%; border: 1px solid var(--border); background: var(--surface); color: var(--text); font-size: 1rem; cursor: pointer; display: flex; align-items: center; justify-content: center; transition: all 0.15s; }
+        .qty-btn:hover { background: var(--primary); border-color: var(--primary); }
+        .qty-num { font-weight: 700; min-width: 20px; text-align: center; font-size: 0.9rem; }
+        .item-info { flex: 1; min-width: 0; }
+        .item-nombre { font-size: 0.85rem; font-weight: 600; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+        .item-subtotal { font-family: 'Bebas Neue', sans-serif; font-size: 1rem; color: var(--gold); }
+        .comanda-footer { padding: 12px 14px; border-top: 1px solid var(--border); flex-shrink: 0; }
+        .total-row { display: flex; justify-content: space-between; align-items: baseline; margin-bottom: 12px; }
+        .total-label { font-size: 0.85rem; color: var(--muted); font-weight: 700; letter-spacing: 1px; text-transform: uppercase; }
+        .total-monto { font-family: 'Bebas Neue', sans-serif; font-size: 2rem; color: var(--text); }
+        .metodo-pago { display: grid; grid-template-columns: repeat(3,1fr); gap: 8px; margin-bottom: 10px; }
+        .mp-btn { padding: 10px 6px; border: 1px solid var(--border); border-radius: 10px; background: var(--surface); color: var(--muted); font-size: 0.75rem; font-weight: 700; cursor: pointer; text-align: center; transition: all 0.2s; }
+        .mp-btn.active { border-color: var(--gold); color: var(--gold); background: #1a1400; }
+        .comanda-acciones { display: flex; gap: 8px; }
+        .btn-limpiar { padding: 12px; border: 1px solid var(--border); border-radius: 12px; background: var(--surface); color: var(--muted); font-family: 'DM Sans', sans-serif; font-size: 0.82rem; font-weight: 700; cursor: pointer; transition: all 0.2s; }
+        .btn-limpiar:hover { border-color: var(--red); color: var(--red); }
+        .btn-cobrar { flex: 1; padding: 14px; border: none; border-radius: 12px; background: var(--primary); color: #fff; font-family: 'Bebas Neue', sans-serif; font-size: 1.3rem; letter-spacing: 2px; cursor: pointer; transition: all 0.2s; }
+        .btn-cobrar:hover { background: #a01f1f; }
+        .btn-cobrar:disabled { background: var(--surface); color: var(--muted); cursor: not-allowed; }
 
-    function aplicarTemaLocal(local) {
-        const t = TEMAS[local] || TEMAS.cafe;
-        const r = document.documentElement.style;
-        r.setProperty('--primary',   t.primary);
-        r.setProperty('--accent',    t.accent);
-        r.setProperty('--local-bg',  t.activeBg);
-    }
+        /* ── MODAL COBRO ── */
+        .modal-overlay { position: fixed; inset: 0; background: rgba(0,0,0,0.85); display: flex; align-items: center; justify-content: center; z-index: 100; padding: 20px; }
+        .modal-card { background: var(--card); border: 1px solid var(--border); border-radius: 20px; padding: 32px 28px; width: 100%; max-width: 380px; text-align: center; }
+        .modal-titulo { font-family: 'Bebas Neue', sans-serif; font-size: 1.2rem; letter-spacing: 2px; color: var(--muted); margin-bottom: 6px; }
+        .modal-cliente { font-size: 1rem; font-weight: 700; margin-bottom: 20px; }
+        .modal-monto { font-family: 'Bebas Neue', sans-serif; font-size: 4rem; color: var(--text); line-height: 1; margin-bottom: 6px; }
+        .modal-metodo { font-size: 0.85rem; color: var(--muted); margin-bottom: 28px; text-transform: uppercase; letter-spacing: 2px; }
+        .modal-acciones { display: flex; gap: 12px; }
+        .btn-modal-cancel { flex: 1; padding: 14px; border: 1px solid var(--border); border-radius: 12px; background: var(--surface); color: var(--muted); font-family: 'DM Sans', sans-serif; font-size: 0.9rem; font-weight: 700; cursor: pointer; }
+        .btn-modal-confirm { flex: 2; padding: 14px; border: none; border-radius: 12px; background: var(--green); color: #fff; font-family: 'Bebas Neue', sans-serif; font-size: 1.4rem; letter-spacing: 2px; cursor: pointer; }
+        .btn-modal-anular { width: 100%; padding: 14px; border: none; border-radius: 12px; background: #2a0808; border: 1px solid var(--red); color: var(--red); font-family: 'DM Sans', sans-serif; font-size: 0.9rem; font-weight: 700; cursor: pointer; margin-top: 10px; }
 
-    // ─── Utilidades ──────────────────────────────────────────────────────────
-    function fmt(n) { return '$' + Math.round(n).toLocaleString('es-CL'); }
+        /* ── MODAL CIERRE TURNO ── */
+        .cierre-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; margin: 20px 0; text-align: left; }
+        .cierre-item { background: var(--surface); border-radius: 12px; padding: 14px; }
+        .cierre-label { font-size: 0.72rem; color: var(--muted); text-transform: uppercase; letter-spacing: 1px; margin-bottom: 4px; }
+        .cierre-valor { font-family: 'Bebas Neue', sans-serif; font-size: 1.4rem; color: var(--gold); }
+        .cierre-total { background: var(--primary); border-radius: 12px; padding: 16px; margin-bottom: 16px; }
+        .cierre-total .cierre-label { color: #fecaca; }
+        .cierre-total .cierre-valor { font-size: 2rem; color: #fff; }
 
-    function toast(msg, tipo = 'ok') {
-        const el = document.getElementById('toast');
-        el.textContent = msg;
-        el.className = 'toast show ' + tipo;
-        setTimeout(() => { el.className = 'toast'; }, 2800);
-    }
+        /* ── TOAST ── */
+        .toast { position: fixed; bottom: 24px; left: 50%; transform: translateX(-50%); background: #1a1a1a; border: 1px solid var(--border); border-radius: 12px; padding: 12px 20px; font-size: 0.88rem; font-weight: 600; z-index: 200; opacity: 0; transition: opacity 0.3s; pointer-events: none; }
+        .toast.show { opacity: 1; }
+        .toast.ok  { border-color: var(--green); color: var(--green); }
+        .toast.err { border-color: var(--red);   color: var(--red); }
 
-    async function sha256(str) {
-        const buf = await crypto.subtle.digest('SHA-256', new TextEncoder().encode(str));
-        return Array.from(new Uint8Array(buf)).map(b => b.toString(16).padStart(2, '0')).join('');
-    }
-
-    // ─── LOGIN ───────────────────────────────────────────────────────────────
-    let pinBuffer = '';
-    let usuarioSeleccionado = null;
-
-    function seleccionarLocal(local, btn) {
-        estado.local = local;
-        aplicarTemaLocal(local);
-        document.querySelectorAll('.local-btn').forEach(b => b.classList.remove('active'));
-        btn.classList.add('active');
-        cargarUsuarios();
-    }
-
-    async function cargarUsuarios() {
-        const grid = document.getElementById('usuario-grid');
-        grid.innerHTML = '<div style="grid-column:1/-1;text-align:center;color:var(--muted);font-size:0.82rem;padding:10px;">Cargando…</div>';
-        usuarioSeleccionado = null;
-        pinBuffer = '';
-        actualizarPinDisplay();
-
-        const { data, error } = await SB
-            .from('pos_usuarios')
-            .select('id, nombre, rol')
-            .eq('activo', true)
-            .or(`sitio.eq.${estado.local},sitio.eq.ambos`)
-            .order('nombre');
-
-        if (error || !data || data.length === 0) {
-            grid.innerHTML = '<div style="grid-column:1/-1;text-align:center;color:var(--muted);font-size:0.82rem;padding:10px;">Sin usuarios registrados.<br>Agrégalos desde el panel admin.</div>';
-            return;
+        /* ── RESPONSIVE ── */
+        @media (max-width: 768px) {
+            .panel-comanda { width: 100%; position: fixed; bottom: 0; left: 0; right: 0; height: 50dvh; border-top: 2px solid var(--border); border-right: none; z-index: 10; }
+            .panel-menu { height: 50dvh; border-right: none; }
+            .pos-body { flex-direction: column; }
+            .productos-grid { grid-template-columns: repeat(auto-fill, minmax(110px, 1fr)); }
         }
-
-        grid.innerHTML = '';
-        data.forEach(u => {
-            const btn = document.createElement('button');
-            btn.className = 'usuario-btn';
-            btn.textContent = u.nombre + (u.rol === 'admin' ? ' ⭐' : '');
-            btn.onclick = async () => {
-                document.querySelectorAll('.usuario-btn').forEach(b => b.classList.remove('selected'));
-                btn.classList.add('selected');
-                usuarioSeleccionado = u;
-                pinBuffer = '';
-                actualizarPinDisplay();
-                document.getElementById('login-error').textContent = '';
-                // En modo admin, entra directo sin PIN
-                if (posAdminDesbloqueado) {
-                    estado.usuario = u;
-                    estado.turnoInicio = new Date();
-                    sessionStorage.setItem('orbita_sesion', JSON.stringify({
-                        usuario: u,
-                        local: estado.local,
-                        turnoInicio: estado.turnoInicio.toISOString(),
-                    }));
-                    await abrirPOS();
-                }
-            };
-            grid.appendChild(btn);
-        });
-    }
-
-    function actualizarPinDisplay() {
-        const el = document.getElementById('pin-display');
-        if (pinBuffer.length === 0) { el.textContent = '·  ·  ·  ·'; return; }
-        el.textContent = '●  '.repeat(pinBuffer.length).trim();
-    }
-
-    // ─── Teclado físico para PIN ─────────────────────────────────────────────
-    document.addEventListener('keydown', function(e) {
-        const loginVisible = document.getElementById('pantalla-login').style.display !== 'none'
-            && !document.getElementById('pantalla-login').style.display; // visible por defecto
-        const enLogin = document.getElementById('pantalla-pos').style.display === 'none'
-            || !document.getElementById('pantalla-pos').style.display;
-        if (!enLogin) return;
-        if (e.key >= '0' && e.key <= '9') { window.pinDigit(e.key); }
-        else if (e.key === 'Backspace')    { window.pinDel(); }
-        else if (e.key === 'Enter')        { window.pinEnter(); }
-    });
-
-    window.pinDigit = function (d) {
-        if (pinBuffer.length >= 4) return;
-        pinBuffer += d;
-        actualizarPinDisplay();
-        if (pinBuffer.length === 4) pinEnter();
-    };
-
-    window.pinDel = function () {
-        pinBuffer = pinBuffer.slice(0, -1);
-        actualizarPinDisplay();
-    };
-
-    window.pinEnter = async function () {
-        const errEl = document.getElementById('login-error');
-        if (!usuarioSeleccionado) { errEl.textContent = 'Selecciona tu nombre primero.'; return; }
-        if (pinBuffer.length < 4)  { errEl.textContent = 'Ingresa los 4 dígitos.'; return; }
-
-        const hash = await sha256(pinBuffer);
-        const { data, error } = await SB
-            .from('pos_usuarios')
-            .select('id, nombre, rol')
-            .eq('id', usuarioSeleccionado.id)
-            .eq('pin_hash', hash)
-            .eq('activo', true)
-            .single();
-
-        pinBuffer = '';
-        actualizarPinDisplay();
-
-        if (error || !data) {
-            errEl.textContent = 'PIN incorrecto. Intenta de nuevo.';
-            return;
+        @media (max-width: 480px) {
+            .panel-comanda { height: 55dvh; }
+            .panel-menu { height: 45dvh; }
         }
 
-        estado.usuario     = data;
-        estado.turnoInicio = new Date();
-        errEl.textContent  = '';
+        .hidden { display: none !important; }
+    </style>
+</head>
+<body>
 
-        // Guardar sesión para sobrevivir F5
-        sessionStorage.setItem('orbita_sesion', JSON.stringify({
-            usuario:     data,
-            local:       estado.local,
-            turnoInicio: estado.turnoInicio.toISOString(),
-        }));
+<!-- ══════════════════════════════════════════════
+     PANTALLA LOGIN
+══════════════════════════════════════════════ -->
+<div id="pantalla-login">
+    <div class="login-sub">Punto de Venta</div>
 
-        abrirPOS();
-    };
+    <div class="login-card">
+        <h2>Selecciona local</h2>
+        <div class="local-select">
+            <button class="local-btn" data-local="cafe" onclick="seleccionarLocal('cafe',this)">☕ Café</button>
+            <button class="local-btn" data-local="fuente" onclick="seleccionarLocal('fuente',this)">🌭 Fuente</button>
+        </div>
 
-    window.seleccionarLocal = seleccionarLocal;
+        <h2>¿Quién eres?</h2>
+        <div class="usuario-grid" id="usuario-grid">
+            <!-- se rellena dinámicamente desde Supabase -->
+            <div style="grid-column:1/-1;text-align:center;color:var(--muted);font-size:0.82rem;padding:10px;">Cargando usuarios…</div>
+        </div>
 
-    // Aplicar tema café por defecto al cargar
-    (function initLocal() {
-        const btnCafe = document.querySelector('.local-btn[data-local="cafe"]');
-        if (btnCafe) {
-            aplicarTemaLocal('cafe');
-            btnCafe.classList.add('active');
-        }
-    })();
+        <div class="pin-display" id="pin-display">·  ·  ·  ·</div>
+        <div class="login-error" id="login-error"></div>
+        <div class="pin-grid">
+            <button class="pin-btn" onclick="pinDigit('1')">1</button>
+            <button class="pin-btn" onclick="pinDigit('2')">2</button>
+            <button class="pin-btn" onclick="pinDigit('3')">3</button>
+            <button class="pin-btn" onclick="pinDigit('4')">4</button>
+            <button class="pin-btn" onclick="pinDigit('5')">5</button>
+            <button class="pin-btn" onclick="pinDigit('6')">6</button>
+            <button class="pin-btn" onclick="pinDigit('7')">7</button>
+            <button class="pin-btn" onclick="pinDigit('8')">8</button>
+            <button class="pin-btn" onclick="pinDigit('9')">9</button>
+            <button class="pin-btn del" onclick="pinDel()">⌫</button>
+            <button class="pin-btn" onclick="pinDigit('0')">0</button>
+            <button class="pin-btn enter" onclick="pinEnter()">✓</button>
+        </div>
+    </div>
+</div>
 
-    // ─── ABRIR POS ───────────────────────────────────────────────────────────
-    async function abrirPOS() {
-        document.getElementById('pantalla-login').style.display = 'none';
-        aplicarTemaLocal(estado.local);
-        document.getElementById('pantalla-pos').style.display   = 'flex';
-        document.getElementById('header-local').textContent =
-            estado.local === 'cafe' ? '☕ Café' : '🌭 Fuente de Soda';
-        document.getElementById('header-usuario').textContent =
-            estado.usuario.nombre + (estado.usuario.rol === 'admin' ? ' ⭐' : '');
+<!-- ══════════════════════════════════════════════
+     PANTALLA POS
+══════════════════════════════════════════════ -->
+<div id="pantalla-pos">
+    <!-- Header -->
+    <div class="pos-header">
+        <div class="pos-header-left">
+            <span class="pos-titulo">ÓRBITA POS</span>
+            <span class="pos-local-badge" id="header-local">Café</span>
+            <span class="pos-usuario-badge" id="header-usuario">—</span>
+        </div>
+        <div class="pos-header-right">
+            <button class="header-btn" onclick="mostrarTabPedidos()" id="btn-tab-pedidos">📋 Pedidos web</button>
+            <button class="header-btn" onclick="mostrarTabVenta()" id="btn-tab-venta">🛒 Nueva venta</button>
+            <button class="header-btn" onclick="abrirHistorial()" id="btn-tab-historial">🕐 Historial</button>
+            <button class="header-btn" id="btn-config" onclick="abrirConfig()" style="display:none;">⚙️</button>
+            <button class="header-btn" id="btn-usuarios" onclick="abrirUsuarios()" style="display:none;">🔑</button>
+            <button class="header-btn" onclick="abrirCierreTurno()">🔒 Cerrar turno</button>
+            <button class="header-btn danger" onclick="cerrarSesionPOS()">Salir</button>
+        </div>
+    </div>
 
-        // Botones config y usuarios: solo visibles en modo admin (llave URL)
-        const btnCfg = document.getElementById('btn-config');
-        if (btnCfg) btnCfg.style.display = posAdminDesbloqueado ? 'inline-block' : 'none';
-        const btnUsr = document.getElementById('btn-usuarios');
-        if (btnUsr) btnUsr.style.display = posAdminDesbloqueado ? 'inline-block' : 'none';
+    <!-- Body -->
+    <div class="pos-body">
 
-        await cargarCatalogo();
-        catActiva = CATS[estado.local][0].id;
-        renderCatTabs();
-        renderProductos();
-        mostrarTabVenta();
-        iniciarBgPolling(); // badge y sonido siempre activos
-    }
+        <!-- Panel izquierdo -->
+        <div class="panel-menu">
 
-    // ─── CATÁLOGO ────────────────────────────────────────────────────────────
-    async function cargarCatalogo() {
-        try {
-            const raw = await window.orbitaProductos.fetchJson(
-                estado.local === 'cafe'
-                    ? window.orbitaProductos.SITIO_CAFE
-                    : window.orbitaProductos.SITIO_FUENTE
-            );
+            <!-- Vista: nueva venta -->
+            <div id="vista-venta" style="display:flex;flex-direction:column;flex:1;min-height:0;">
+                <div class="cat-tabs" id="cat-tabs"><!-- dinámico --></div>
+                <div class="productos-grid" id="productos-grid"><!-- dinámico --></div>
+            </div>
 
-            if (estado.local === 'cafe') {
-                estado.catalogoCafe = Array.isArray(raw) ? raw : [];
-            } else {
-                // Fuente retorna objeto con .productos y .papas_tamanios
-                const prods = raw && raw.productos ? raw.productos : [];
-                const papas = raw && raw.papas_tamanios ? raw.papas_tamanios : [];
-                // Agregar papas como productos con cat='extra' para el POS
-                const papasProd = papas.map(p => ({
-                    id: p.id, nombre: p.nombre, precio: p.precio,
-                    costo: p.costo || 0, activo: p.activo !== false, cat: 'extra'
-                }));
-                // Cargar hand rolls del sitio handroll e incorporarlos a la fuente
-                let handrolls = [];
-                try {
-                    const rawHR = await window.orbitaProductos.fetchJson(
-                        window.orbitaProductos.SITIO_HANDROLL
-                    );
-                    const hrProds = Array.isArray(rawHR) ? rawHR : [];
-                    handrolls = hrProds
-                        .filter(p => p.activo !== false && (p.categoria === 'handroll' || p.cat === 'handroll'))
-                        .map(p => ({ ...p, cat: 'handroll' }));
-                } catch (e) {
-                    console.error('Error cargando hand rolls para fuente:', e);
-                }
-                estado.catalogoFuente = [...prods, ...papasProd, ...handrolls];
-            }
-        } catch (e) {
-            console.error('Error cargando catálogo:', e);
-        }
-    }
-
-    function getCatalogo() {
-        return estado.local === 'cafe' ? estado.catalogoCafe : estado.catalogoFuente;
-    }
-
-    // ─── RENDER CATEGORÍAS ───────────────────────────────────────────────────
-    function renderCatTabs() {
-        const tabs = document.getElementById('cat-tabs');
-        tabs.innerHTML = '';
-        CATS[estado.local].forEach(cat => {
-            const btn = document.createElement('button');
-            btn.className = 'cat-tab' + (cat.id === catActiva ? ' active' : '');
-            btn.textContent = cat.label;
-            btn.onclick = () => {
-                catActiva = cat.id;
-                document.querySelectorAll('.cat-tab').forEach(b => b.classList.remove('active'));
-                btn.classList.add('active');
-                renderProductos();
-            };
-            tabs.appendChild(btn);
-        });
-    }
-
-    // ─── RENDER PRODUCTOS ────────────────────────────────────────────────────
-    function renderProductos() {
-        const grid = document.getElementById('productos-grid');
-        const catIds = [catActiva];
-        if (catActiva === 'bebida') catIds.push('agua');
-        const cat  = getCatalogo().filter(p => p.activo !== false && catIds.includes(p.cat));
-
-        if (cat.length === 0) {
-            grid.innerHTML = '<div style="color:var(--muted);font-size:0.85rem;padding:20px;">Sin productos en esta categoría.</div>';
-            return;
-        }
-
-        grid.innerHTML = '';
-        cat.forEach(p => {
-            const card = document.createElement('button');
-            card.className = 'producto-card';
-            const sinPrecio = !p.precio || p.precio === 0;
-            card.innerHTML = `
-                <div class="prod-nombre">${p.nombre}</div>
-                ${p.desc ? `<div class="prod-desc">${p.desc}</div>` : ''}
-                <div class="prod-precio ${sinPrecio ? 'sin-precio' : ''}">${sinPrecio ? 'Sin precio' : fmt(p.precio)}</div>
-            `;
-            if (!sinPrecio) {
-                card.onclick = () => clickProducto(p);
-            } else {
-                card.style.opacity = '0.5';
-                card.style.cursor  = 'not-allowed';
-                card.title = 'Configura el precio desde el panel admin';
-            }
-            grid.appendChild(card);
-        });
-    }
-
-    // ─── COMANDA ─────────────────────────────────────────────────────────────
-    function agregarAComanda(prod) {
-        const existing = estado.comanda.find(i => i.id === prod.id);
-        if (existing) {
-            existing.qty++;
-        } else {
-            estado.comanda.push({ id: prod.id, nombre: prod.nombre, precio: prod.precio, costo: prod.costo || 0, qty: 1 });
-        }
-        renderComanda();
-    }
-
-    function renderComanda() {
-        const el = document.getElementById('comanda-items');
-        if (estado.comanda.length === 0) {
-            el.innerHTML = '<div class="comanda-vacia">Sin productos</div>';
-            document.getElementById('total-monto').textContent = '$0';
-            document.getElementById('btn-cobrar').disabled = true;
-            return;
-        }
-
-        el.innerHTML = '';
-        let total = 0;
-        estado.comanda.forEach((item, idx) => {
-            const sub = item.precio * item.qty;
-            total += sub;
-            const row = document.createElement('div');
-            row.className = 'comanda-item';
-            row.innerHTML = `
-                <div class="item-qty-ctrl">
-                    <button class="qty-btn" onclick="cambiarQty(${idx},-1)">−</button>
-                    <span class="qty-num">${item.qty}</span>
-                    <button class="qty-btn" onclick="cambiarQty(${idx},1)">+</button>
+            <!-- Vista: pedidos web -->
+            <div id="vista-pedidos" class="hidden" style="display:flex;flex-direction:column;flex:1;min-height:0;height:100%;">
+                <div id="pantalla-pedidos-web">
+                <div class="cat-tabs" style="border-bottom:1px solid var(--border);padding:10px 12px;flex-shrink:0;">
+                    <span style="font-size:0.8rem;color:var(--muted);font-weight:700;letter-spacing:1px;text-transform:uppercase;">Pedidos pendientes del local</span>
+                    <span id="badge-pendientes" style="display:none;background:var(--primary);color:#fff;border-radius:50%;width:22px;height:22px;font-size:0.75rem;font-weight:700;align-items:center;justify-content:center;margin-left:8px;"></span>
+                    <button onclick="cargarPedidosWeb()" style="margin-left:auto;padding:6px 12px;border:1px solid var(--border);border-radius:8px;background:var(--surface);color:var(--muted);font-size:0.75rem;cursor:pointer;">↺ Actualizar</button>
                 </div>
-                <div class="item-info">
-                    <div class="item-nombre">${item.nombre}</div>
-                    ${item.detalle ? `<div style="font-size:0.72rem;color:var(--muted);margin-top:2px;">${item.detalle}</div>` : ''}
-                </div>
-                <div class="item-subtotal">${fmt(sub)}</div>
-            `;
-            el.appendChild(row);
-        });
-
-        document.getElementById('total-monto').textContent = fmt(total);
-        document.getElementById('btn-cobrar').disabled = false;
-    }
-
-    window.cambiarQty = function (idx, delta) {
-        estado.comanda[idx].qty += delta;
-        if (estado.comanda[idx].qty <= 0) estado.comanda.splice(idx, 1);
-        renderComanda();
-    };
-
-    window.limpiarComanda = function () {
-        if (estado.comanda.length === 0) return;
-        if (!confirm('¿Limpiar la comanda actual?')) return;
-        estado.comanda = [];
-        document.getElementById('campo-nombre').value = '';
-        document.getElementById('campo-tipo').value   = 'local';
-        renderComanda();
-    };
-
-    // ─── MÉTODO DE PAGO ───────────────────────────────────────────────────────
-    window.seleccionarPago = function (mp, btn) {
-        estado.metodoPago = mp;
-        document.querySelectorAll('.mp-btn').forEach(b => b.classList.remove('active'));
-        btn.classList.add('active');
-    };
-
-    // ─── MODAL COBRO ──────────────────────────────────────────────────────────
-    window.abrirModalCobro = function () {
-        const nombre = document.getElementById('campo-nombre').value.trim();
-        if (!nombre) {
-            document.getElementById('campo-nombre').focus();
-            toast('Ingresa el nombre del cliente', 'err');
-            return;
-        }
-        if (estado.comanda.length === 0) { toast('Agrega productos primero', 'err'); return; }
-
-        const total = estado.comanda.reduce((s, i) => s + i.precio * i.qty, 0);
-        document.getElementById('modal-cliente-nombre').textContent = nombre;
-        document.getElementById('modal-monto').textContent = fmt(total);
-        document.getElementById('modal-metodo').textContent = estado.metodoPago.toUpperCase();
-        document.getElementById('modal-cobro').classList.remove('hidden');
-    };
-
-    window.cerrarModalCobro = function () {
-        document.getElementById('modal-cobro').classList.add('hidden');
-    };
-
-    window.confirmarCobro = async function () {
-        const nombre = document.getElementById('campo-nombre').value.trim();
-        const tipo   = document.getElementById('campo-tipo').value;
-        const total  = estado.comanda.reduce((s, i) => s + i.precio * i.qty, 0);
-        const costo  = estado.comanda.reduce((s, i) => s + (i.costo || 0) * i.qty, 0);
-
-        const items = estado.comanda.map(i => ({ id: i.id, nombre: i.nombre, detalle: i.detalle || null, precio: i.precio, qty: i.qty }));
-
-        const { error } = await SB.from('pedidos').insert({
-            sitio:               estado.local,
-            nombre:              nombre,
-            total:               total,
-            items_json:          items,
-            estado:              'pagado',
-            tipo_entrega:        tipo === 'local' ? 'local' : 'retiro',
-            origen:              'fisico',
-            cajero_id:           estado.usuario.id,
-            metodo_pago_entrega: estado.metodoPago || 'efectivo',
-        });
-
-        cerrarModalCobro();
-
-        if (error) {
-            console.error(error);
-            toast('Error al guardar la venta', 'err');
-            return;
-        }
-
-        toast(`✅ Venta de ${fmt(total)} registrada`, 'ok');
-        estado.comanda = [];
-        document.getElementById('campo-nombre').value = '';
-        document.getElementById('campo-tipo').value   = 'local';
-        renderComanda();
-    };
-
-    // ─── VISTA TABS ───────────────────────────────────────────────────────────
-    let autoRefreshInterval  = null;
-    let bgPollingInterval = null; // polling liviano siempre activo
-
-    // Polling de fondo: badge siempre, sonido solo cuando llega pedido nuevo
-    async function bgPolling() {
-        if (!estado.usuario || !estado.local) return;
-        const { data } = await SB
-            .from('pedidos')
-            .select('id, estado')
-            .eq('sitio', estado.local)
-            .in('estado', ['pendiente', 'pagado', 'whatsapp', 'en_cocina', 'listo', 'en_camino']);
-
-        if (!data) return;
-
-        const activos = data.filter(p =>
-            ['pendiente', 'pagado', 'whatsapp', 'en_cocina', 'listo'].includes(p.estado)
-        );
-
-        // Sonar solo si llega un pedido que no conocíamos (cualquier canal)
-        let hayNuevo = false;
-        data.forEach(p => {
-            if (!pedidosConocidos.has(p.id)) {
-                hayNuevo = true;
-            }
-            pedidosConocidos.add(p.id);
-        });
-
-        if (hayNuevo) notificarPedidoNuevo();
-        actualizarBadgePendientes(activos.length);
-    }
-
-    function iniciarBgPolling() {
-        if (bgPollingInterval) return;
-        bgPolling(); // primera ejecución inmediata
-        bgPollingInterval = setInterval(bgPolling, 8000);
-    }
-
-    window.mostrarTabPedidos = function () {
-        document.getElementById('vista-venta').classList.add('hidden');
-        document.getElementById('vista-pedidos').classList.remove('hidden');
-        document.getElementById('btn-tab-pedidos').style.borderColor = 'var(--primary)';
-        document.getElementById('btn-tab-venta').style.borderColor   = 'var(--border)';
-        cargarPedidosWeb();
-        // Auto-refresh completo (renderiza lista) solo cuando está en esta pestaña
-        if (!autoRefreshInterval) {
-            autoRefreshInterval = setInterval(cargarPedidosWeb, 8000);
-        }
-    };
-
-    window.mostrarTabVenta = function () {
-        document.getElementById('vista-venta').classList.remove('hidden');
-        document.getElementById('vista-pedidos').classList.add('hidden');
-        document.getElementById('btn-tab-venta').style.borderColor   = 'var(--primary)';
-        document.getElementById('btn-tab-pedidos').style.borderColor = 'var(--border)';
-        // Detener auto-refresh cuando no está en pedidos web
-        if (autoRefreshInterval) {
-            clearInterval(autoRefreshInterval);
-            autoRefreshInterval = null;
-        }
-    };
-
-    // ─── PEDIDOS WEB ──────────────────────────────────────────────────────────
-    // ─── Notificación pedido nuevo ───────────────────────────────────────────
-    let pedidosConocidos = new Set();
-
-    function notificarPedidoNuevo(p) {
-        // Sonido
-        try {
-            const ctx = new (window.AudioContext || window.webkitAudioContext)();
-            [523, 659, 784].forEach((freq, i) => {
-                const o = ctx.createOscillator();
-                const g = ctx.createGain();
-                o.connect(g); g.connect(ctx.destination);
-                o.frequency.value = freq;
-                o.type = 'sine';
-                g.gain.setValueAtTime(0.3, ctx.currentTime + i * 0.15);
-                g.gain.exponentialRampToValueAtTime(0.001, ctx.currentTime + i * 0.15 + 0.3);
-                o.start(ctx.currentTime + i * 0.15);
-                o.stop(ctx.currentTime + i * 0.15 + 0.3);
-            });
-        } catch(e) {}
-    }
-
-    function actualizarBadgePendientes(total) {
-        const badge = document.getElementById('badge-pendientes');
-        if (!badge) return;
-        if (total > 0) {
-            badge.textContent = total;
-            badge.style.display = 'inline-flex';
-        } else {
-            badge.style.display = 'none';
-        }
-    }
-
-    window.cargarPedidosWeb = async function () {
-        const lista = document.getElementById('pedidos-web-list');
-        lista.innerHTML = '<div style="color:var(--muted);font-size:0.85rem;padding:20px;text-align:center;">Cargando…</div>';
-
-        const { data, error } = await SB
-            .from('pedidos')
-            .select('*')
-            .eq('sitio', estado.local)
-            .in('estado', ['pendiente', 'pagado', 'whatsapp', 'en_cocina', 'listo', 'en_camino'])
-            .order('creado_at', { ascending: true });
-
-        if (error || !data || data.length === 0) {
-            lista.innerHTML = '<div style="color:var(--muted);font-size:0.85rem;padding:40px;text-align:center;">Sin pedidos pendientes ✅</div>';
-            return;
-        }
-
-        lista.innerHTML = '';
-        // Contar pendientes activos
-        const pendientesActivos = data.filter(p => ['pendiente','pagado','whatsapp','en_cocina','listo'].includes(p.estado)).length;
-        actualizarBadgePendientes(pendientesActivos);
-
-        data.forEach(p => {
-            // bgPolling maneja sonido y badge — aquí solo registramos ids conocidos
-            pedidosConocidos.add(p.id);
-            const items = Array.isArray(p.items_json)
-                ? p.items_json.map(i => `${i.qty ?? i.cantidad ?? '?'}x ${i.nombre}`).join(', ')
-                : '—';
-            const badgeClass = {
-                pagado:     'badge-pagado',
-                whatsapp:   'badge-whatsapp',
-                en_cocina:  'badge-en-cocina',
-                listo:      'badge-listo',
-                en_camino:  'badge-en-camino',
-                pendiente:  'badge-pendiente',
-            }[p.estado] || 'badge-pendiente';
-            const badgeLabel = {
-                pagado:    'Pagado',
-                whatsapp:  'WhatsApp',
-                en_cocina: 'En cocina 🍳',
-                listo:     'Listo ✅',
-                en_camino: 'Despachado 🛵',
-                pendiente: 'Pendiente',
-            }[p.estado] || p.estado;
-
-            const esDelivery = p.tipo_entrega === 'delivery';
-            const hora = new Date(p.creado_at).toLocaleTimeString('es-CL', { hour: '2-digit', minute: '2-digit' });
-
-            const card = document.createElement('div');
-            card.className = 'pedido-web-card';
-            card.innerHTML = `
-                <div class="pedido-web-header">
-                    <span class="pedido-web-nombre">${p.nombre} · ${hora}</span>
-                    <span class="badge-estado ${badgeClass}">${badgeLabel}</span>
-                </div>
-                <div class="pedido-web-items">${items}</div>
-                ${esDelivery && p.direccion_entrega ? `<div class="pedido-web-dir">📍 ${p.direccion_entrega}</div>` : ''}
-                <div class="pedido-web-total">${fmt(p.total)}</div>
-                <div class="pedido-web-actions" id="acciones-${p.id}"></div>
-            `;
-            lista.appendChild(card);
-            renderAccionesPedido(p, card.querySelector(`#acciones-${p.id}`));
-        });
-    };
-
-    function renderAccionesPedido(p, container) {
-        container.innerHTML = '';
-        const esDelivery = p.tipo_entrega === 'delivery';
-
-        // Estado: pendiente o whatsapp → pasar a En Cocina
-        if (p.estado === 'pendiente' || p.estado === 'whatsapp' || p.estado === 'pagado') {
-            const btn = document.createElement('button');
-            btn.className = 'btn-accion btn-despachar';
-            btn.textContent = '🍳 Enviar a cocina';
-            btn.onclick = () => cambiarEstadoPedido(p.id, 'en_cocina', true);
-            container.appendChild(btn);
-        }
-
-        // Estado: en_cocina → marcar Listo (dispara WhatsApp al repartidor si es delivery)
-        if (p.estado === 'en_cocina') {
-            const btn = document.createElement('button');
-            btn.className = 'btn-accion btn-confirmar';
-            btn.style.background = '#b8860b';
-            btn.textContent = '✅ Marcar como listo';
-            btn.onclick = () => marcarListo(p);
-            container.appendChild(btn);
-        }
-
-        // Estado: listo → En camino (dispara WhatsApp al cliente)
-        if (p.estado === 'listo') {
-            if (esDelivery) {
-                const btn = document.createElement('button');
-                btn.className = 'btn-accion btn-despachar';
-                btn.textContent = '🛵 Despachar';
-                btn.onclick = () => marcarEnCamino(p);
-                container.appendChild(btn);
-            } else {
-                // Retiro en local -> modal para validar codigo y cobrar
-                const btn = document.createElement('button');
-                btn.className = 'btn-accion btn-confirmar';
-                btn.textContent = '📦 Entregar';
-                btn.onclick = () => abrirModalRetiro(p);
-                container.appendChild(btn);
-            }
-        }
-
-        // Estado: en_camino → esperando repartidor
-        if (p.estado === 'en_camino') {
-            const info = document.createElement('span');
-            info.style.cssText = 'font-size:0.8rem;color:var(--blue);padding:10px 0;display:block;';
-            info.textContent = '🛵 Esperando confirmación del repartidor…';
-            container.appendChild(info);
-        }
-
-        // Anular disponible en todos los estados activos
-        if (!['recibido','anulado'].includes(p.estado)) {
-            const btnAnul = document.createElement('button');
-            btnAnul.className = 'btn-accion btn-anular-web';
-            btnAnul.textContent = '✕ Anular';
-            btnAnul.onclick = () => abrirModalAnular(p.id, p.nombre);
-            container.appendChild(btnAnul);
-        }
-    }
-
-    async function cambiarEstadoPedido(id, estadoNuevo, recargar = false) {
-        const { error } = await SB.from('pedidos').update({ estado: estadoNuevo }).eq('id', id);
-        if (error) { toast('Error al actualizar pedido', 'err'); return; }
-        toast('Pedido actualizado ✅', 'ok');
-        // Disparar push notification al cliente (silencioso — no bloquea el flujo)
-        try {
-            fetch(`${window.orbitaAuth.url}/functions/v1/send-push`, {
-                method: 'POST',
-                headers: {
-                    'Content-Type': 'application/json',
-                    'Authorization': `Bearer ${window.orbitaAuth.anonKey}`
-                },
-                body: JSON.stringify({ pedido_id: id, estado_nuevo: estadoNuevo })
-            }).catch(() => {}); // silencioso si falla
-        } catch(e) {}
-        if (recargar) cargarPedidosWeb();
-    }
-
-    // Genera código de 4 dígitos
-    function generarCodigo() {
-        return String(Math.floor(1000 + Math.random() * 9000));
-    }
-
-    // Cajero marca "Listo" → WhatsApp al repartidor si es delivery
-    async function marcarListo(p) {
-        // Generar y guardar código si es delivery
-        let codigo = p.codigo_entrega;
-        if (p.tipo_entrega === 'delivery' && !codigo) {
-            codigo = generarCodigo();
-            await SB.from('pedidos').update({ codigo_entrega: codigo }).eq('id', p.id);
-        }
-        await cambiarEstadoPedido(p.id, 'listo');
-
-        if (p.tipo_entrega === 'delivery') {
-            // WhatsApp al repartidor
-            const { data } = await SB.from('pos_config').select('valor_text').eq('clave', 'wsp_repartidor').single();
-            const numRepartidor = data?.valor_text || '';
-            if (!numRepartidor || numRepartidor === '+56900000000') {
-                toast('Configura el número del repartidor en el panel admin', 'err');
-            } else {
-                const localNombre = estado.local === 'cafe' ? 'CAFÉ ÓRBITA' : 'FUENTE DE SODA ÓRBITA';
-                const items = Array.isArray(p.items_json)
-                    ? p.items_json.map(i => `• ${i.qty ?? i.cantidad ?? '?'}x ${i.nombre}`).join('\n')
-                    : '—';
-                const linkEntrega = `${window.location.origin}/entrega.html?id=${p.id}`;
-                const msg = encodeURIComponent(
-                    `🛵 PEDIDO LISTO — ${localNombre}\n\n` +
-                    `👤 Cliente: ${p.nombre}\n` +
-                    `📍 Dirección: ${p.direccion_entrega || 'Sin dirección'}\n\n` +
-                    `📋 Pedido:\n${items}\n\n` +
-                    `💰 Total: ${fmt(p.total)}\n` +
-                    `🔑 Código de entrega: ${codigo}\n\n` +
-                    `✅ Confirmar entrega → ${linkEntrega}`
-                );
-                window.open(`https://wa.me/${numRepartidor.replace(/\D/g, '')}?text=${msg}`, '_blank');
-            }
-        }
-        cargarPedidosWeb();
-    }
-
-    // Cajero marca "En camino" → WhatsApp al cliente
-    async function marcarEnCamino(p) {
-        await cambiarEstadoPedido(p.id, 'en_camino');
-
-        // WhatsApp al cliente si tiene teléfono
-        const telefono = p.telefono || p.telefono_cliente || '';
-        if (telefono) {
-            const items = Array.isArray(p.items_json)
-                ? p.items_json.map(i => `• ${i.qty ?? i.cantidad ?? '?'}x ${i.nombre}`).join('\n')
-                : '—';
-            const msg = encodeURIComponent(
-                `🛵 ¡Tu pedido está en camino!\n\n` +
-                `📋 ${items}\n` +
-                `💰 Total: ${fmt(p.total)}\n\n` +
-                `🔑 Código de entrega: ${p.codigo_entrega}\n` +
-                `(Muéstraselo al repartidor al recibir tu pedido)`
-            );
-            window.open(`https://wa.me/${telefono.replace(/\D/g, '')}?text=${msg}`, '_blank');
-        }
-        cargarPedidosWeb();
-    }
-
-    // ─── ANULAR ───────────────────────────────────────────────────────────────
-    window.abrirModalAnular = function (id, nombre) {
-        estado.pedidoAnularId = id;
-        document.getElementById('anular-cliente').textContent = nombre;
-        document.getElementById('modal-anular').classList.remove('hidden');
-    };
-
-    window.cerrarModalAnular = function () {
-        document.getElementById('modal-anular').classList.add('hidden');
-        estado.pedidoAnularId = null;
-    };
-
-    window.confirmarAnulacion = async function () {
-        if (!estado.pedidoAnularId) return;
-        await cambiarEstadoPedido(estado.pedidoAnularId, 'anulado', true);
-        cerrarModalAnular();
-    };
-
-    // ─── HISTORIAL ────────────────────────────────────────────────────────────
-    const ESTADO_LABEL = {
-        pendiente:  'Pendiente',
-        pagado:     'Pagado',
-        whatsapp:   'WhatsApp',
-        en_cocina:  'En cocina',
-        listo:      'Listo',
-        en_camino:  'Despachado',
-        recibido:   'Entregado ✅',
-        rechazado:  'Rechazado ❌',
-        anulado:    'Anulado ❌',
-        fisico:     'Físico',
-    };
-
-    const ORIGEN_LABEL = {
-        web:       '🌐 Web',
-        whatsapp:  '💬 WhatsApp',
-        fisico:    '🏠 Físico',
-    };
-
-    window.abrirHistorial = async function () {
-        document.getElementById('modal-historial').classList.remove('hidden');
-        const lista = document.getElementById('historial-lista');
-        lista.innerHTML = '<div style="color:var(--muted);text-align:center;padding:20px;">Cargando…</div>';
-
-        const hoy = new Date();
-        hoy.setHours(0, 0, 0, 0);
-
-        const { data, error } = await SB
-            .from('pedidos')
-            .select('id, nombre, estado, origen, tipo_entrega, total, items_json, creado_at, metodo_pago_entrega')
-            .eq('sitio', estado.local)
-            .gte('creado_at', hoy.toISOString())
-            .order('creado_at', { ascending: false });
-
-        if (error || !data || data.length === 0) {
-            lista.innerHTML = '<div style="color:var(--muted);text-align:center;padding:30px;">Sin pedidos hoy</div>';
-            return;
-        }
-
-        lista.innerHTML = '';
-        data.forEach(p => {
-            const hora  = new Date(p.creado_at).toLocaleTimeString('es-CL', { hour: '2-digit', minute: '2-digit' });
-            const estadoLabel  = ESTADO_LABEL[p.estado]  || p.estado;
-            const origenLabel  = ORIGEN_LABEL[p.origen]  || p.origen;
-            const estadoColor  = ['recibido'].includes(p.estado) ? 'var(--green)'
-                               : ['anulado','rechazado'].includes(p.estado) ? 'var(--red)'
-                               : 'var(--gold)';
-
-            const row = document.createElement('div');
-            row.style.cssText = 'display:flex;justify-content:space-between;align-items:center;padding:12px 14px;border-bottom:1px solid var(--border);cursor:pointer;border-radius:10px;transition:background 0.15s;';
-            row.innerHTML = `
-                <div>
-                    <div style="font-weight:700;font-size:0.9rem;">${p.nombre || '—'}</div>
-                    <div style="font-size:0.75rem;color:var(--muted);margin-top:2px;">${hora} · ${origenLabel}</div>
-                </div>
-                <div style="text-align:right;">
-                    <div style="font-family:'Bebas Neue',sans-serif;font-size:1.1rem;color:var(--gold);">${fmt(p.total)}</div>
-                    <div style="font-size:0.72rem;color:${estadoColor};font-weight:700;">${estadoLabel}</div>
-                </div>
-            `;
-            row.onmouseenter = () => row.style.background = 'var(--surface)';
-            row.onmouseleave = () => row.style.background = 'transparent';
-            row.onclick = () => abrirDetallePedido(p);
-            lista.appendChild(row);
-        });
-    };
-
-    window.cerrarHistorial = function () {
-        document.getElementById('modal-historial').classList.add('hidden');
-    };
-
-    window.abrirDetallePedido = function (p) {
-        const hora  = new Date(p.creado_at).toLocaleTimeString('es-CL', { hour: '2-digit', minute: '2-digit' });
-        const items = Array.isArray(p.items_json)
-            ? p.items_json.map(i => `
-                <div style="display:flex;justify-content:space-between;padding:6px 0;border-bottom:1px solid var(--border);font-size:0.88rem;">
-                    <span><span style="color:var(--muted);">${i.qty || 1}×</span> ${i.nombre}</span>
-                    <span style="color:var(--gold);">${fmt((i.precio || 0) * (i.qty || 1))}</span>
-                </div>`).join('')
-            : '<div style="color:var(--muted);">Sin detalle</div>';
-
-        const metodoPago = p.metodo_pago_entrega
-            ? { efectivo: '💵 Efectivo', transferencia: '🏦 Transferencia', online: '🌐 Online' }[p.metodo_pago_entrega] || p.metodo_pago_entrega
-            : '—';
-
-        document.getElementById('detalle-pedido-contenido').innerHTML = `
-            <div style="background:var(--surface);border-radius:12px;padding:16px;margin-bottom:16px;">
-                <div style="display:flex;justify-content:space-between;margin-bottom:8px;">
-                    <span style="color:var(--muted);font-size:0.75rem;text-transform:uppercase;letter-spacing:1px;">Cliente</span>
-                    <span style="font-weight:700;">${p.nombre || '—'}</span>
-                </div>
-                <div style="display:flex;justify-content:space-between;margin-bottom:8px;">
-                    <span style="color:var(--muted);font-size:0.75rem;text-transform:uppercase;letter-spacing:1px;">Hora</span>
-                    <span>${hora}</span>
-                </div>
-                <div style="display:flex;justify-content:space-between;margin-bottom:8px;">
-                    <span style="color:var(--muted);font-size:0.75rem;text-transform:uppercase;letter-spacing:1px;">Origen</span>
-                    <span>${ORIGEN_LABEL[p.origen] || p.origen}</span>
-                </div>
-                <div style="display:flex;justify-content:space-between;margin-bottom:8px;">
-                    <span style="color:var(--muted);font-size:0.75rem;text-transform:uppercase;letter-spacing:1px;">Tipo</span>
-                    <span>${p.tipo_entrega || '—'}</span>
-                </div>
-                <div style="display:flex;justify-content:space-between;margin-bottom:8px;">
-                    <span style="color:var(--muted);font-size:0.75rem;text-transform:uppercase;letter-spacing:1px;">Pago</span>
-                    <span>${metodoPago}</span>
-                </div>
-                <div style="display:flex;justify-content:space-between;">
-                    <span style="color:var(--muted);font-size:0.75rem;text-transform:uppercase;letter-spacing:1px;">Estado</span>
-                    <span style="font-weight:700;">${ESTADO_LABEL[p.estado] || p.estado}</span>
+                <div class="pedidos-web-list" id="pedidos-web-list"><!-- dinámico --></div>
                 </div>
             </div>
-            <div style="margin-bottom:12px;">${items}</div>
-            <div style="display:flex;justify-content:space-between;font-family:'Bebas Neue',sans-serif;font-size:1.4rem;color:var(--gold);padding-top:10px;border-top:1px solid var(--border);">
-                <span>TOTAL</span>
-                <span>${fmt(p.total)}</span>
+        </div>
+
+        <!-- Panel derecho: comanda -->
+        <div class="panel-comanda">
+            <div class="comanda-header">
+                <div class="comanda-titulo">COMANDA</div>
+                <div class="comanda-campos">
+                    <input class="campo-input" id="campo-nombre" type="text" placeholder="Nombre del cliente *" autocomplete="off" maxlength="40">
+                    <div class="campo-row">
+                        <select class="campo-select" id="campo-tipo">
+                            <option value="local">🏠 Para el local</option>
+                            <option value="llevar">🛍️ Para llevar</option>
+                        </select>
+                    </div>
+                </div>
             </div>
-        `;
-        document.getElementById('modal-detalle-pedido').classList.remove('hidden');
-    };
 
-    window.cerrarDetallePedido = function () {
-        document.getElementById('modal-detalle-pedido').classList.add('hidden');
-    };
+            <div class="comanda-items" id="comanda-items">
+                <div class="comanda-vacia">Sin productos</div>
+            </div>
 
-    // Cerrar modales historial con click fuera
-    document.getElementById('modal-historial').addEventListener('click', function(e) {
-        if (e.target === this) cerrarHistorial();
-    });
-    document.getElementById('modal-detalle-pedido').addEventListener('click', function(e) {
-        if (e.target === this) cerrarDetallePedido();
-    });
-    window.abrirCierreTurno = async function () {
-        // Traer ventas del turno actual (desde turnoInicio)
-        const desde = estado.turnoInicio.toISOString();
-        const { data } = await SB
-            .from('pedidos')
-            .select('total, metodo_pago_entrega, estado, origen')
-            .eq('sitio', estado.local)
-            .gte('creado_at', desde);
-
-        const ventas   = (data || []).filter(p => p.estado !== 'anulado');
-        const anuladas = (data || []).filter(p => p.estado === 'anulado');
-
-        // Efectivo: físicos + delivery pagado en efectivo al repartidor
-        const efectivo = ventas.filter(p => p.metodo_pago_entrega === 'efectivo').reduce((s, p) => s + (p.total || 0), 0);
-        // Tarjeta: físicos pagados con tarjeta en el local
-        const tarjeta  = ventas.filter(p => p.origen === 'fisico' && p.metodo_pago_entrega === 'tarjeta').reduce((s, p) => s + (p.total || 0), 0);
-        // Transferencia: físicos + delivery pagado por transferencia al repartidor
-        const transfer = ventas.filter(p => p.metodo_pago_entrega === 'transferencia').reduce((s, p) => s + (p.total || 0), 0);
-        // Online: pedidos web pagados con MercadoPago
-        const online   = ventas.filter(p => p.origen === 'web' && p.metodo_pago_entrega === 'online').reduce((s, p) => s + (p.total || 0), 0);
-        const totalGeneral = ventas.reduce((s, p) => s + (p.total || 0), 0);
-
-        document.getElementById('cierre-cajero').textContent     = estado.usuario.nombre;
-        document.getElementById('cierre-total-monto').textContent = fmt(totalGeneral);
-        document.getElementById('cierre-efectivo').textContent    = fmt(efectivo);
-        document.getElementById('cierre-tarjeta').textContent     = fmt(tarjeta);
-        document.getElementById('cierre-transfer').textContent    = fmt(transfer);
-        document.getElementById('cierre-online').textContent      = fmt(online);
-        document.getElementById('cierre-num-trans').textContent   = ventas.length;
-        document.getElementById('cierre-num-anul').textContent    = anuladas.length;
-
-        document.getElementById('modal-cierre').classList.remove('hidden');
-    };
-
-    window.cerrarModalCierre = function () {
-        document.getElementById('modal-cierre').classList.add('hidden');
-    };
-
-    window.confirmarCierre = async function () {
-        const desde = estado.turnoInicio.toISOString();
-        const { data } = await SB
-            .from('pedidos')
-            .select('total, metodo_pago_entrega, estado, origen')
-            .eq('sitio', estado.local)
-            .gte('creado_at', desde);
-
-        const ventas   = (data || []).filter(p => p.estado !== 'anulado');
-        const anuladas = (data || []).filter(p => p.estado === 'anulado');
-
-        await SB.from('cierres_turno').insert({
-            cajero_id:      estado.usuario.id,
-            sitio:          estado.local,
-            turno_inicio:   desde,
-            turno_fin:      new Date().toISOString(),
-            total_efectivo: ventas.filter(p => p.metodo_pago_entrega === 'efectivo').reduce((s, p) => s + (p.total || 0), 0),
-            total_tarjeta:  ventas.filter(p => p.origen === 'fisico' && p.metodo_pago_entrega === 'tarjeta').reduce((s, p) => s + (p.total || 0), 0),
-            total_transfer: ventas.filter(p => p.metodo_pago_entrega === 'transferencia').reduce((s, p) => s + (p.total || 0), 0),
-            total_online:   ventas.filter(p => p.origen === 'web' && p.metodo_pago_entrega === 'online').reduce((s, p) => s + (p.total || 0), 0),
-            total_ventas:   ventas.reduce((s, p) => s + (p.total || 0), 0),
-            num_transacc:   ventas.length,
-            num_anuladas:   anuladas.length,
-        });
-
-        cerrarModalCierre();
-        toast('Turno cerrado correctamente ✅', 'ok');
-
-        // Volver al login
-        setTimeout(() => {
-            sessionStorage.removeItem('orbita_sesion');
-            if (bgPollingInterval) { clearInterval(bgPollingInterval); bgPollingInterval = null; }
-            if (autoRefreshInterval) { clearInterval(autoRefreshInterval); autoRefreshInterval = null; }
-            pedidosConocidos.clear();
-            estado.usuario     = null;
-            estado.turnoInicio = null;
-            estado.comanda     = [];
-            document.getElementById('pantalla-pos').style.display   = 'none';
-            document.getElementById('pantalla-login').style.display = 'flex';
-            pinBuffer = '';
-            actualizarPinDisplay();
-            cargarUsuarios();
-        }, 1500);
-    };
-
-    // ─── CERRAR SESIÓN ────────────────────────────────────────────────────────
-    window.cerrarSesionPOS = function () {
-        if (!confirm('¿Cerrar sesión? El turno no se guardará.')) return;
-        sessionStorage.removeItem('orbita_sesion');
-        if (bgPollingInterval) { clearInterval(bgPollingInterval); bgPollingInterval = null; }
-        if (autoRefreshInterval) { clearInterval(autoRefreshInterval); autoRefreshInterval = null; }
-        pedidosConocidos.clear();
-        estado.usuario     = null;
-        estado.turnoInicio = null;
-        estado.comanda     = [];
-        document.getElementById('pantalla-pos').style.display   = 'none';
-        document.getElementById('pantalla-login').style.display = 'flex';
-        pinBuffer = '';
-        actualizarPinDisplay();
-        cargarUsuarios();
-    };
-
-    // ─── INIT ─────────────────────────────────────────────────────────────────
-    document.addEventListener('DOMContentLoaded', () => {
-        // Restaurar sesión si el cajero hizo F5
-        const sesionGuardada = sessionStorage.getItem('orbita_sesion');
-        if (sesionGuardada) {
-            try {
-                const s = JSON.parse(sesionGuardada);
-                estado.usuario     = s.usuario;
-                estado.local       = s.local;
-                estado.turnoInicio = new Date(s.turnoInicio);
-                abrirPOS();
-                return;
-            } catch (e) {
-                sessionStorage.removeItem('orbita_sesion');
-            }
-        }
-        cargarUsuarios();
-        // Comanda vacía inicial
-        renderComanda();
-    });
-
-
-    // ─── MODAL RETIRO ─────────────────────────────────────────────────────────
-    let pedidoRetiroActual = null;
-
-    window.abrirModalRetiro = function (p) {
-        pedidoRetiroActual = p;
-        const esWeb = p.origen === 'web';
-
-        document.getElementById('retiro-nombre').textContent = p.nombre;
-
-        // Mostrar/ocultar sección de código según origen
-        // Web: el cliente tiene código → cajero lo valida
-        // Físico: no hay código, cajero solo confirma que el cliente retiró
-        const codigoSection = document.getElementById('retiro-codigo-section');
-        codigoSection.style.display = esWeb ? 'block' : 'none';
-        document.getElementById('retiro-codigo').value = '';
-        document.getElementById('retiro-codigo-error').style.display = 'none';
-
-        document.getElementById('modal-retiro').classList.remove('hidden');
-        if (esWeb) setTimeout(() => document.getElementById('retiro-codigo').focus(), 100);
-    };
-
-    window.cerrarModalRetiro = function () {
-        document.getElementById('modal-retiro').classList.add('hidden');
-        pedidoRetiroActual = null;
-    };
-
-    window.confirmarRetiro = async function () {
-        if (!pedidoRetiroActual) return;
-        const esWeb = pedidoRetiroActual.origen === 'web';
-
-        // Solo validar código en pedidos web
-        if (esWeb) {
-            const codigoIngresado = document.getElementById('retiro-codigo').value.trim();
-            const codigoCorrecto  = String(pedidoRetiroActual.codigo_entrega || '');
-            const errEl           = document.getElementById('retiro-codigo-error');
-            if (codigoIngresado !== codigoCorrecto) {
-                errEl.style.display = 'block';
-                document.getElementById('retiro-codigo').focus();
-                return;
-            }
-            errEl.style.display = 'none';
-        }
-
-        const { error } = await SB.from('pedidos')
-            .update({ estado: 'recibido' })
-            .eq('id', pedidoRetiroActual.id);
-
-        if (error) { toast('Error al confirmar retiro', 'err'); return; }
-
-        toast('✅ Retirado', 'ok');
-        cerrarModalRetiro();
-        cargarPedidosWeb();
-    };
-
-    // Cerrar retiro con click fuera
-    document.getElementById('modal-retiro')?.addEventListener('click', function(e) {
-        if (e.target === this) cerrarModalRetiro();
-    });
-
-    // ─── CONFIGURACIÓN (admin) ────────────────────────────────────────────────
-    window.abrirConfig = async function () {
-        // Cargar valores actuales de pos_config
-        const { data } = await SB.from('pos_config').select('clave, valor_text');
-        if (data) {
-            const map = {};
-            data.forEach(r => { map[r.clave] = r.valor_text; });
-            const r = document.getElementById('cfg-wsp-repartidor');
-            const l = document.getElementById('cfg-wsp-local');
-            const e = document.getElementById('cfg-email');
-            if (r) r.value = map['wsp_repartidor'] || '';
-            if (l) l.value = map['wsp_local']      || '';
-            if (e) e.value = map['email_contacto'] || '';
-        }
-        document.getElementById('modal-config').classList.remove('hidden');
-    };
-
-    window.cerrarConfig = function () {
-        document.getElementById('modal-config').classList.add('hidden');
-    };
-
-    window.guardarConfig = async function () {
-        const campos = [
-            { clave: 'wsp_repartidor', id: 'cfg-wsp-repartidor' },
-            { clave: 'wsp_local',      id: 'cfg-wsp-local' },
-            { clave: 'email_contacto', id: 'cfg-email' },
-        ];
-
-        for (const c of campos) {
-            const val = document.getElementById(c.id)?.value.trim() || '';
-            await SB.from('pos_config')
-                .upsert({ clave: c.clave, valor_text: val }, { onConflict: 'clave' });
-        }
-
-        toast('Configuración guardada ✅', 'ok');
-        cerrarConfig();
-    };
-
-    // Cerrar config con click fuera
-    document.getElementById('modal-config')?.addEventListener('click', function(e) {
-        if (e.target === this) cerrarConfig();
-    });
-
-    // ── GESTIÓN DE USUARIOS ──────────────────────────────────────────────────
-
-    window.abrirUsuarios = async function () {
-        document.getElementById('modal-usuarios').classList.remove('hidden');
-        cancelarFormUsuario();
-        await renderListaUsuarios();
-    };
-
-    window.cerrarUsuarios = function () {
-        document.getElementById('modal-usuarios').classList.add('hidden');
-    };
-
-    async function renderListaUsuarios() {
-        const lista = document.getElementById('usuarios-lista');
-        lista.innerHTML = '<div style="color:var(--muted);font-size:0.85rem;text-align:center;padding:20px;">Cargando…</div>';
-        try {
-            const { data, error } = await SB
-                .from('pos_usuarios')
-                .select('id,nombre,rol,sitio,activo')
-                .order('nombre');
-            if (error) throw error;
-            if (!data.length) {
-                lista.innerHTML = '<div style="color:var(--muted);font-size:0.85rem;text-align:center;padding:20px;">Sin usuarios</div>';
-                return;
-            }
-            lista.innerHTML = data.map(u => `
-                <div style="background:var(--surface);border:1px solid var(--border);border-radius:12px;padding:12px 14px;display:flex;align-items:center;gap:10px;">
-                    <div style="flex:1;min-width:0;">
-                        <div style="font-weight:700;font-size:0.9rem;${!u.activo ? 'color:var(--muted);text-decoration:line-through;' : ''}">${u.nombre}</div>
-                        <div style="font-size:0.75rem;color:var(--muted);margin-top:2px;">
-                            ${u.rol === 'admin' ? '⭐ Admin' : '👤 Cajero'} · 
-                            ${u.sitio === 'cafe' ? '☕ Café' : u.sitio === 'fuente' ? '🌭 Fuente' : '🔀 Ambos'}
-                            ${!u.activo ? ' · <span style="color:var(--red);">Inactivo</span>' : ''}
-                        </div>
-                    </div>
-                    <button onclick="editarUsuario('${u.id}','${u.nombre}','${u.rol}','${u.sitio}',${u.activo})"
-                        style="padding:6px 10px;border:1px solid var(--border);border-radius:8px;background:var(--card);color:var(--muted);font-size:0.75rem;cursor:pointer;">✏️</button>
-                    <button onclick="toggleActivoUsuario('${u.id}',${u.activo})"
-                        style="padding:6px 10px;border:1px solid ${u.activo ? 'var(--red)' : 'var(--green)'};border-radius:8px;background:var(--card);color:${u.activo ? 'var(--red)' : 'var(--green)'};font-size:0.75rem;cursor:pointer;">${u.activo ? '🚫' : '✅'}</button>
-                    <button onclick="eliminarUsuario('${u.id}','${u.nombre}')"
-                        style="padding:6px 10px;border:1px solid var(--red);border-radius:8px;background:var(--card);color:var(--red);font-size:0.75rem;cursor:pointer;">🗑️</button>
+            <div class="comanda-footer">
+                <div class="total-row">
+                    <span class="total-label">Total</span>
+                    <span class="total-monto" id="total-monto">$0</span>
                 </div>
-            `).join('');
-        } catch(e) {
-            lista.innerHTML = '<div style="color:var(--red);font-size:0.85rem;text-align:center;padding:20px;">Error cargando usuarios</div>';
-        }
-    }
-
-    window.nuevoUsuario = function () {
-        document.getElementById('usr-id').value = '';
-        document.getElementById('usr-nombre').value = '';
-        document.getElementById('usr-rol').value = 'cajero';
-        document.getElementById('usr-sitio').value = estado.local; // default al local actual
-        document.getElementById('usr-pin').value = '';
-        document.getElementById('usr-pin').placeholder = 'PIN (4 dígitos)';
-        document.getElementById('usuarios-form-titulo').textContent = 'NUEVO USUARIO';
-        document.getElementById('btn-nuevo-usuario').style.display = 'none';
-        document.getElementById('usuarios-form').style.display = 'block';
-        document.getElementById('usr-nombre').focus();
-    };
-
-    window.editarUsuario = function (id, nombre, rol, sitio, activo) {
-        document.getElementById('usr-id').value = id;
-        document.getElementById('usr-nombre').value = nombre;
-        document.getElementById('usr-rol').value = rol;
-        document.getElementById('usr-sitio').value = sitio;
-        document.getElementById('usr-pin').value = '';
-        document.getElementById('usr-pin').placeholder = 'Nuevo PIN (dejar vacío para no cambiar)';
-        document.getElementById('usuarios-form-titulo').textContent = 'EDITAR USUARIO';
-        document.getElementById('btn-nuevo-usuario').style.display = 'none';
-        document.getElementById('usuarios-form').style.display = 'block';
-        document.getElementById('usr-nombre').focus();
-    };
-
-    window.cancelarFormUsuario = function () {
-        document.getElementById('usr-id').value = '';
-        document.getElementById('usr-nombre').value = '';
-        document.getElementById('usr-pin').value = '';
-        document.getElementById('usuarios-form-titulo').textContent = 'NUEVO USUARIO';
-        document.getElementById('btn-nuevo-usuario').style.display = 'block';
-        document.getElementById('usuarios-form').style.display = 'none';
-    };
-
-    window.guardarUsuario = async function () {
-        const id     = document.getElementById('usr-id').value;
-        const nombre = document.getElementById('usr-nombre').value.trim();
-        const rol    = document.getElementById('usr-rol').value;
-        const sitio  = document.getElementById('usr-sitio').value;
-        const pin    = document.getElementById('usr-pin').value.trim();
-
-        if (!nombre) { toast('Ingresa un nombre', 'err'); return; }
-        if (!id && (!pin || !/^\d{4}$/.test(pin))) { toast('PIN debe ser 4 dígitos numéricos', 'err'); return; }
-        if (pin && !/^\d{4}$/.test(pin)) { toast('PIN debe ser 4 dígitos numéricos', 'err'); return; }
-
-        try {
-            let pin_hash = null;
-            if (pin) {
-                const buf = await crypto.subtle.digest('SHA-256', new TextEncoder().encode(pin));
-                pin_hash = Array.from(new Uint8Array(buf)).map(b => b.toString(16).padStart(2,'0')).join('');
-            }
-
-            if (id) {
-                // Editar
-                const upd = { nombre, rol, sitio };
-                if (pin_hash) upd.pin_hash = pin_hash;
-                const { error } = await SB.from('pos_usuarios').update(upd).eq('id', id);
-                if (error) throw error;
-                toast('Usuario actualizado ✅', 'ok');
-            } else {
-                // Crear
-                const { error } = await SB.from('pos_usuarios').insert({ nombre, rol, sitio, pin_hash, activo: true });
-                if (error) throw error;
-                toast('Usuario creado ✅', 'ok');
-            }
-
-            cancelarFormUsuario();
-            await renderListaUsuarios();
-        } catch(e) {
-            toast('Error guardando usuario', 'err');
-            console.error(e);
-        }
-    };
-
-    window.toggleActivoUsuario = async function (id, activo) {
-        try {
-            const { error } = await SB.from('pos_usuarios').update({ activo: !activo }).eq('id', id);
-            if (error) throw error;
-            toast(activo ? 'Usuario desactivado' : 'Usuario activado ✅', activo ? 'err' : 'ok');
-            await renderListaUsuarios();
-        } catch(e) {
-            toast('Error actualizando usuario', 'err');
-        }
-    };
-
-    window.eliminarUsuario = async function (id, nombre) {
-        if (!confirm(`¿Eliminar a ${nombre}? Esta acción no se puede deshacer.`)) return;
-        try {
-            const { error } = await SB.from('pos_usuarios').delete().eq('id', id);
-            if (error) throw error;
-            toast('Usuario eliminado', 'ok');
-            await renderListaUsuarios();
-        } catch(e) {
-            toast('Error eliminando usuario', 'err');
-        }
-    };
-
-    // Cerrar modal usuarios con click fuera
-    document.getElementById('modal-usuarios')?.addEventListener('click', function(e) {
-        if (e.target === this) cerrarUsuarios();
-    });
-
-    // ── OPCIONES DE PRODUCTO ─────────────────────────────────────────────────
-
-    // Recetas predeterminadas
-    const RECETA_SANDWICH = {
-        'Italiano':  ['palta', 'tomate', 'mayo'],
-        'Chacarero': ['tomate', 'porotos', 'aji', 'mayo'],
-        'Luco':      ['queso', 'mayo'],
-    };
-    const RECETA_COMPLETO = {
-        'Italiano':  ['tomate', 'palta', 'mayo'],
-        'Completo':  ['tomate', 'chucrut', 'mayo'],
-        'Dinámico':  ['palta', 'tomate', 'americana', 'mayo', 'chucrut'],
-    };
-
-    // Todos los ingredientes disponibles
-    const INGREDIENTES_FUENTE = [
-        { id: 'palta',     nombre: 'Palta' },
-        { id: 'tomate',    nombre: 'Tomate' },
-        { id: 'mayo',      nombre: 'Mayonesa' },
-        { id: 'chucrut',   nombre: 'Chucrut' },
-        { id: 'queso',     nombre: 'Queso' },
-        { id: 'porotos',   nombre: 'Porotos verdes' },
-        { id: 'aji',       nombre: 'Ají verde' },
-        { id: 'americana', nombre: 'Americana' },
-        { id: 'lechuga',   nombre: 'Lechuga' },
-        { id: 'cebolla',   nombre: 'Cebolla' },
-        { id: 'pepino',    nombre: 'Pepinillos' },
-    ];
-
-    const BEBIDAS_FUENTE = [
-        'Coca-Cola','Coca-Cola sin azúcar','Pepsi','Kem',
-        'Bilz','Pap','Fanta','Sprite','Agua con gas','Agua sin gas'
-    ];
-
-    let opcionesState = null; // producto actual en el modal
-
-    // Determina si un producto necesita modal de opciones
-    function necesitaOpciones(prod) {
-        const cat = prod.cat || prod.categoria || '';
-        if (estado.local === 'cafe' && cat === 'cafe') return true;          // elegir grano
-        if (estado.local === 'fuente') {
-            if (cat === 'sandwich' || cat === 'completo') return true;       // receta + ingredientes + bebida
-            if (cat === 'handroll') return true;                             // salsa
-        }
-        if (prod.categoria === 'handroll' || cat === 'handroll') return true; // handroll en cualquier sitio
-        if (cat === 'jugo' || prod.categoria === 'jugo') return true;             // jugos: azúcar
-        return false;
-    }
-
-    function clickProducto(prod) {
-        if (!necesitaOpciones(prod)) {
-            agregarAComanda(prod);
-            return;
-        }
-        abrirOpciones(prod);
-    }
-
-    function abrirOpciones(prod) {
-        const cat = prod.cat || prod.categoria || '';
-        opcionesState = { prod, cat, selecciones: {} };
-
-        document.getElementById('opciones-titulo').textContent = prod.nombre.toUpperCase();
-        document.getElementById('opciones-subtitulo').textContent = fmt(prod.precio);
-        document.getElementById('opciones-resumen').textContent = '';
-
-        const contenido = document.getElementById('opciones-contenido');
-        contenido.innerHTML = '';
-
-        // ── CAFÉ: elegir grano (y leche si aplica) ───────────────────────────
-        const CAFES_CON_LECHE = ['c_cortado','c_latte','c_capuchino','c_mocachino','c_chocolate'];
-        const llevaleche = CAFES_CON_LECHE.includes(prod.id);
-        if (cat === 'cafe') {
-            contenido.innerHTML = `
-                <div>
-                    <div style="font-size:0.75rem;letter-spacing:2px;text-transform:uppercase;color:var(--muted);margin-bottom:10px;">TIPO DE GRANO</div>
-                    <div style="display:flex;gap:10px;">
-                        ${['Napoli','Armonía'].map(g => `
-                            <button class="opt-btn-opciones" data-grupo="grano" data-val="${g}"
-                                onclick="selOpcion('grano','${g}')"
-                                style="flex:1;padding:14px;border:1px solid var(--border);border-radius:12px;background:var(--surface);color:var(--text);font-family:'DM Sans',sans-serif;font-size:0.9rem;font-weight:700;cursor:pointer;">
-                                ${g === 'Napoli' ? '☕ Napoli' : '🌿 Armonía'}<br>
-                                <span style="font-size:0.72rem;color:var(--muted);font-weight:400;">${g === 'Napoli' ? 'Intenso' : 'Suave'}</span>
-                            </button>`).join('')}
-                    </div>
+                <div class="metodo-pago">
+                    <button class="mp-btn active" data-mp="efectivo" onclick="seleccionarPago('efectivo',this)">💵 Efectivo</button>
+                    <button class="mp-btn" data-mp="tarjeta" onclick="seleccionarPago('tarjeta',this)">💳 Tarjeta</button>
+                    <button class="mp-btn" data-mp="transferencia" onclick="seleccionarPago('transferencia',this)">📲 Transfer.</button>
                 </div>
-                ${llevaleche ? `
-                <div>
-                    <div style="font-size:0.75rem;letter-spacing:2px;text-transform:uppercase;color:var(--muted);margin-bottom:10px;">TIPO DE LECHE</div>
-                    <div style="display:flex;gap:10px;">
-                        ${[{id:'entera',label:'🥛 Entera',desc:'Estándar'},{id:'sin_lactosa',label:'🌿 Sin lactosa',desc:'Descremada'}].map(l => `
-                            <button class="opt-btn-opciones" data-grupo="leche" data-val="${l.id}"
-                                onclick="selOpcion('leche','${l.id}')"
-                                style="flex:1;padding:14px;border:1px solid var(--border);border-radius:12px;background:var(--surface);color:var(--text);font-family:'DM Sans',sans-serif;font-size:0.9rem;font-weight:700;cursor:pointer;">
-                                ${l.label}<br>
-                                <span style="font-size:0.72rem;color:var(--muted);font-weight:400;">${l.desc}</span>
-                            </button>`).join('')}
-                    </div>
-                </div>` : ''}`;
-        }
-
-        // ── HANDROLL: elegir salsa ────────────────────────────────────────────
-        if (cat === 'handroll') {
-            contenido.innerHTML = `
-                <div>
-                    <div style="font-size:0.75rem;letter-spacing:2px;text-transform:uppercase;color:var(--muted);margin-bottom:10px;">SALSA</div>
-                    <div style="display:flex;gap:10px;flex-wrap:wrap;">
-                        ${[{id:'soya',label:'🫙 Soya',desc:'Gratis'},{id:'agridulce',label:'🍯 Agridulce',desc:'+$500'},{id:'sin_salsa',label:'Sin salsa',desc:''}].map(s => `
-                            <button class="opt-btn-opciones" data-grupo="salsa" data-val="${s.id}"
-                                onclick="selOpcion('salsa','${s.id}')"
-                                style="flex:1;min-width:90px;padding:14px 10px;border:1px solid var(--border);border-radius:12px;background:var(--surface);color:var(--text);font-family:'DM Sans',sans-serif;font-size:0.88rem;font-weight:700;cursor:pointer;text-align:center;">
-                                ${s.label}${s.desc ? `<br><span style="font-size:0.72rem;color:var(--muted);font-weight:400;">${s.desc}</span>` : ''}
-                            </button>`).join('')}
-                    </div>
-                </div>`;
-        }
-
-        // ── SANDWICH / COMPLETO / HAMBURGUESA ────────────────────────────────
-        if (cat === 'sandwich' || cat === 'completo') {
-            const recetas = cat === 'completo' ? RECETA_COMPLETO : RECETA_SANDWICH;
-            const opciones = Object.keys(recetas);
-            opcionesState.ingr = {}; // ingredientes seleccionados
-
-            contenido.innerHTML = `
-                <div>
-                    <div style="font-size:0.75rem;letter-spacing:2px;text-transform:uppercase;color:var(--muted);margin-bottom:10px;">ELIGE UNA OPCIÓN</div>
-                    <div style="display:flex;gap:8px;flex-wrap:wrap;">
-                        ${opciones.map(op => `
-                            <button class="opt-btn-opciones" data-grupo="receta" data-val="${op}"
-                                onclick="selReceta('${op}')"
-                                style="flex:1;min-width:90px;padding:12px 8px;border:1px solid var(--border);border-radius:12px;background:var(--surface);color:var(--text);font-family:'DM Sans',sans-serif;font-size:0.88rem;font-weight:700;cursor:pointer;text-align:center;">
-                                ${op}
-                            </button>`).join('')}
-                    </div>
+                <div class="comanda-acciones">
+                    <button class="btn-limpiar" onclick="limpiarComanda()">🗑️ Limpiar</button>
+                    <button class="btn-cobrar" id="btn-cobrar" onclick="abrirModalCobro()">COBRAR</button>
                 </div>
-                <div id="opciones-ingredientes" style="display:none;">
-                    <div style="font-size:0.75rem;letter-spacing:2px;text-transform:uppercase;color:var(--muted);margin-bottom:10px;">INGREDIENTES <span style="font-weight:400;text-transform:none;font-size:0.72rem;">(quita o agrega)</span></div>
-                    <div id="ingredientes-grid" style="display:flex;flex-wrap:wrap;gap:8px;"></div>
-                </div>
-                ${prod.bebida ? `
-                <div id="opciones-bebida">
-                    <div style="font-size:0.75rem;letter-spacing:2px;text-transform:uppercase;color:var(--muted);margin-bottom:10px;">BEBIDA DEL COMBO</div>
-                    <select id="sel-bebida" onchange="selOpcion('bebida',this.value)"
-                        style="width:100%;padding:12px;border:1px solid var(--border);border-radius:12px;background:var(--surface);color:var(--text);font-family:'DM Sans',sans-serif;font-size:0.9rem;outline:none;">
-                        <option value="">— Elige una bebida —</option>
-                        ${BEBIDAS_FUENTE.map(b => `<option value="${b}">${b}</option>`).join('')}
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- ══════════════════════════════════════════════
+     MODAL: COBRO
+══════════════════════════════════════════════ -->
+<div class="modal-overlay hidden" id="modal-cobro">
+    <div class="modal-card">
+        <div class="modal-titulo">CONFIRMAR COBRO</div>
+        <div class="modal-cliente" id="modal-cliente-nombre">—</div>
+        <div class="modal-monto" id="modal-monto">$0</div>
+        <div class="modal-metodo" id="modal-metodo">efectivo</div>
+        <div class="modal-acciones">
+            <button class="btn-modal-cancel" onclick="cerrarModalCobro()">Cancelar</button>
+            <button class="btn-modal-confirm" onclick="confirmarCobro()">COBRADO ✓</button>
+        </div>
+    </div>
+</div>
+
+<!-- ══════════════════════════════════════════════
+     MODAL: ANULAR PEDIDO WEB
+══════════════════════════════════════════════ -->
+<div class="modal-overlay hidden" id="modal-anular">
+    <div class="modal-card">
+        <div class="modal-titulo">⚠️ ANULAR PEDIDO</div>
+        <div class="modal-cliente" id="anular-cliente">—</div>
+        <p style="color:var(--muted);font-size:0.85rem;margin-bottom:24px;">Esta acción queda registrada. ¿Confirmas la anulación?</p>
+        <div class="modal-acciones">
+            <button class="btn-modal-cancel" onclick="cerrarModalAnular()">Cancelar</button>
+            <button class="btn-modal-anular" style="flex:2;margin-top:0;" onclick="confirmarAnulacion()">ANULAR</button>
+        </div>
+    </div>
+</div>
+
+<!-- ══════════════════════════════════════════════
+     MODAL: HISTORIAL DE PEDIDOS
+══════════════════════════════════════════════ -->
+<div class="modal-overlay hidden" id="modal-historial">
+    <div class="modal-card" style="max-width:500px;max-height:80dvh;overflow-y:auto;text-align:left;">
+        <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:20px;">
+            <div class="modal-titulo" style="margin-bottom:0;">🕐 HISTORIAL DEL DÍA</div>
+            <button onclick="cerrarHistorial()" style="background:none;border:none;color:var(--muted);font-size:1.4rem;cursor:pointer;line-height:1;">✕</button>
+        </div>
+        <div id="historial-lista">
+            <div style="color:var(--muted);text-align:center;padding:20px;">Cargando…</div>
+        </div>
+    </div>
+</div>
+
+<!-- ══════════════════════════════════════════════
+     MODAL: DETALLE PEDIDO HISTORIAL
+══════════════════════════════════════════════ -->
+<div class="modal-overlay hidden" id="modal-detalle-pedido">
+    <div class="modal-card" style="max-width:420px;text-align:left;">
+        <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:20px;">
+            <div class="modal-titulo" style="margin-bottom:0;">DETALLE PEDIDO</div>
+            <button onclick="cerrarDetallePedido()" style="background:none;border:none;color:var(--muted);font-size:1.4rem;cursor:pointer;line-height:1;">✕</button>
+        </div>
+        <div id="detalle-pedido-contenido"></div>
+    </div>
+</div>
+<div class="modal-overlay hidden" id="modal-cierre">
+    <div class="modal-card" style="max-width:440px;">
+        <div class="modal-titulo">🔒 CIERRE DE TURNO</div>
+        <div class="modal-cliente" id="cierre-cajero">—</div>
+        <div class="cierre-total">
+            <div class="cierre-label">Total vendido</div>
+            <div class="cierre-valor" id="cierre-total-monto">$0</div>
+        </div>
+        <div class="cierre-grid">
+            <div class="cierre-item"><div class="cierre-label">💵 Efectivo</div><div class="cierre-valor" id="cierre-efectivo">$0</div></div>
+            <div class="cierre-item"><div class="cierre-label">💳 Tarjeta</div><div class="cierre-valor" id="cierre-tarjeta">$0</div></div>
+            <div class="cierre-item"><div class="cierre-label">📲 Transferencia</div><div class="cierre-valor" id="cierre-transfer">$0</div></div>
+            <div class="cierre-item"><div class="cierre-label">🌐 Online</div><div class="cierre-valor" id="cierre-online">$0</div></div>
+            <div class="cierre-item"><div class="cierre-label">✅ Transacciones</div><div class="cierre-valor" id="cierre-num-trans">0</div></div>
+            <div class="cierre-item"><div class="cierre-label">❌ Anuladas</div><div class="cierre-valor" id="cierre-num-anul">0</div></div>
+        </div>
+        <div class="modal-acciones">
+            <button class="btn-modal-cancel" onclick="cerrarModalCierre()">Volver</button>
+            <button class="btn-modal-confirm" onclick="confirmarCierre()">CERRAR TURNO</button>
+        </div>
+    </div>
+</div>
+
+<!-- ══════════════════════════════════════════════
+     TOAST
+══════════════════════════════════════════════ -->
+
+
+<!-- ══════════════════════════════════════════════
+     MODAL: CONFIRMAR RETIRO
+══════════════════════════════════════════════ -->
+<div class="modal-overlay hidden" id="modal-retiro">
+    <div class="modal-card" style="max-width:380px;text-align:left;">
+        <div class="modal-titulo">📦 CONFIRMAR RETIRO</div>
+        <div class="modal-cliente" id="retiro-nombre">—</div>
+
+        <div style="margin-bottom:20px;">
+            <!-- Solo visible para pedidos web (cliente tiene código) -->
+            <div id="retiro-codigo-section">
+                <label style="font-size:0.75rem;letter-spacing:2px;text-transform:uppercase;color:var(--muted);display:block;margin-bottom:6px;">Código del cliente</label>
+                <input id="retiro-codigo" type="text" maxlength="4" placeholder="1234"
+                    style="width:100%;background:var(--surface);border:1px solid var(--border);border-radius:10px;padding:10px 14px;color:var(--text);font-family:'DM Sans',sans-serif;font-size:1.1rem;text-align:center;letter-spacing:6px;">
+                <div id="retiro-codigo-error" style="color:var(--red);font-size:0.8rem;margin-top:4px;display:none;">❌ Código incorrecto</div>
+            </div>
+        </div>
+
+        <div class="modal-acciones">
+            <button class="btn-modal-cancel" onclick="cerrarModalRetiro()">Cancelar</button>
+            <button class="btn-modal-confirm" onclick="confirmarRetiro()">✅ RETIRADO</button>
+        </div>
+    </div>
+</div>
+
+<!-- ══════════════════════════════════════════════
+     MODAL: CONFIGURACIÓN (solo admin)
+══════════════════════════════════════════════ -->
+<div class="modal-overlay hidden" id="modal-config">
+    <div class="modal-card" style="max-width:420px;text-align:left;">
+        <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:20px;">
+            <div class="modal-titulo" style="margin-bottom:0;">⚙️ CONFIGURACIÓN</div>
+            <button onclick="cerrarConfig()" style="background:none;border:none;color:var(--muted);font-size:1.4rem;cursor:pointer;line-height:1;">✕</button>
+        </div>
+        <div style="display:flex;flex-direction:column;gap:18px;">
+            <div>
+                <label style="font-size:0.78rem;letter-spacing:2px;text-transform:uppercase;color:var(--muted);display:block;margin-bottom:8px;">🛵 Número repartidor (WhatsApp)</label>
+                <input id="cfg-wsp-repartidor" type="tel" placeholder="+56912345678"
+                    style="width:100%;background:var(--surface);border:1px solid var(--border);border-radius:10px;padding:10px 14px;color:var(--text);font-family:'DM Sans',sans-serif;font-size:0.95rem;">
+            </div>
+            <div>
+                <label style="font-size:0.78rem;letter-spacing:2px;text-transform:uppercase;color:var(--muted);display:block;margin-bottom:8px;">📞 Número del local (WhatsApp)</label>
+                <input id="cfg-wsp-local" type="tel" placeholder="+56912345678"
+                    style="width:100%;background:var(--surface);border:1px solid var(--border);border-radius:10px;padding:10px 14px;color:var(--text);font-family:'DM Sans',sans-serif;font-size:0.95rem;">
+            </div>
+            <div>
+                <label style="font-size:0.78rem;letter-spacing:2px;text-transform:uppercase;color:var(--muted);display:block;margin-bottom:8px;">📧 Correo de contacto</label>
+                <input id="cfg-email" type="email" placeholder="contacto@orbita.cl"
+                    style="width:100%;background:var(--surface);border:1px solid var(--border);border-radius:10px;padding:10px 14px;color:var(--text);font-family:'DM Sans',sans-serif;font-size:0.95rem;">
+            </div>
+        </div>
+        <button class="btn-modal-confirm" style="margin-top:24px;" onclick="guardarConfig()">GUARDAR</button>
+    </div>
+</div>
+
+<div class="toast" id="toast"></div>
+
+<!-- ══════════════════════════════════════════════
+     SCRIPTS
+══════════════════════════════════════════════ -->
+<!-- ══════════════════════════════════════════════
+     MODAL: GESTIÓN DE USUARIOS (solo admin)
+══════════════════════════════════════════════ -->
+<div class="modal-overlay hidden" id="modal-usuarios">
+    <div class="modal-card" style="max-width:480px;text-align:left;max-height:85dvh;display:flex;flex-direction:column;">
+        <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:20px;flex-shrink:0;">
+            <div class="modal-titulo" style="margin-bottom:0;">🔑 USUARIOS DEL POS</div>
+            <button onclick="cerrarUsuarios()" style="background:none;border:none;color:var(--muted);font-size:1.4rem;cursor:pointer;line-height:1;">✕</button>
+        </div>
+
+        <!-- Lista de usuarios -->
+        <div id="usuarios-lista" style="flex:1;overflow-y:auto;margin-bottom:16px;display:flex;flex-direction:column;gap:10px;">
+            <div style="color:var(--muted);font-size:0.85rem;text-align:center;padding:20px;">Cargando…</div>
+        </div>
+
+        <!-- Formulario crear/editar -->
+        <div id="usuarios-form" style="border-top:1px solid var(--border);padding-top:16px;flex-shrink:0;">
+            <div style="font-size:0.75rem;letter-spacing:2px;text-transform:uppercase;color:var(--muted);margin-bottom:12px;" id="usuarios-form-titulo">NUEVO USUARIO</div>
+            <input type="hidden" id="usr-id">
+            <div style="display:flex;flex-direction:column;gap:10px;">
+                <input class="campo-input" id="usr-nombre" type="text" placeholder="Nombre" maxlength="30" autocomplete="off">
+                <div style="display:flex;gap:10px;">
+                    <select class="campo-select" id="usr-rol">
+                        <option value="cajero">Cajero</option>
+                        <option value="admin">Admin</option>
                     </select>
-                </div>` : ''}`;
-        }
+                    <select class="campo-select" id="usr-sitio">
+                        <option value="cafe">☕ Café</option>
+                        <option value="fuente">🌭 Fuente</option>
+                        <option value="ambos">Ambos</option>
+                    </select>
+                </div>
+                <input class="campo-input" id="usr-pin" type="password" placeholder="PIN (4 dígitos)" maxlength="4" autocomplete="off">
+                <div style="display:flex;gap:8px;">
+                    <button class="btn-modal-cancel" style="flex:1;" onclick="cancelarFormUsuario()">Cancelar</button>
+                    <button class="btn-modal-confirm" style="flex:2;font-size:1rem;padding:12px;" onclick="guardarUsuario()">GUARDAR</button>
+                </div>
+            </div>
+        </div>
 
-        // ── JUGO: azúcar ──────────────────────────────────────────────────────
-        if (cat === 'jugo') {
-            contenido.innerHTML = `
-                <div>
-                    <div style="font-size:0.75rem;letter-spacing:2px;text-transform:uppercase;color:var(--muted);margin-bottom:10px;">AZÚCAR</div>
-                    <div style="display:flex;gap:10px;flex-wrap:wrap;">
-                        ${[{id:'con',label:'🍬 Con azúcar'},{id:'sin',label:'🚫 Sin azúcar'},{id:'endulzante',label:'🌿 Endulzante'}].map(a => `
-                            <button class="opt-btn-opciones" data-grupo="azucar" data-val="${a.id}"
-                                onclick="selOpcion('azucar','${a.id}')"
-                                style="flex:1;min-width:90px;padding:14px 10px;border:1px solid var(--border);border-radius:12px;background:var(--surface);color:var(--text);font-family:'DM Sans',sans-serif;font-size:0.88rem;font-weight:700;cursor:pointer;text-align:center;">
-                                ${a.label}
-                            </button>`).join('')}
-                    </div>
-                </div>`;
-        }
+        <button onclick="nuevoUsuario()" id="btn-nuevo-usuario"
+            style="margin-top:12px;width:100%;padding:12px;border:1px dashed var(--border);border-radius:12px;background:transparent;color:var(--muted);font-family:'DM Sans',sans-serif;font-size:0.88rem;font-weight:700;cursor:pointer;flex-shrink:0;">
+            + Nuevo usuario
+        </button>
+    </div>
+</div>
 
-        document.getElementById('modal-opciones').classList.remove('hidden');
-    }
+<!-- ══════════════════════════════════════════════
+     MODAL: OPCIONES DE PRODUCTO
+══════════════════════════════════════════════ -->
+<div class="modal-overlay hidden" id="modal-opciones">
+    <div class="modal-card" style="max-width:440px;text-align:left;max-height:85dvh;display:flex;flex-direction:column;">
+        <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:6px;flex-shrink:0;">
+            <div class="modal-titulo" style="margin-bottom:0;" id="opciones-titulo">OPCIONES</div>
+            <button onclick="cerrarOpciones()" style="background:none;border:none;color:var(--muted);font-size:1.4rem;cursor:pointer;line-height:1;">✕</button>
+        </div>
+        <div style="font-size:0.85rem;color:var(--muted);margin-bottom:18px;flex-shrink:0;" id="opciones-subtitulo"></div>
+        <div id="opciones-contenido" style="flex:1;overflow-y:auto;display:flex;flex-direction:column;gap:14px;"></div>
+        <div style="margin-top:18px;flex-shrink:0;">
+            <div id="opciones-resumen" style="font-size:0.82rem;color:var(--muted);margin-bottom:10px;min-height:18px;"></div>
+            <button class="btn-modal-confirm" style="width:100%;font-size:1rem;padding:14px;" onclick="confirmarOpciones()">AGREGAR A COMANDA</button>
+        </div>
+    </div>
+</div>
 
-    window.selOpcion = function(grupo, val) {
-        opcionesState.selecciones[grupo] = val;
-        // Highlight botón seleccionado
-        document.querySelectorAll(`[data-grupo="${grupo}"]`).forEach(btn => {
-            btn.style.background = btn.dataset.val === val ? 'var(--primary)' : 'var(--surface)';
-            btn.style.color = btn.dataset.val === val ? '#fff' : 'var(--text)';
-            btn.style.borderColor = btn.dataset.val === val ? 'var(--primary)' : 'var(--border)';
-        });
-        actualizarResumenOpciones();
-    };
+<!-- ══════════════════════════════════════════════
+     MODAL: CREDENCIALES ADMIN (llave URL)
+══════════════════════════════════════════════ -->
+<div class="modal-overlay hidden" id="modal-admin-login">
+    <div class="modal-card" style="max-width:360px;text-align:left;">
+        <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:20px;">
+            <div class="modal-titulo" style="margin-bottom:0;">🔐 MODO ADMIN</div>
+            <button onclick="cerrarAdminLogin()" style="background:none;border:none;color:var(--muted);font-size:1.4rem;cursor:pointer;line-height:1;">✕</button>
+        </div>
+        <div style="display:flex;flex-direction:column;gap:10px;">
+            <input class="campo-input" id="admin-login-email" type="email" placeholder="Email" autocomplete="username">
+            <input class="campo-input" id="admin-login-pass" type="password" placeholder="Contraseña" autocomplete="current-password"
+                onkeydown="if(event.key==='Enter') verificarAdminLogin()">
+            <div id="admin-login-error" style="color:var(--red);font-size:0.82rem;display:none;"></div>
+            <button class="btn-modal-confirm" style="font-size:1rem;padding:12px;" onclick="verificarAdminLogin()">INGRESAR</button>
+        </div>
+    </div>
+</div>
 
-    window.selReceta = function(opcion) {
-        const cat = opcionesState.cat;
-        const recetas = cat === 'completo' ? RECETA_COMPLETO : RECETA_SANDWICH;
-        opcionesState.selecciones.receta = opcion;
-        // Cargar ingredientes base de la receta
-        opcionesState.ingr = {};
-        (recetas[opcion] || []).forEach(id => { opcionesState.ingr[id] = true; });
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/dist/umd/supabase.js"></script>
+<script src="./orbita-auth.js"></script>
+<script src="./orbita-productos.js"></script>
+<script src="./orbita-pos.js"></script>
 
-        // Highlight receta
-        document.querySelectorAll('[data-grupo="receta"]').forEach(btn => {
-            btn.style.background = btn.dataset.val === opcion ? 'var(--primary)' : 'var(--surface)';
-            btn.style.color = btn.dataset.val === opcion ? '#fff' : 'var(--text)';
-            btn.style.borderColor = btn.dataset.val === opcion ? 'var(--primary)' : 'var(--border)';
-        });
-
-        // Mostrar ingredientes
-        document.getElementById('opciones-ingredientes').style.display = 'block';
-        renderIngredientesOpciones();
-        actualizarResumenOpciones();
-    };
-
-    function renderIngredientesOpciones() {
-        const grid = document.getElementById('ingredientes-grid');
-        if (!grid) return;
-        grid.innerHTML = INGREDIENTES_FUENTE.map(ing => {
-            const activo = !!opcionesState.ingr[ing.id];
-            return `<button onclick="toggleIngrediente('${ing.id}')" id="ing-btn-${ing.id}"
-                style="padding:8px 14px;border:1px solid ${activo ? 'var(--primary)' : 'var(--border)'};border-radius:20px;
-                background:${activo ? 'var(--primary)' : 'var(--surface)'};color:${activo ? '#fff' : 'var(--muted)'};
-                font-family:'DM Sans',sans-serif;font-size:0.82rem;font-weight:600;cursor:pointer;">
-                ${activo ? '✓ ' : ''}${ing.nombre}
-            </button>`;
-        }).join('');
-    }
-
-    window.toggleIngrediente = function(id) {
-        opcionesState.ingr[id] = !opcionesState.ingr[id];
-        if (!opcionesState.ingr[id]) delete opcionesState.ingr[id];
-        renderIngredientesOpciones();
-        actualizarResumenOpciones();
-    };
-
-    function actualizarResumenOpciones() {
-        const s = opcionesState.selecciones;
-        const partes = [];
-        if (s.azucar) partes.push(s.azucar === 'con' ? 'Con azúcar' : s.azucar === 'sin' ? 'Sin azúcar' : 'Endulzante');
-        if (s.grano) partes.push(s.grano);
-        if (s.leche) partes.push(s.leche === 'sin_lactosa' ? 'Sin lactosa' : 'Leche entera');
-        if (s.salsa) partes.push(s.salsa === 'sin_salsa' ? 'Sin salsa' : s.salsa === 'agridulce' ? 'Agridulce' : 'Soya');
-        if (s.receta) partes.push(s.receta);
-        if (opcionesState.ingr) {
-            const ings = INGREDIENTES_FUENTE.filter(i => opcionesState.ingr[i.id]).map(i => i.nombre);
-            if (ings.length) partes.push(ings.join(', '));
-        }
-        if (s.bebida) partes.push('🥤 ' + s.bebida);
-        document.getElementById('opciones-resumen').textContent = partes.join(' · ');
-    }
-
-    window.cerrarOpciones = function() {
-        document.getElementById('modal-opciones').classList.add('hidden');
-        opcionesState = null;
-    };
-
-    window.confirmarOpciones = function() {
-        const { prod, cat, selecciones, ingr } = opcionesState;
-
-        // Validaciones
-        if (cat === 'cafe' && !selecciones.grano) {
-            toast('Elige el tipo de grano', 'err'); return;
-        }
-        const CAFES_CON_LECHE_V = ['c_cortado','c_latte','c_capuchino','c_mocachino','c_chocolate'];
-        if (cat === 'cafe' && CAFES_CON_LECHE_V.includes(prod.id) && !selecciones.leche) {
-            toast('Elige el tipo de leche', 'err'); return;
-        }
-        if (cat === 'handroll' && !selecciones.salsa) {
-            toast('Elige la salsa', 'err'); return;
-        }
-        if (cat === 'jugo' && !selecciones.azucar) {
-            toast('Elige la opción de azúcar', 'err'); return;
-        }
-        if ((cat === 'sandwich' || cat === 'completo') && !selecciones.receta) {
-            toast('Elige una opción', 'err'); return;
-        }
-        if (prod.bebida && !selecciones.bebida) {
-            toast('Elige la bebida del combo', 'err'); return;
-        }
-
-        // Armar nombre con detalle
-        let detalle = '';
-        if (selecciones.azucar) detalle = selecciones.azucar === 'con' ? 'Con azúcar' : selecciones.azucar === 'sin' ? 'Sin azúcar' : 'Endulzante';
-        if (selecciones.grano) detalle = selecciones.grano;
-        if (selecciones.leche) detalle += (detalle ? ' · ' : '') + (selecciones.leche === 'sin_lactosa' ? 'Sin lactosa' : 'Leche entera');
-        if (selecciones.salsa) detalle = selecciones.salsa === 'sin_salsa' ? 'Sin salsa' : selecciones.salsa === 'agridulce' ? 'Agridulce +$500' : 'Soya';
-        if (selecciones.receta) {
-            const ings = INGREDIENTES_FUENTE.filter(i => ingr && ingr[i.id]).map(i => i.nombre).join(', ');
-            detalle = selecciones.receta + (ings ? ' · ' + ings : '');
-        }
-        if (selecciones.bebida) detalle += (detalle ? ' · ' : '') + '🥤 ' + selecciones.bebida;
-
-        // Precio: handroll agridulce suma $500
-        let precio = prod.precio;
-        if (selecciones.salsa === 'agridulce') precio += 500;
-
-        const uid = prod.id + '_' + Date.now();
-        estado.comanda.push({
-            id: uid,
-            nombre: prod.nombre,
-            detalle,
-            precio,
-            costo: prod.costo || 0,
-            qty: 1
-        });
-        renderComanda();
-        cerrarOpciones();
-        toast(prod.nombre + ' agregado ✓', 'ok');
-    };
-
-    document.getElementById('modal-opciones')?.addEventListener('click', function(e) {
-        if (e.target === this) cerrarOpciones();
-    });
-
-
-})();
+</body>
+</html>
