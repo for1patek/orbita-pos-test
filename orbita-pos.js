@@ -1657,65 +1657,74 @@
         const grid = document.getElementById('ingredientes-grid');
         if (!grid) return;
 
-        const receta = opcionesState.selecciones.receta;
-        const cat    = opcionesState.cat;
+        const receta  = opcionesState.selecciones.receta;
+        const cat     = opcionesState.cat;
         const recetas = cat === 'completo' ? RECETA_COMPLETO : RECETA_SANDWICH;
-        const base   = new Set(recetas[receta] || []);
+        const base    = new Set(recetas[receta] || []);
 
-        // Ingredientes base (de la receta)
-        const baseHTML = INGREDIENTES_FUENTE.filter(i => base.has(i.id)).map(ing => {
-            const cant = opcionesState.ingr[ing.id] ?? 1;
-            const label = cant === 0 ? '<span style="color:var(--red);font-size:0.7rem;">SIN</span>'
-                        : cant === 2 ? '<span style="color:var(--primary);font-size:0.7rem;">DOBLE</span>'
-                        : '<span style="font-size:0.7rem;color:var(--muted);">✓</span>';
+        // Botón control reutilizable
+        const ctrlBtn = (id, delta, txt) =>
+            `<button onclick="cambiarCantIngr('${id}',${delta})"
+                style="width:28px;height:28px;border-radius:50%;border:1px solid var(--border);background:var(--card);
+                color:var(--text);font-size:1rem;cursor:pointer;flex-shrink:0;display:flex;align-items:center;justify-content:center;">${txt}</button>`;
+
+        // Fila base: nombre ocupa flex-1, controles alineados a la derecha
+        const filaBase = (ing) => {
+            const cant  = opcionesState.ingr[ing.id] ?? 1;
+            const badge = cant === 0
+                ? `<span style="font-size:0.68rem;color:var(--red);font-weight:700;min-width:36px;text-align:center;">SIN</span>`
+                : cant === 2
+                ? `<span style="font-size:0.68rem;color:var(--primary);font-weight:700;min-width:36px;text-align:center;">DOBLE</span>`
+                : `<span style="min-width:36px;"></span>`;
             return `
-                <div style="display:flex;align-items:center;justify-content:space-between;padding:8px 0;border-bottom:1px solid var(--border);">
-                    <span style="font-size:0.88rem;${cant===0?'color:var(--muted);text-decoration:line-through;':''}">${ing.nombre}</span>
-                    <div style="display:flex;align-items:center;gap:8px;">
-                        ${label}
-                        <button onclick="cambiarCantIngr('${ing.id}',-1)"
-                            style="width:26px;height:26px;border-radius:50%;border:1px solid var(--border);background:var(--card);color:var(--text);font-size:1rem;cursor:pointer;line-height:1;">−</button>
-                        <button onclick="cambiarCantIngr('${ing.id}',1)"
-                            style="width:26px;height:26px;border-radius:50%;border:1px solid var(--border);background:var(--card);color:var(--text);font-size:1rem;cursor:pointer;line-height:1;">+</button>
-                    </div>
+                <div style="display:flex;align-items:center;gap:8px;padding:8px 0;border-bottom:1px solid var(--border);">
+                    <span style="flex:1;font-size:0.88rem;${cant===0?'color:var(--muted);text-decoration:line-through;':''}">${ing.nombre}</span>
+                    ${badge}
+                    ${ctrlBtn(ing.id, -1, '−')}
+                    ${ctrlBtn(ing.id,  1, '+')}
                 </div>`;
-        }).join('');
+        };
 
-        // Extras (fuera de la receta) — colapsables
-        const extrasHTML = INGREDIENTES_FUENTE.filter(i => !base.has(i.id)).map(ing => {
+        // Extras en grid 2 columnas, cada celda con nombre+controles
+        const celdaExtra = (ing) => {
             const cant = opcionesState.ingr[ing.id] || 0;
-            const label = cant === 0 ? '' : cant === 2
-                ? '<span style="color:var(--primary);font-size:0.7rem;">DOBLE</span>'
-                : '<span style="color:var(--green);font-size:0.7rem;">+1</span>';
+            const badge = cant === 2
+                ? `<span style="font-size:0.65rem;color:var(--primary);font-weight:700;">x2</span>`
+                : cant === 1
+                ? `<span style="font-size:0.65rem;color:#4caf50;font-weight:700;">+1</span>`
+                : `<span style="font-size:0.65rem;color:transparent;">__</span>`;
             return `
-                <div style="display:flex;align-items:center;justify-content:space-between;padding:8px 0;border-bottom:1px solid var(--border);">
-                    <span style="font-size:0.88rem;${cant===0?'color:var(--muted);':''}">${ing.nombre} ${label}</span>
-                    <div style="display:flex;align-items:center;gap:8px;">
-                        <button onclick="cambiarCantIngr('${ing.id}',-1)"
-                            style="width:26px;height:26px;border-radius:50%;border:1px solid var(--border);background:var(--card);color:var(--text);font-size:1rem;cursor:pointer;line-height:1;">−</button>
-                        <span style="min-width:16px;text-align:center;font-size:0.88rem;">${cant}</span>
-                        <button onclick="cambiarCantIngr('${ing.id}',1)"
-                            style="width:26px;height:26px;border-radius:50%;border:1px solid var(--border);background:var(--card);color:var(--text);font-size:1rem;cursor:pointer;line-height:1;">+</button>
-                    </div>
+                <div style="display:flex;align-items:center;gap:6px;padding:6px 8px;border:1px solid var(--border);border-radius:10px;background:var(--surface);">
+                    <span style="flex:1;font-size:0.8rem;${cant===0?'color:var(--muted);':''}">${ing.nombre} ${badge}</span>
+                    ${ctrlBtn(ing.id, -1, '−')}
+                    ${ctrlBtn(ing.id,  1, '+')}
                 </div>`;
-        }).join('');
+        };
+
+        const baseHTML   = INGREDIENTES_FUENTE.filter(i => base.has(i.id)).map(filaBase).join('');
+        const extrasHTML = INGREDIENTES_FUENTE.filter(i => !base.has(i.id)).map(celdaExtra).join('');
+
+        // Mantener estado del extras-bar si ya estaba abierto
+        const extrasAbierto = document.getElementById('extras-bar')?.style.display === 'block';
 
         grid.innerHTML = `
             ${baseHTML}
             <div style="margin-top:10px;">
                 <button onclick="toggleExtrasBar()" id="btn-extras-bar"
-                    style="width:100%;padding:8px;border:1px dashed var(--border);border-radius:10px;background:transparent;color:var(--muted);font-family:'DM Sans',sans-serif;font-size:0.8rem;cursor:pointer;">
-                    + Agregar extras
+                    style="width:100%;padding:8px;border:1px dashed var(--border);border-radius:10px;background:transparent;
+                    color:var(--muted);font-family:'DM Sans',sans-serif;font-size:0.8rem;cursor:pointer;">
+                    ${extrasAbierto ? '− Ocultar extras' : '+ Agregar extras'}
                 </button>
-                <div id="extras-bar" style="display:none;margin-top:8px;">${extrasHTML}</div>
+                <div id="extras-bar" style="display:${extrasAbierto?'grid':'none'};margin-top:8px;
+                    grid-template-columns:1fr 1fr;gap:6px;">${extrasHTML}</div>
             </div>`;
     }
 
     window.toggleExtrasBar = function() {
         const bar = document.getElementById('extras-bar');
         const btn = document.getElementById('btn-extras-bar');
-        if (bar.style.display === 'none') {
-            bar.style.display = 'block';
+        if (bar.style.display === 'none' || bar.style.display === '') {
+            bar.style.display = 'grid';
             btn.textContent = '− Ocultar extras';
         } else {
             bar.style.display = 'none';
