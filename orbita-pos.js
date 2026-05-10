@@ -498,9 +498,8 @@
             total:               total,
             items_json:          items,
             estado:              'pagado',
-            tipo_entrega:        tipo === 'local' ? 'local' : 'retiro',
+            tipo_entrega:        tipo,
             origen:              'fisico',
-            cajero_id:           estado.usuario.id,
             metodo_pago_entrega: estado.metodoPago || 'efectivo',
         });
 
@@ -1639,7 +1638,7 @@
         opcionesState.selecciones.receta = opcion;
         // Cargar ingredientes base de la receta
         opcionesState.ingr = {};
-        (recetas[opcion] || []).forEach(id => { opcionesState.ingr[id] = true; });
+        (recetas[opcion] || []).forEach(id => { opcionesState.ingr[id] = 1; });
 
         // Highlight receta
         document.querySelectorAll('[data-grupo="receta"]').forEach(btn => {
@@ -1657,20 +1656,84 @@
     function renderIngredientesOpciones() {
         const grid = document.getElementById('ingredientes-grid');
         if (!grid) return;
-        grid.innerHTML = INGREDIENTES_FUENTE.map(ing => {
-            const activo = !!opcionesState.ingr[ing.id];
-            return `<button onclick="toggleIngrediente('${ing.id}')" id="ing-btn-${ing.id}"
-                style="padding:8px 14px;border:1px solid ${activo ? 'var(--primary)' : 'var(--border)'};border-radius:20px;
-                background:${activo ? 'var(--primary)' : 'var(--surface)'};color:${activo ? '#fff' : 'var(--muted)'};
-                font-family:'DM Sans',sans-serif;font-size:0.82rem;font-weight:600;cursor:pointer;">
-                ${activo ? '✓ ' : ''}${ing.nombre}
-            </button>`;
+
+        const receta = opcionesState.selecciones.receta;
+        const cat    = opcionesState.cat;
+        const recetas = cat === 'completo' ? RECETA_COMPLETO : RECETA_SANDWICH;
+        const base   = new Set(recetas[receta] || []);
+
+        // Ingredientes base (de la receta)
+        const baseHTML = INGREDIENTES_FUENTE.filter(i => base.has(i.id)).map(ing => {
+            const cant = opcionesState.ingr[ing.id] ?? 1;
+            const label = cant === 0 ? '<span style="color:var(--red);font-size:0.7rem;">SIN</span>'
+                        : cant === 2 ? '<span style="color:var(--primary);font-size:0.7rem;">DOBLE</span>'
+                        : '<span style="font-size:0.7rem;color:var(--muted);">✓</span>';
+            return `
+                <div style="display:flex;align-items:center;justify-content:space-between;padding:8px 0;border-bottom:1px solid var(--border);">
+                    <span style="font-size:0.88rem;${cant===0?'color:var(--muted);text-decoration:line-through;':''}">${ing.nombre}</span>
+                    <div style="display:flex;align-items:center;gap:8px;">
+                        ${label}
+                        <button onclick="cambiarCantIngr('${ing.id}',-1)"
+                            style="width:26px;height:26px;border-radius:50%;border:1px solid var(--border);background:var(--card);color:var(--text);font-size:1rem;cursor:pointer;line-height:1;">−</button>
+                        <button onclick="cambiarCantIngr('${ing.id}',1)"
+                            style="width:26px;height:26px;border-radius:50%;border:1px solid var(--border);background:var(--card);color:var(--text);font-size:1rem;cursor:pointer;line-height:1;">+</button>
+                    </div>
+                </div>`;
         }).join('');
+
+        // Extras (fuera de la receta) — colapsables
+        const extrasHTML = INGREDIENTES_FUENTE.filter(i => !base.has(i.id)).map(ing => {
+            const cant = opcionesState.ingr[ing.id] || 0;
+            const label = cant === 0 ? '' : cant === 2
+                ? '<span style="color:var(--primary);font-size:0.7rem;">DOBLE</span>'
+                : '<span style="color:var(--green);font-size:0.7rem;">+1</span>';
+            return `
+                <div style="display:flex;align-items:center;justify-content:space-between;padding:8px 0;border-bottom:1px solid var(--border);">
+                    <span style="font-size:0.88rem;${cant===0?'color:var(--muted);':''}">${ing.nombre} ${label}</span>
+                    <div style="display:flex;align-items:center;gap:8px;">
+                        <button onclick="cambiarCantIngr('${ing.id}',-1)"
+                            style="width:26px;height:26px;border-radius:50%;border:1px solid var(--border);background:var(--card);color:var(--text);font-size:1rem;cursor:pointer;line-height:1;">−</button>
+                        <span style="min-width:16px;text-align:center;font-size:0.88rem;">${cant}</span>
+                        <button onclick="cambiarCantIngr('${ing.id}',1)"
+                            style="width:26px;height:26px;border-radius:50%;border:1px solid var(--border);background:var(--card);color:var(--text);font-size:1rem;cursor:pointer;line-height:1;">+</button>
+                    </div>
+                </div>`;
+        }).join('');
+
+        grid.innerHTML = `
+            ${baseHTML}
+            <div style="margin-top:10px;">
+                <button onclick="toggleExtrasBar()" id="btn-extras-bar"
+                    style="width:100%;padding:8px;border:1px dashed var(--border);border-radius:10px;background:transparent;color:var(--muted);font-family:'DM Sans',sans-serif;font-size:0.8rem;cursor:pointer;">
+                    + Agregar extras
+                </button>
+                <div id="extras-bar" style="display:none;margin-top:8px;">${extrasHTML}</div>
+            </div>`;
     }
 
-    window.toggleIngrediente = function(id) {
-        opcionesState.ingr[id] = !opcionesState.ingr[id];
-        if (!opcionesState.ingr[id]) delete opcionesState.ingr[id];
+    window.toggleExtrasBar = function() {
+        const bar = document.getElementById('extras-bar');
+        const btn = document.getElementById('btn-extras-bar');
+        if (bar.style.display === 'none') {
+            bar.style.display = 'block';
+            btn.textContent = '− Ocultar extras';
+        } else {
+            bar.style.display = 'none';
+            btn.textContent = '+ Agregar extras';
+        }
+    };
+
+    // ingr ahora es { id: cantidad } — 0=sin, 1=normal, 2=doble
+    window.cambiarCantIngr = function(id, delta) {
+        const cur = opcionesState.ingr[id] || 0;
+        const nxt = Math.max(0, Math.min(2, cur + delta));
+        // Solo un doble a la vez
+        if (nxt === 2) {
+            const hayDoble = Object.entries(opcionesState.ingr).find(([k,v]) => k !== id && v === 2);
+            if (hayDoble) { toast('Solo un ingrediente puede ir doble a la vez', 'err'); return; }
+        }
+        if (nxt === 0) delete opcionesState.ingr[id];
+        else opcionesState.ingr[id] = nxt;
         renderIngredientesOpciones();
         actualizarResumenOpciones();
     };
@@ -1683,9 +1746,20 @@
         if (s.leche) partes.push(s.leche === 'sin_lactosa' ? 'Sin lactosa' : 'Leche entera');
         if (s.salsa) partes.push(s.salsa === 'sin_salsa' ? 'Sin salsa' : s.salsa === 'agridulce' ? 'Agridulce' : 'Soya');
         if (s.receta) partes.push(s.receta);
-        if (opcionesState.ingr) {
-            const ings = INGREDIENTES_FUENTE.filter(i => opcionesState.ingr[i.id]).map(i => i.nombre);
-            if (ings.length) partes.push(ings.join(', '));
+        if (opcionesState.ingr && opcionesState.selecciones.receta) {
+            const recetas = opcionesState.cat === 'completo' ? RECETA_COMPLETO : RECETA_SANDWICH;
+            const base = new Set(recetas[opcionesState.selecciones.receta] || []);
+            const mods = [];
+            // Ingredientes sin (base que se quitó)
+            INGREDIENTES_FUENTE.filter(i => base.has(i.id) && (opcionesState.ingr[i.id] ?? 1) === 0)
+                .forEach(i => mods.push('sin ' + i.nombre));
+            // Ingredientes doble
+            INGREDIENTES_FUENTE.filter(i => (opcionesState.ingr[i.id]) === 2)
+                .forEach(i => mods.push('doble ' + i.nombre));
+            // Extras agregados
+            INGREDIENTES_FUENTE.filter(i => !base.has(i.id) && (opcionesState.ingr[i.id] || 0) > 0)
+                .forEach(i => mods.push('+ ' + i.nombre));
+            if (mods.length) partes.push(mods.join(', '));
         }
         if (s.bebida) partes.push('🥤 ' + s.bebida);
         document.getElementById('opciones-resumen').textContent = partes.join(' · ');
@@ -1727,8 +1801,16 @@
         if (selecciones.leche) detalle += (detalle ? ' · ' : '') + (selecciones.leche === 'sin_lactosa' ? 'Sin lactosa' : 'Leche entera');
         if (selecciones.salsa) detalle = selecciones.salsa === 'sin_salsa' ? 'Sin salsa' : selecciones.salsa === 'agridulce' ? 'Agridulce +$500' : 'Soya';
         if (selecciones.receta) {
-            const ings = INGREDIENTES_FUENTE.filter(i => ingr && ingr[i.id]).map(i => i.nombre).join(', ');
-            detalle = selecciones.receta + (ings ? ' · ' + ings : '');
+            const recetas = cat === 'completo' ? RECETA_COMPLETO : RECETA_SANDWICH;
+            const base = new Set(recetas[selecciones.receta] || []);
+            const mods = [];
+            INGREDIENTES_FUENTE.filter(i => base.has(i.id) && (ingr[i.id] ?? 1) === 0)
+                .forEach(i => mods.push('sin ' + i.nombre));
+            INGREDIENTES_FUENTE.filter(i => (ingr[i.id]) === 2)
+                .forEach(i => mods.push('doble ' + i.nombre));
+            INGREDIENTES_FUENTE.filter(i => !base.has(i.id) && (ingr[i.id] || 0) > 0)
+                .forEach(i => mods.push('+ ' + i.nombre));
+            detalle = selecciones.receta + (mods.length ? ' ' + mods.join(', ') : '');
         }
         if (selecciones.bebida) detalle += (detalle ? ' · ' : '') + '🥤 ' + selecciones.bebida;
 
