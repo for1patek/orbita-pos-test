@@ -80,7 +80,7 @@
         .food-card { background: var(--card); border: 1px solid var(--border2); padding: 22px 22px; border-radius: 18px; margin-bottom: 22px; transition: border-color 0.25s; text-align: left; overflow: hidden; }
         .food-card:hover { border-color: var(--accent); }
         .food-card.disabled { opacity: 0.4; pointer-events: none; }
-        .food-card-header { display: flex; justify-content: space-between; align-items: flex-start; margin-bottom: 14px; }
+        .food-card-header { display: flex; justify-content: space-between; align-items: flex-start; gap: 12px; margin-bottom: 14px; } .food-card .price { white-space: nowrap; flex-shrink: 0; }
         .food-card h3 { font-size: 1.1rem; font-weight: 700; color: var(--text); }
         .food-card .desc { font-size: 0.85rem; color: var(--muted); margin-top: 4px; }
         .price { font-family: 'Bebas Neue', sans-serif; font-size: 1.6rem; color: var(--accent); letter-spacing: 1px; white-space: nowrap; }
@@ -309,12 +309,13 @@
     <div class="menu-grid-3">
         <div class="col-box">
             <div class="cat-label">🍟 Papas Fritas</div>
-            <div class="food-card" onclick="abrirModalPapas()" style="cursor:pointer;">
+            <div class="food-card" onclick="abrirModalPapas()" style="cursor:pointer;" id="card-papas-fritas">
                 <div class="food-card-header">
                     <div>
                         <h3>Papas Fritas</h3>
                         <div class="desc">Chica · Mediana · Grande</div>
                     </div>
+                    <span class="price" id="papas-precio-desde"></span>
                 </div>
                 <div style="font-size:0.75rem;color:var(--muted);margin-top:6px;">Toca para elegir tu tamaño →</div>
             </div>
@@ -677,6 +678,12 @@
             var m = window.orbitaProductos.mergeFuente(PRODUCTOS_DEF, PAPAS_TAMANIOS_DEF, BEBIDAS_DEF, raw);
             productos = m.productos;
             PAPAS_TAMANIOS = m.papas_tamanios;
+            // Actualizar precio "Desde $X" en la card de papas
+            const _pEl = document.getElementById('papas-precio-desde');
+            if (_pEl) {
+                const _min = Math.min(...PAPAS_TAMANIOS.filter(t=>t.activo!==false&&t.precio>0).map(t=>t.precio));
+                _pEl.textContent = isFinite(_min) ? 'Desde $' + _min.toLocaleString('es-CL') : '';
+            }
             BEBIDAS = m.bebidas;
             // Merge stored con defaults: garantiza que ingredientes nuevos (ej. aji_verde)
             // aparezcan aunque no estuvieran cuando Alex guardó por primera vez.
@@ -841,6 +848,12 @@
 
         document.getElementById('menu-extras').innerHTML    = extras.map(renderExtraPapasCard).join('');
         document.getElementById('menu-sandwiches').innerHTML = sandwiches.map(renderCard).join('');
+        // Precio mínimo de papas
+        const precioDesde = document.getElementById('papas-precio-desde');
+        if (precioDesde) {
+            const minPapa = Math.min(...PAPAS_TAMANIOS.filter(t=>t.activo!==false&&t.precio>0).map(t=>t.precio));
+            precioDesde.textContent = isFinite(minPapa) ? 'Desde $' + minPapa.toLocaleString('es-CL') : '';
+        }
         document.getElementById('menu-completos').innerHTML  = completos.map(renderCard).join('');
         document.getElementById('menu-jugos').innerHTML      = jugos.map(renderFilaBebida).join('');
         document.getElementById('menu-bebidas').innerHTML    = bebidas.map(renderFilaBebida).join('');
