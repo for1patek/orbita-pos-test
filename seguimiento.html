@@ -323,7 +323,7 @@
       <div class="estado-sub"   id="estado-sub"></div>
 
       <!-- Mensaje contacto (visible solo en estados editables) -->
-      <div id="msg-contacto" style="display:none;margin-top:16px;padding:12px 14px;border-radius:12px;background:rgba(255,255,255,0.05);border:1px solid rgba(255,255,255,0.1);font-size:0.8rem;color:rgba(255,255,255,0.6);text-align:center;line-height:1.5;">
+      <div id="msg-contacto" style="display:none;margin-top:28px;padding:12px 14px;border-radius:12px;background:rgba(255,255,255,0.05);border:1px solid rgba(255,255,255,0.1);font-size:0.8rem;color:rgba(255,255,255,0.6);text-align:center;line-height:1.5;">
         ¿Te equivocaste en algo? <br>
         <a href="https://wa.me/56971019691?text=Hola, quiero modificar mi pedido" target="_blank"
           style="color:#25D366;font-weight:700;text-decoration:none;">📲 Escríbenos por WhatsApp</a>
@@ -339,12 +339,15 @@
           <div class="progress-dot" id="d-dot-2"></div>
           <div class="progress-line" id="d-line-2"></div>
           <div class="progress-dot" id="d-dot-3"></div>
+          <div class="progress-line" id="d-line-3"></div>
+          <div class="progress-dot" id="d-dot-4"></div>
         </div>
         <div class="progress-labels">
           <div class="progress-label" id="d-lbl-0">Confirmado</div>
           <div class="progress-label" id="d-lbl-1">En cocina</div>
-          <div class="progress-label" id="d-lbl-2">En camino</div>
-          <div class="progress-label" id="d-lbl-3">Entregado</div>
+          <div class="progress-label" id="d-lbl-2">Listo</div>
+          <div class="progress-label" id="d-lbl-3">En camino</div>
+          <div class="progress-label" id="d-lbl-4">Entregado</div>
         </div>
       </div>
 
@@ -478,8 +481,8 @@
     if (['pendiente','pagado','whatsapp'].includes(estado)) return 0;
     if (estado === 'en_cocina')                             return 1;
     if (estado === 'listo')                                 return 2;
-    if (estado === 'en_camino')                             return 2;
-    if (estado === 'recibido')                              return 3;
+    if (estado === 'en_camino')                             return 3;
+    if (estado === 'recibido')                              return 4;
     return 0;
   }
   function pasoRetiro(estado) {
@@ -492,7 +495,7 @@
   // ── Render barra ────────────────────────────────────────────────────────
   function renderBarra(p) {
     const esDelivery = p.tipo_entrega === 'delivery';
-    const totalPasos = esDelivery ? 4 : 3;
+    const totalPasos = esDelivery ? 5 : 3;
     const paso       = esDelivery ? pasoDelivery(p.estado) : pasoRetiro(p.estado);
     const prefix     = esDelivery ? 'd' : 'r';
 
