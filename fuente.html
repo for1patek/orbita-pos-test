@@ -40,7 +40,7 @@
         .cat-label { font-family: 'Bebas Neue', sans-serif; font-size: 1.05rem; letter-spacing: 3px; color: var(--muted); text-align: left; margin: 30px 0 14px; border-left: 4px solid var(--accent); padding-left: 12px; }
 
         /* ── GRID MENÚ 3 COL ── */
-        .menu-grid-3 { display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 20px; align-items: start; max-width: 1080px; margin: 0 auto; }
+        .menu-grid-3 { display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 40px; align-items: start; max-width: 1080px; margin: 0 auto; }
         @media (max-width: 980px) { .menu-grid-3 { grid-template-columns: 1fr; max-width: 520px; } }
 
         /* ── BUSCADOR ── */
@@ -309,12 +309,14 @@
     <div class="menu-grid-3">
         <div class="col-box">
             <div class="cat-label">🍟 Papas Fritas</div>
-            <div class="papas-card" id="papas-selector">
-                <h3>Papas Fritas</h3>
-                <div class="desc">Elige tu tamaño — puedes agregar varios</div>
-                <div class="papas-sizes" id="papas-sizes"></div>
-                <div class="papas-resumen" id="papas-resumen">Sin papas aún</div>
-                <button class="btn-agregar-papa" id="btn-agregar-papa" onclick="agregarPapa()" disabled>+ AGREGAR</button>
+            <div class="food-card" onclick="abrirModalPapas()" style="cursor:pointer;">
+                <div class="food-card-header">
+                    <div>
+                        <h3>Papas Fritas</h3>
+                        <div class="desc">Chica · Mediana · Grande</div>
+                    </div>
+                </div>
+                <div style="font-size:0.75rem;color:var(--muted);margin-top:6px;">Toca para elegir tu tamaño →</div>
             </div>
             <div id="menu-extras"></div>
         </div>
@@ -901,43 +903,15 @@
 
 
     function renderExtraPapasCard(p) {
-        const sel = extraSel[p.id] || null;
-        const salSel = extraSalchichaSel[p.id] || null;
-        const requiereSalchicha = !!p.salchicha;
-        const btnText = sel ? `+ AGREGAR ${p.nombre.toUpperCase()}` : '+ AGREGAR';
-        const dispSel = sel ? _papasStockDisponible(sel) : 0;
-        const btnDisabled = !sel || dispSel <= 0 || (requiereSalchicha && !salSel);
-        const salchichaHtml = requiereSalchicha ? `
-            <div class="mini-box" style="margin-top:10px;">
-                <div class="mini-title">Salchicha</div>
-                <div style="display:flex;flex-direction:column;gap:8px;">
-                    ${SALCHICHAS.map(s => `
-                        <button class="opt-btn ${salSel===s.id?'active':''}" style="display:flex;justify-content:space-between;align-items:center;gap:10px;width:100%;" onclick="seleccionarExtraSalchicha('${p.id}','${s.id}')">
-                            <span>${escHtml(s.label)}</span>
-                            ${s.badge ? `<span style="font-size:0.7rem;font-weight:700;color:${s.precio>0?'var(--accent)':'var(--muted)'};letter-spacing:0.5px;text-transform:uppercase;">${escHtml(s.badge)}</span>` : ''}
-                        </button>
-                    `).join('')}
+        return `<div class="food-card ${p.activo?'':'disabled'}" id="extra-${p.id}" onclick="${p.activo?`abrirModalExtra('${p.id}')`:''}" style="${p.activo?'cursor:pointer;':''}">
+            <div class="food-card-header">
+                <div>
+                    <h3>${escHtml(p.nombre)}${!p.activo?' <span style="color:var(--accent);font-size:0.72rem;">(No disponible)</span>':''}</h3>
+                    <div class="desc">${escHtml(p.desc||'')}</div>
                 </div>
+                <span class="price">$${p.precio.toLocaleString('es-CL')}</span>
             </div>
-        ` : '';
-        return `<div class="papas-card ${p.activo ? '' : 'disabled'}" id="extra-${p.id}">
-            <h3>${escHtml(p.nombre)}${!p.activo ? ' <span style="color:var(--accent);font-size:0.72rem;">(No disponible)</span>' : ''}</h3>
-            <div class="desc">${escHtml(p.desc||'')}</div>
-            <div class="papas-sizes">
-                ${PAPAS_TAMANIOS.map(t => {
-                    const disp = _papasStockDisponible(t.id);
-                    const sinStock = disp <= 0;
-                    const cls = `papas-size-btn ${sel === t.id ? 'selected' : ''}${sinStock ? ' disabled' : ''}`;
-                    const stockTxt = sinStock ? '<div style="font-size:0.65rem;color:var(--accent);margin-top:2px;">No disponible</div>' : '';
-                    return `<button class="${cls}" onclick="seleccionarExtraPapa('${p.id}','${t.id}')" ${sinStock ? 'disabled style="opacity:0.45;cursor:not-allowed;"' : ''}>
-                        ${escHtml(t.nombre)}
-                        <div class="papas-size-price">$${(t.precio + p.precio).toLocaleString('es-CL')}</div>
-                        ${stockTxt}
-                    </button>`;
-                }).join('')}
-            </div>
-            ${salchichaHtml}
-            <button class="btn-agregar-papa" onclick="agregarExtraPapa('${p.id}')" ${btnDisabled ? 'disabled' : ''}>${btnText}</button>
+            <div style="font-size:0.75rem;color:var(--muted);margin-top:6px;">Toca para elegir tu tamaño →</div>
         </div>`;
     }
 
@@ -2709,6 +2683,156 @@
         }
     });
 
+
+
+    // ── MODAL EXTRAS (salchipapa, nuggets) ───────────────────────────────────
+    let mpExtraState = null;
+
+    window.abrirModalExtra = function(prodId) {
+        const prod = productos.find(p => p.id === prodId);
+        if (!prod) return;
+        mpExtraState = { prod, size: null, salchicha: null };
+        document.getElementById('modal-extra-titulo').textContent = prod.nombre.toUpperCase();
+        document.getElementById('modal-extra-desc').textContent = prod.desc || '';
+        document.getElementById('modal-extra-fuente').style.display = 'flex';
+        renderModalExtra();
+    };
+
+    window.cerrarModalExtra = function() {
+        document.getElementById('modal-extra-fuente').style.display = 'none';
+        mpExtraState = null;
+    };
+
+    function renderModalExtra() {
+        const { prod, size, salchicha } = mpExtraState;
+        let html = '';
+
+        // Salchicha (solo salchipapa)
+        if (prod.salchicha) {
+            html += `<div>
+                <div style="font-size:0.72rem;letter-spacing:2px;text-transform:uppercase;color:var(--muted);margin-bottom:10px;font-family:'Bebas Neue',sans-serif;">SALCHICHA</div>
+                <div style="display:flex;flex-direction:column;gap:8px;">
+                    ${SALCHICHAS.map(s => `
+                        <button onclick="mpExtraSelSalchicha('${s.id}')" type="button"
+                            style="display:flex;justify-content:space-between;align-items:center;padding:12px 14px;
+                            border:1px solid ${salchicha===s.id?'var(--accent)':'var(--border)'};border-radius:12px;
+                            background:${salchicha===s.id?'rgba(212,135,42,0.15)':'var(--card)'};
+                            color:var(--text);font-family:'DM Sans',sans-serif;font-size:0.9rem;font-weight:700;cursor:pointer;">
+                            <span>${s.label}</span>
+                            ${s.badge?`<span style="font-size:0.72rem;color:${s.precio>0?'var(--accent)':'var(--muted)'};">${s.badge}</span>`:''}
+                        </button>`).join('')}
+                </div>
+            </div>`;
+        }
+
+        // Tamaño
+        html += `<div>
+            <div style="font-size:0.72rem;letter-spacing:2px;text-transform:uppercase;color:var(--muted);margin-bottom:10px;font-family:'Bebas Neue',sans-serif;">TAMAÑO</div>
+            <div style="display:flex;gap:10px;flex-wrap:wrap;">
+                ${PAPAS_TAMANIOS.filter(t => t.activo!==false).map(t => `
+                    <button onclick="mpExtraSelSize('${t.id}')" type="button"
+                        style="flex:1;min-width:80px;padding:14px 8px;border:1px solid ${size===t.id?'var(--accent)':'var(--border2)'};
+                        border-radius:12px;background:${size===t.id?'rgba(212,135,42,0.15)':'var(--card)'};
+                        color:var(--text);font-family:'DM Sans',sans-serif;font-size:0.88rem;font-weight:700;cursor:pointer;text-align:center;">
+                        ${t.nombre}<br>
+                        <span style="font-size:0.78rem;color:var(--accent);font-weight:400;">$${(t.precio+prod.precio).toLocaleString('es-CL')}</span>
+                    </button>`).join('')}
+            </div>
+        </div>`;
+
+        document.getElementById('modal-extra-contenido').innerHTML = html;
+
+        // Resumen y botón
+        const listo = !!size && (!prod.salchicha || !!salchicha);
+        const partes = [];
+        if (salchicha) partes.push(SALCHICHAS.find(s=>s.id===salchicha)?.label);
+        if (size) partes.push(PAPAS_TAMANIOS.find(t=>t.id===size)?.nombre);
+        document.getElementById('modal-extra-resumen').textContent = partes.join(' · ');
+        document.getElementById('modal-extra-btn').style.opacity = listo ? '1' : '0.4';
+    }
+
+    window.mpExtraSelSalchicha = function(id) { mpExtraState.salchicha = id; renderModalExtra(); };
+    window.mpExtraSelSize = function(id) { mpExtraState.size = id; renderModalExtra(); };
+
+    window.confirmarModalExtra = function() {
+        const { prod, size, salchicha } = mpExtraState;
+        if (!size) {
+            const r = document.getElementById('modal-extra-resumen');
+            r.textContent = 'Elige tu tamaño 😊'; r.style.color = '#e55';
+            setTimeout(() => { r.style.color = 'var(--muted)'; renderModalExtra(); }, 2000);
+            return;
+        }
+        if (prod.salchicha && !salchicha) {
+            const r = document.getElementById('modal-extra-resumen');
+            r.textContent = 'Elige el tipo de salchicha 😊'; r.style.color = '#e55';
+            setTimeout(() => { r.style.color = 'var(--muted)'; renderModalExtra(); }, 2000);
+            return;
+        }
+        const t = PAPAS_TAMANIOS.find(x => x.id === size);
+        const s = salchicha ? SALCHICHAS.find(x => x.id === salchicha) : null;
+        let nombre = `${prod.nombre} ${t.nombre}`;
+        let precio = t.precio + prod.precio + (s ? Number(s.precio)||0 : 0);
+        if (s) nombre += ` · ${s.label}`;
+        extrasPapasEnPedido.push({ tipo: prod.id, sizeId: size, salchicha, nombre, precio });
+        cerrarModalExtra();
+        actualizarResumen();
+    };
+
+    // ── MODAL PAPAS ──────────────────────────────────────────────────────────
+    let mpPapasSize = null;
+
+    window.abrirModalPapas = function() {
+        mpPapasSize = null;
+        const modal = document.getElementById('modal-papas-fuente');
+        modal.style.display = 'flex';
+        renderModalPapas();
+    };
+
+    window.cerrarModalPapas = function() {
+        document.getElementById('modal-papas-fuente').style.display = 'none';
+        mpPapasSize = null;
+    };
+
+    function renderModalPapas() {
+        const cont = document.getElementById('modal-papas-tamanios');
+        cont.innerHTML = PAPAS_TAMANIOS.filter(t => t.activo !== false).map(t => `
+            <button onclick="mpSelPapa('${t.id}')" type="button"
+                style="flex:1;min-width:80px;padding:14px 8px;border:1px solid ${mpPapasSize===t.id?'var(--accent)':'var(--border2)'};
+                border-radius:12px;background:${mpPapasSize===t.id?'rgba(212,135,42,0.15)':'var(--card)'};
+                color:var(--text);font-family:'DM Sans',sans-serif;font-size:0.88rem;font-weight:700;cursor:pointer;text-align:center;">
+                ${t.nombre}<br>
+                <span style="font-size:0.78rem;color:var(--accent);font-weight:400;">$${t.precio.toLocaleString('es-CL')}</span>
+            </button>`).join('');
+
+        const resumen = document.getElementById('modal-papas-resumen');
+        resumen.textContent = mpPapasSize
+            ? '🍟 ' + PAPAS_TAMANIOS.find(t => t.id === mpPapasSize)?.nombre
+            : '';
+
+        const btn = document.getElementById('modal-papas-btn');
+        btn.style.opacity = mpPapasSize ? '1' : '0.4';
+    }
+
+    window.mpSelPapa = function(id) {
+        mpPapasSize = id;
+        renderModalPapas();
+    };
+
+    window.confirmarModalPapas = function() {
+        if (!mpPapasSize) {
+            const resumen = document.getElementById('modal-papas-resumen');
+            resumen.textContent = 'Elige tu tamaño 😊';
+            resumen.style.color = '#e55';
+            setTimeout(() => { resumen.style.color = 'var(--muted)'; renderModalPapas(); }, 2000);
+            return;
+        }
+        const t = PAPAS_TAMANIOS.find(t => t.id === mpPapasSize);
+        if (!t) return;
+        papasElegidas.push({ uid: 'papa_' + Date.now(), tamanio: t.nombre, precio: t.precio });
+        cerrarModalPapas();
+        actualizarResumen();
+    };
+
     // ── MODAL DE PRODUCTO FUENTE ─────────────────────────────────────────────
 
     let mpfState = null;
@@ -2763,7 +2887,7 @@
         // Opción
         html += `<div>
             <div style="font-size:0.72rem;letter-spacing:2px;text-transform:uppercase;color:var(--muted);margin-bottom:10px;font-family:'Bebas Neue',sans-serif;">ELIGE UNA OPCIÓN</div>
-            <div style="display:flex;gap:8px;flex-wrap:wrap;">
+            <div id="mpf-seccion-opcion" style="display:flex;gap:8px;flex-wrap:wrap;border-radius:12px;transition:box-shadow 0.3s;">
                 ${opts.map(o => `
                     <button onclick="mpfSetOpcion('${o}')" type="button"
                         style="flex:1;min-width:80px;padding:12px 8px;border:1px solid ${mpfState.opcion===o?'var(--accent)':'var(--border)'};border-radius:12px;
@@ -2839,8 +2963,8 @@
         if (prod.bebida) {
             html += `<div>
                 <div style="font-size:0.72rem;letter-spacing:2px;text-transform:uppercase;color:var(--muted);margin-bottom:10px;font-family:'Bebas Neue',sans-serif;">BEBIDA DEL COMBO</div>
-                <select onchange="mpfState.bebida=this.value;mpfActualizarResumen()" type="button"
-                    style="width:100%;padding:12px;border:1px solid ${mpfState.bebida?'var(--accent)':'var(--border)'};border-radius:12px;
+                <select id="mpf-seccion-bebida" onchange="mpfState.bebida=this.value;mpfActualizarResumen()" type="button"
+                    style="width:100%;padding:12px;border:1px solid ${mpfState.bebida?'var(--accent)':'var(--border)'};border-radius:12px;transition:box-shadow 0.3s;
                     background:var(--card);color:${mpfState.bebida?'var(--text)':'var(--muted)'};
                     font-family:'DM Sans',sans-serif;font-size:0.9rem;outline:none;">
                     <option value="">— Elige una bebida —</option>
@@ -2916,20 +3040,34 @@
         if (bebida) partes.push('🥤 ' + bebida);
         document.getElementById('mpf-resumen').textContent = partes.join(' · ');
 
-        // Habilitar botón solo si se cumplieron las condiciones
+        // Opacidad del botón según si está completo
         const listo = !!mpfState.opcion && (!mpfState.prod.bebida || !!mpfState.bebida);
         const btn = document.getElementById('mpf-btn-agregar');
-        if (btn) {
-            btn.disabled = !listo;
-            btn.style.opacity = listo ? '1' : '0.4';
-            btn.style.cursor = listo ? 'pointer' : 'not-allowed';
+        if (btn) btn.style.opacity = listo ? '1' : '0.4';
+    }
+
+    function mpfMostrarError(msg, scrollTargetId) {
+        const el = document.getElementById('mpf-resumen');
+        if (!el) return;
+        el.textContent = msg;
+        el.style.color = '#e55';
+        setTimeout(() => { el.style.color = 'var(--muted)'; mpfActualizarResumen(); }, 2500);
+        // Scroll al elemento con highlight
+        if (scrollTargetId) {
+            const target = document.getElementById(scrollTargetId);
+            if (target) {
+                target.scrollIntoView({ behavior: 'smooth', block: 'center' });
+                target.style.transition = 'box-shadow 0.3s';
+                target.style.boxShadow = '0 0 0 2px #e55';
+                setTimeout(() => { target.style.boxShadow = ''; }, 1800);
+            }
         }
     }
 
     window.confirmarModalFuente = function() {
         const { prod, opcion, base, extras, bebida, salchicha } = mpfState;
-        if (!opcion) { alert('Elige una opción para continuar.'); return; }
-        if (prod.bebida && !bebida) { alert('Elige la bebida del combo.'); return; }
+        if (!opcion) { mpfMostrarError('Elige una opción para tu sandwich 😊', 'mpf-seccion-opcion'); return; }
+        if (prod.bebida && !bebida) { mpfMostrarError('Elige tu bebida 🥤', 'mpf-seccion-bebida'); return; }
 
         const tipo = prod.cat;
         const receta = tipo === 'completo' ? (RECETA_COMPLETOS[opcion]||[]) : (RECETA_SANDWICH[opcion]||[]);
@@ -2975,6 +3113,48 @@
 <script src="./orbita-pago-flow.js"></script>
 <script src="./orbita-pago-rapido.js"></script>
 <!-- ══════════════════════════════════════════════
+     MODAL: EXTRAS (salchipapa, nuggets)
+══════════════════════════════════════════════ -->
+<div id="modal-extra-fuente" style="display:none;position:fixed;inset:0;z-index:9000;background:rgba(0,0,0,0.7);align-items:flex-end;justify-content:center;padding:0;"
+    onclick="if(event.target===this)cerrarModalExtra()">
+    <div style="background:var(--surface);border:1px solid var(--border2);border-radius:20px 20px 0 0;width:100%;max-width:540px;padding:24px 20px 20px;">
+        <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:6px;">
+            <div style="font-family:'Bebas Neue',sans-serif;font-size:1.4rem;letter-spacing:2px;color:var(--text);" id="modal-extra-titulo"></div>
+            <button onclick="cerrarModalExtra()" style="background:none;border:none;color:var(--muted);font-size:1.6rem;cursor:pointer;line-height:1;">✕</button>
+        </div>
+        <div style="font-size:0.85rem;color:var(--muted);margin-bottom:18px;" id="modal-extra-desc"></div>
+        <div id="modal-extra-contenido" style="display:flex;flex-direction:column;gap:18px;"></div>
+        <div id="modal-extra-resumen" style="font-size:0.85rem;color:var(--muted);margin:14px 0 10px;min-height:20px;"></div>
+        <button id="modal-extra-btn" onclick="confirmarModalExtra()"
+            style="width:100%;padding:16px;border:none;border-radius:14px;background:var(--accent);color:#fff;
+            font-family:'Bebas Neue',sans-serif;font-size:1.2rem;letter-spacing:2px;cursor:pointer;opacity:0.4;transition:opacity 0.2s;">
+            + AGREGAR AL PEDIDO
+        </button>
+    </div>
+</div>
+
+<!-- ══════════════════════════════════════════════
+     MODAL: PAPAS FRITAS
+══════════════════════════════════════════════ -->
+<div id="modal-papas-fuente" style="display:none;position:fixed;inset:0;z-index:9000;background:rgba(0,0,0,0.7);align-items:flex-end;justify-content:center;padding:0;"
+    onclick="if(event.target===this)cerrarModalPapas()">
+    <div style="background:var(--surface);border:1px solid var(--border2);border-radius:20px 20px 0 0;width:100%;max-width:540px;padding:24px 20px 20px;">
+        <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:20px;">
+            <div style="font-family:'Bebas Neue',sans-serif;font-size:1.4rem;letter-spacing:2px;color:var(--text);">🍟 PAPAS FRITAS</div>
+            <button onclick="cerrarModalPapas()" style="background:none;border:none;color:var(--muted);font-size:1.6rem;cursor:pointer;line-height:1;">✕</button>
+        </div>
+        <div style="font-size:0.72rem;letter-spacing:2px;text-transform:uppercase;color:var(--muted);margin-bottom:10px;font-family:'Bebas Neue',sans-serif;">ELIGE TU TAMAÑO</div>
+        <div id="modal-papas-tamanios" style="display:flex;gap:10px;margin-bottom:20px;flex-wrap:wrap;"></div>
+        <div id="modal-papas-resumen" style="font-size:0.85rem;color:var(--muted);margin-bottom:14px;min-height:20px;"></div>
+        <button id="modal-papas-btn" onclick="confirmarModalPapas()"
+            style="width:100%;padding:16px;border:none;border-radius:14px;background:var(--accent);color:#fff;
+            font-family:'Bebas Neue',sans-serif;font-size:1.2rem;letter-spacing:2px;cursor:pointer;opacity:0.4;transition:opacity 0.2s;">
+            + AGREGAR AL PEDIDO
+        </button>
+    </div>
+</div>
+
+<!-- ══════════════════════════════════════════════
      MODAL: OPCIONES DE PRODUCTO (fuente)
 ══════════════════════════════════════════════ -->
 <div id="modal-prod-fuente" style="display:none;position:fixed;inset:0;z-index:9000;background:rgba(0,0,0,0.7);align-items:flex-end;justify-content:center;padding:0;"
@@ -2997,9 +3177,9 @@
         <!-- Footer -->
         <div style="padding:16px 20px;border-top:1px solid var(--border);flex-shrink:0;">
             <div id="mpf-resumen" style="font-size:0.8rem;color:var(--muted);margin-bottom:10px;min-height:16px;"></div>
-            <button id="mpf-btn-agregar" onclick="confirmarModalFuente()" disabled
+            <button id="mpf-btn-agregar" onclick="confirmarModalFuente()"
                 style="width:100%;padding:16px;border:none;border-radius:14px;background:var(--accent);color:#fff;
-                font-family:'Bebas Neue',sans-serif;font-size:1.2rem;letter-spacing:2px;cursor:not-allowed;opacity:0.4;transition:opacity 0.2s;">
+                font-family:'Bebas Neue',sans-serif;font-size:1.2rem;letter-spacing:2px;cursor:pointer;opacity:0.4;transition:opacity 0.2s;">
                 + AGREGAR AL PEDIDO
             </button>
         </div>
