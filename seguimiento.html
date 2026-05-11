@@ -750,7 +750,7 @@
   }
 
   // Polling: estado cada 15s, mapa cada 10s
-  pollInterval = setInterval(pollPedido, 15000);
+  pollInterval = setInterval(pollPedido, 8000);
   setInterval(() => {
     if (pedido?.estado === 'en_camino') pollUbicacion();
   }, 10000);
