@@ -916,13 +916,18 @@
 
 
     function renderExtraPapasCard(p) {
+        const minPapa = Math.min(...PAPAS_TAMANIOS.filter(t=>t.activo!==false&&t.precio>0).map(t=>t.precio));
+        const precioBase = p.precio + (isFinite(minPapa) ? minPapa : 0);
         return `<div class="food-card ${p.activo?'':'disabled'}" id="extra-${p.id}" onclick="${p.activo?`abrirModalExtra('${p.id}')`:''}" style="${p.activo?'cursor:pointer;':''}">
             <div class="food-card-header">
                 <div>
                     <h3>${escHtml(p.nombre)}${!p.activo?' <span style="color:var(--accent);font-size:0.72rem;">(No disponible)</span>':''}</h3>
                     <div class="desc">${escHtml(p.desc||'')}</div>
                 </div>
-                <span class="price">$${p.precio.toLocaleString('es-CL')}</span>
+                <div style="text-align:right;">
+                    <div class="price">$${precioBase.toLocaleString('es-CL')}</div>
+                    <div style="font-size:0.7rem;color:var(--muted);">desde</div>
+                </div>
             </div>
             <div style="font-size:0.75rem;color:var(--muted);margin-top:6px;">Toca para elegir tu tamaño →</div>
         </div>`;
