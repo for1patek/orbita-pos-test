@@ -279,6 +279,20 @@
         show('vista-ok');
     };
 
+    // Polling silencioso para detectar anulación
+    const pollAnulado = setInterval(async () => {
+        const { data } = await SB
+            .from('pedidos')
+            .select('estado')
+            .eq('id', pedidoId)
+            .single();
+        if (data && ['anulado','rechazado'].includes(data.estado)) {
+            clearInterval(pollAnulado);
+            detenerGPS();
+            show('vista-error');
+        }
+    }, 8000);
+
 })();
 </script>
 </body>
