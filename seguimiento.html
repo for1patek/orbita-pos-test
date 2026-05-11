@@ -624,7 +624,7 @@
   async function pollPedido() {
     const { data, error } = await SB
       .from('pedidos')
-      .select('id, nombre, estado, tipo_entrega, items_json, total, codigo_entrega, telefono')
+      .select('id, nombre, estado, tipo_entrega, sitio, items_json, total, codigo_entrega, telefono')
       .eq('id', pedidoId)
       .single();
 
@@ -720,7 +720,7 @@
   // ── Carga inicial ────────────────────────────────────────────────────────
   const { data, error } = await SB
     .from('pedidos')
-    .select('id, nombre, estado, tipo_entrega, items_json, total, codigo_entrega, telefono')
+    .select('id, nombre, estado, tipo_entrega, sitio, items_json, total, codigo_entrega, telefono')
     .eq('id', pedidoId)
     .single();
 
@@ -732,6 +732,12 @@
   }
 
   pedido = data;
+
+  // Aplicar color según sitio
+  const colorSitio = pedido.sitio === 'cafe' ? '#8B1A1A' : '#C4922A';
+  document.documentElement.style.setProperty('--fire', colorSitio);
+  document.documentElement.style.setProperty('--gold', colorSitio);
+
   show('vista-pedido');
   renderEstado(pedido);
   renderResumen(pedido);
