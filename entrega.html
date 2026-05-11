@@ -159,6 +159,7 @@
         .single();
 
     if (error || !pedido)                                { show('vista-error'); return; }
+    if (pedido.tipo_entrega !== 'delivery')              { show('vista-error'); return; }
     if (pedido.estado === 'recibido')                    { show('vista-ya');    return; }
     if (['anulado','rechazado'].includes(pedido.estado)) { show('vista-error'); return; }
 
