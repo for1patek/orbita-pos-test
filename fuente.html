@@ -314,7 +314,10 @@
                     <div>
                         <h3>Papas Fritas</h3>
                     </div>
-                    <span class="price" id="papas-precio-desde"></span>
+                    <div style="text-align:right;">
+                        <div style="font-size:0.7rem;color:var(--muted);margin-bottom:2px;">desde</div>
+                        <div class="price" style="font-size:1rem;" id="papas-precio-desde"></div>
+                    </div>
                 </div>
                 <div style="font-size:0.75rem;color:var(--muted);margin-top:6px;">Toca para elegir tu tamaño →</div>
             </div>
@@ -681,7 +684,7 @@
             const _pEl = document.getElementById('papas-precio-desde');
             if (_pEl) {
                 const _min = Math.min(...PAPAS_TAMANIOS.filter(t=>t.activo!==false&&t.precio>0).map(t=>t.precio));
-                _pEl.textContent = isFinite(_min) ? 'Desde $' + _min.toLocaleString('es-CL') : '';
+                _pEl.textContent = isFinite(_min) ? '$' + _min.toLocaleString('es-CL') : '';
             }
             BEBIDAS = m.bebidas;
             // Merge stored con defaults: garantiza que ingredientes nuevos (ej. aji_verde)
@@ -851,7 +854,7 @@
         const precioDesde = document.getElementById('papas-precio-desde');
         if (precioDesde) {
             const minPapa = Math.min(...PAPAS_TAMANIOS.filter(t=>t.activo!==false&&t.precio>0).map(t=>t.precio));
-            precioDesde.textContent = isFinite(minPapa) ? 'Desde $' + minPapa.toLocaleString('es-CL') : '';
+            precioDesde.textContent = isFinite(minPapa) ? '$' + minPapa.toLocaleString('es-CL') : '';
         }
         document.getElementById('menu-completos').innerHTML  = completos.map(renderCard).join('');
         document.getElementById('menu-jugos').innerHTML      = jugos.map(renderFilaBebida).join('');
