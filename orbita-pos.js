@@ -401,7 +401,7 @@
         if (existing) {
             existing.qty++;
         } else {
-            estado.comanda.push({ id: prod.id, nombre: prod.nombre, precio: prod.precio, costo: prod.costo || 0, qty: 1 });
+            estado.comanda.push({ id: prod.id, producto_id: prod.id, nombre: prod.nombre, precio: prod.precio, costo: prod.costo || 0, qty: 1 });
         }
         renderComanda();
     }
@@ -492,7 +492,47 @@
 
         const items = estado.comanda.map(i => ({ id: i.id, nombre: i.nombre, detalle: i.detalle || null, precio: i.precio, qty: i.qty }));
 
-        const { error } = await SB.from('pedidos').insert({
+        // ─── Verificación de stock ────────────────────────────────────────────
+        // Convierte la comanda al formato que espera orbitaStock
+        if (window.orbitaStock) {
+            const stockItems = window.orbitaStock.comandaAItems(estado.comanda);
+            const { ok, alertas, advertencia } = await window.orbitaStock.verificarStock(estado.local, stockItems);
+
+            // Si Supabase no respondió — avisar al cajero pero dejar continuar
+            if (advertencia) {
+                toast('⚠️ ' + advertencia, 'warn');
+            }
+
+            // Si hay alertas de stock — mostrar al cajero y pedirle confirmación
+            if (alertas?.length) {
+                const msg = window.orbitaStock.mensajeAlertas(alertas);
+
+                // Registrar evento de demanda no satisfecha para cada alerta
+                for (const a of alertas) {
+                    window.orbitaStock.registrarEvento(
+                        'insuficiente', estado.local,
+                        a.producto_id, a.nombre,
+                        a.pedido, a.disponible
+                    );
+                }
+
+                // Si el stock no alcanza — el cajero decide si igual cobra
+                if (!ok) {
+                    const continuar = confirm(
+                        '⚠️ Stock insuficiente:\n\n' + msg +
+                        '\n\n¿Deseas continuar con la venta de todas formas?'
+                    );
+                    if (!continuar) return; // Cajero canceló — no se cobra
+                }
+                // Si ok=true pero hay alertas — solo informamos (stock bajo pero dentro del 80%)
+                else {
+                    toast('⚠️ Stock bajo en algunos productos', 'warn');
+                }
+            }
+        }
+        // ─────────────────────────────────────────────────────────────────────
+
+        const { data: pedidoData, error } = await SB.from('pedidos').insert({
             sitio:               estado.local,
             nombre:              nombre,
             total:               total,
@@ -501,7 +541,7 @@
             tipo_entrega:        tipo,
             origen:              'fisico',
             metodo_pago_entrega: estado.metodoPago || 'efectivo',
-        });
+        }).select('id').single();
 
         cerrarModalCobro();
 
@@ -510,6 +550,15 @@
             toast('Error al guardar la venta', 'err');
             return;
         }
+
+        // ─── Descontar stock post-pago ────────────────────────────────────────
+        // El pedido ya está registrado — ahora descontamos el stock atómicamente
+        if (window.orbitaStock && pedidoData?.id) {
+            const stockItems = window.orbitaStock.comandaAItems(estado.comanda);
+            window.orbitaStock.descontarStock(estado.local, stockItems, pedidoData.id);
+            // No esperamos el resultado para no bloquear la UI — el descuento es async
+        }
+        // ─────────────────────────────────────────────────────────────────────
 
         toast(`✅ Venta de ${fmt(total)} registrada`, 'ok');
         estado.comanda = [];
@@ -1830,6 +1879,7 @@
         const uid = prod.id + '_' + Date.now();
         estado.comanda.push({
             id: uid,
+            producto_id: prod.id,
             nombre: prod.nombre,
             detalle,
             precio,
