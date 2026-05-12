@@ -87,6 +87,8 @@
         .cafe-card { background: var(--card); border: 1px solid var(--border); padding: 16px 18px; border-radius: 16px; margin-bottom: 12px; transition: border-color 0.2s; text-align: left; }
         .cafe-card:hover { border-color: var(--primary); }
         .cafe-card.disabled { opacity: 0.4; pointer-events: none; }
+        .cafe-card.card-agotado { border-color: #e53e3e44 !important; cursor: not-allowed; }
+        .cafe-card.card-agotado:hover { border-color: #e53e3e44 !important; }
         .cafe-card-header { display: flex; justify-content: space-between; align-items: flex-start; margin-bottom: 10px; }
         .cafe-card h3 { font-size: 1rem; font-weight: 600; color: var(--text); }
         .cafe-card .desc { font-size: 0.78rem; color: var(--muted); margin-top: 2px; }
@@ -559,7 +561,7 @@
 <script src="./orbita-supabase-sync.js"></script>
 <script src="./orbita-delivery.js"></script>
 <script src="./orbita-productos.js"></script>
-<script src="orbita-inventario.js"></script>
+<script src="./orbita-stock.js"></script>
 <script>
     const WSP_NUMBER  = "56971019691"; // ← cambiar al número del café
     const LINK_RESENA = "resenas.html?sitio=cafe";
@@ -1024,6 +1026,22 @@
         if (tipoEntrega === 'delivery' && !_dirTexto) { alert("Por favor ingresa tu dirección de entrega 📍"); document.getElementById('input-direccion-delivery')?.focus(); return; }
         if (error)   { alert("Por favor completa todos los campos 👆"); return; }
 
+        // ─── Verificación de stock ────────────────────────────────────────────
+        if (window.orbitaStock) {
+            const stockItems = pedidoWebAItems();
+            if (stockItems.length) {
+                const { ok, alertas } = await window.orbitaStock.verificarStock('cafe', stockItems);
+                if (!ok && alertas?.length) {
+                    mostrarBloqueoStock(alertas);
+                    for (const a of alertas) {
+                        window.orbitaStock.registrarEvento('insuficiente', 'cafe', a.producto_id, a.nombre, a.pedido, a.disponible);
+                    }
+                    return;
+                }
+            }
+        }
+        // ─────────────────────────────────────────────────────────────────────
+
         const delivery = tipoEntrega === 'delivery' ? (window.COSTO_DELIVERY || 2000) : 0;
         const totalCafes = cafesEnPedido.reduce((a, c) => a + c.precio, 0);
         const totalResto = productos.reduce((a, p) => ((p.cat === 'cafe' && p.grano) ? a : (a + (pedido[p.id] || 0) * p.precio)), 0);
@@ -1103,6 +1121,23 @@
         if (tipoEntrega === 'retiro' && !hora) { horaInput.classList.add('input-error'); if (!error) horaInput.focus(); error = true; }
         if (tipoEntrega === 'delivery' && !ubicacionCliente) { alert("Por favor comparte tu ubicación para el delivery 📍"); return; }
         if (error) { alert("Por favor completa todos los campos 👆"); return; }
+
+        // ─── Verificación de stock ────────────────────────────────────────────
+        if (window.orbitaStock) {
+            const stockItems = pedidoWebAItems();
+            if (stockItems.length) {
+                const { ok, alertas } = await window.orbitaStock.verificarStock('cafe', stockItems);
+                if (!ok && alertas?.length) {
+                    mostrarBloqueoStock(alertas);
+                    for (const a of alertas) {
+                        window.orbitaStock.registrarEvento('insuficiente', 'cafe', a.producto_id, a.nombre, a.pedido, a.disponible);
+                    }
+                    return;
+                }
+            }
+        }
+        // ─────────────────────────────────────────────────────────────────────
+
         const btn = document.getElementById('btn-mp');
         btn.disabled = true; btn.textContent = '⏳ Generando pago...';
         const items = [];
@@ -1585,6 +1620,7 @@
         ));
         if (found.length === 0) {
             results.innerHTML = '<div class="search-no-results">No se encontraron productos</div>';
+            if (window.orbitaStock) window.orbitaStock.registrarBusqueda('cafe', q, true);
         } else {
             results.innerHTML = found.map(p => `
                 <div class="search-result-item" onclick="agregarDesdeBusqueda('${p.id}')">
@@ -1595,6 +1631,7 @@
                     <div class="search-result-price">$${(Number(p.precio)||0).toLocaleString('es-CL')}</div>
                 </div>
             `).join('');
+            if (window.orbitaStock) window.orbitaStock.registrarBusqueda('cafe', q, false);
         }
         results.style.display = 'block';
     }
@@ -1713,6 +1750,99 @@
         }
     }
 
+    // ─── Stock en tiempo real ─────────────────────────────────────────────────
+    let _stockMap = new Map();
+
+    function applyStockUI() {
+        productos.forEach(p => {
+            const card = document.getElementById('card-' + p.id)
+                      || document.querySelector(`[data-prod="${p.id}"]`);
+            if (!card) return;
+            // Solo aplicar agotado si el producto EXISTE en stock_local con cantidad 0
+            // Si no está en el mapa (_stockMap no tiene la key), se muestra normal
+            const enStock = _stockMap.has(p.id);
+            const qty = enStock ? _stockMap.get(p.id) : null;
+            const agotado = enStock && qty <= 0;
+            if (agotado) {
+                card.classList.add('card-agotado');
+                if (!card.querySelector('.badge-agotado')) {
+                    const badge = document.createElement('div');
+                    badge.className = 'badge-agotado';
+                    badge.textContent = 'Agotado';
+                    badge.style.cssText = 'position:absolute;top:10px;right:10px;background:#e53e3e;color:#fff;font-size:0.7rem;font-weight:700;padding:3px 10px;border-radius:20px;letter-spacing:0.5px;text-transform:uppercase;z-index:2;';
+                    card.style.position = 'relative';
+                    card.prepend(badge);
+                }
+                card.style.opacity = '0.45';
+                card.style.pointerEvents = 'none';
+                card.style.filter = 'grayscale(0.6)';
+            } else {
+                card.classList.remove('card-agotado');
+                card.querySelector('.badge-agotado')?.remove();
+                card.style.opacity = '';
+                card.style.pointerEvents = '';
+                card.style.filter = '';
+            }
+        });
+    }
+
+    async function cargarStockInicial() {
+        if (!window.orbitaStock) return;
+        const ids = productos.map(p => p.id);
+        if (!ids.length) return;
+        _stockMap = await window.orbitaStock.stockVariosProductos('cafe', ids);
+        applyStockUI();
+    }
+
+    function suscribirStockRealtime() {
+        if (!window.supabase || !window.SUPABASE_URL || !window.SUPABASE_KEY) return;
+        const client = window.supabase.createClient(window.SUPABASE_URL, window.SUPABASE_KEY);
+        client
+            .channel('stock-cafe')
+            .on('postgres_changes', {
+                event:  'UPDATE',
+                schema: 'public',
+                table:  'stock_local',
+                filter: 'sitio=eq.cafe',
+            }, payload => {
+                if (payload.new?.producto_id !== undefined) {
+                    _stockMap.set(payload.new.producto_id, payload.new.cantidad ?? 0);
+                    applyStockUI();
+                }
+            })
+            .subscribe();
+    }
+
+    // Convierte el pedido de café al formato de orbitaStock
+    function pedidoWebAItems() {
+        const items = [];
+        // Cafés con grano (cada uno tiene baseId + grano elegido)
+        const conteoCafes = {};
+        cafesEnPedido.forEach(c => {
+            const key = c.baseId + '__' + c.grano;
+            if (!conteoCafes[key]) conteoCafes[key] = { producto_id: c.baseId + '_' + c.grano.toLowerCase().replace(/\s/g,'_'), nombre: c.nombre, cantidad: 0 };
+            conteoCafes[key].cantidad++;
+        });
+        Object.values(conteoCafes).forEach(i => items.push(i));
+        // Resto de productos (pasteles, bebidas, jugos, aguas)
+        productos.forEach(p => {
+            if (p.cat === 'cafe' && p.grano) return; // ya cubiertos arriba
+            const qty = pedido[p.id] || 0;
+            if (!qty) return;
+            items.push({ producto_id: p.id, nombre: p.nombre, cantidad: qty });
+        });
+        return items;
+    }
+
+    function mostrarBloqueoStock(alertas) {
+        const lineas = alertas.map(a => {
+            if (a.tipo === 'agotado') return `• ${a.nombre}: agotado`;
+            if (a.tipo === 'insuficiente_unidades') return `• ${a.nombre}: solo quedan ${a.disponible} (pediste ${a.pedido})`;
+            return `• ${a.nombre}: stock insuficiente`;
+        }).join('\n');
+        alert('😔 Lo sentimos, algunos productos no tienen stock suficiente:\n\n' + lineas + '\n\nPor favor ajusta tu pedido.');
+    }
+
     (async function init() {
         await cargarCatalogoCafe();
         cargarCostoDeliveryCafe();
@@ -1720,6 +1850,8 @@
         renderMenu();
         cargarResenasPublicas();
         if (window.orbitaPagoFlow) window.orbitaPagoFlow.detectarRetorno();
+        await cargarStockInicial();
+        suscribirStockRealtime();
     })();
     if (esAdmin) window.addEventListener('load', () => {
         mostrarAdminModoBanner();
