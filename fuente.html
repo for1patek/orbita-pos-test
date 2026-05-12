@@ -80,6 +80,8 @@
         .food-card { background: var(--card); border: 1px solid var(--border2); padding: 22px 22px; border-radius: 18px; margin-bottom: 22px; transition: border-color 0.25s; text-align: left; overflow: hidden; }
         .food-card:hover { border-color: var(--accent); }
         .food-card.disabled { opacity: 0.4; pointer-events: none; }
+        .food-card.card-agotado { border-color: #e53e3e44 !important; cursor: not-allowed; }
+        .food-card.card-agotado:hover { border-color: #e53e3e44 !important; }
         .food-card-header { display: flex; justify-content: space-between; align-items: flex-start; gap: 12px; margin-bottom: 14px; } .food-card .price { white-space: nowrap; flex-shrink: 0; }
         .food-card h3 { font-size: 1.1rem; font-weight: 700; color: var(--text); }
         .food-card .desc { font-size: 0.85rem; color: var(--muted); margin-top: 4px; }
@@ -580,6 +582,7 @@
 <script src="./orbita-supabase-sync.js"></script>
 <script src="./orbita-delivery.js"></script>
 <script src="./orbita-productos.js"></script>
+<script src="./orbita-stock.js"></script>
 <script src="./orbita-inventario.js"></script>
 <script>
     const WSP_NUMBER    = "56971019691"; // ← cambiar al número de la fuente de soda
@@ -1651,6 +1654,73 @@
     }
 
     // ── ENVIAR PEDIDO ──
+    // ─── Stock: convierte el pedido web al formato de orbitaStock ────────────
+    // Une los 4 arrays separados (papas, extras, sandwiches, productos generales)
+    // en un array plano que la edge function puede procesar.
+    function pedidoWebAItems() {
+        const items = [];
+
+        // Papas fritas solas (cada una es un tamaño distinto)
+        const contPapas = {};
+        papasEnPedido.forEach(p => {
+            contPapas[p.id] = (contPapas[p.id] || { producto_id: p.id, nombre: 'Papas ' + p.nombre, cantidad: 0 });
+            contPapas[p.id].cantidad++;
+        });
+        Object.values(contPapas).forEach(i => items.push(i));
+
+        // Extras con papas (salchipapa, nuggets con papas)
+        const contExtras = {};
+        extrasPapasEnPedido.forEach(p => {
+            const key = p.sizeId || p.tipo;
+            contExtras[key] = (contExtras[key] || { producto_id: key, nombre: p.nombre, cantidad: 0 });
+            contExtras[key].cantidad++;
+        });
+        Object.values(contExtras).forEach(i => items.push(i));
+
+        // Sándwiches / completos custom (cada uno tiene su baseId y opciones)
+        sandwichesCustom.forEach(s => {
+            items.push({
+                producto_id: s.baseId,
+                nombre:      s.nombreBase,
+                cantidad:    1,
+                // Los ingredientes que pidió el cliente (sin tomate, etc.)
+                // se envían si el sándwich los tiene definidos
+                ingredientes: s.ingredientes || null,
+            });
+        });
+
+        // Jugos
+        Object.keys(pedidoJugos).forEach(k => {
+            const qty = pedidoJugos[k];
+            if (!qty) return;
+            const sep    = k.indexOf('__');
+            const jugoId = k.slice(0, sep);
+            const prod   = productos.find(p => p.id === jugoId);
+            if (!prod) return;
+            items.push({ producto_id: jugoId, nombre: prod.nombre, cantidad: qty });
+        });
+
+        // Productos generales (bebidas, otros)
+        productos.forEach(p => {
+            if (['sandwich', 'completo', 'jugo'].includes(p.cat)) return;
+            const qty = pedido[p.id] || 0;
+            if (!qty) return;
+            items.push({ producto_id: p.id, nombre: p.nombre, cantidad: qty });
+        });
+
+        return items;
+    }
+
+    // ─── Stock: muestra mensaje de bloqueo al cliente ─────────────────────────
+    function mostrarBloqueoStock(alertas) {
+        const lineas = alertas.map(a => {
+            if (a.tipo === 'agotado') return `• ${a.nombre}: agotado`;
+            if (a.tipo === 'insuficiente_unidades') return `• ${a.nombre}: solo quedan ${a.disponible} (pediste ${a.pedido})`;
+            return `• ${a.nombre}: stock insuficiente`;
+        }).join('\n');
+        alert('😔 Lo sentimos, algunos productos no tienen stock suficiente:\n\n' + lineas + '\n\nPor favor ajusta tu pedido.');
+    }
+
     async function enviarPedido() {
         const totalUnidades = papasEnPedido.length + extrasPapasEnPedido.length + sandwichesCustom.length + productos.reduce((a,p) => {
             if (p.cat === 'sandwich' || p.cat === 'completo') return a;
@@ -1677,6 +1747,27 @@
                 if (!bebida) { alert(`Elige la bebida para: ${p.nombre} 🥤`); return; }
             }
         }
+
+        // ─── Verificación de stock (web: bloquea si no hay) ───────────────────
+        if (window.orbitaStock) {
+            const stockItems = pedidoWebAItems();
+            if (stockItems.length) {
+                const { ok, alertas } = await window.orbitaStock.verificarStock('fuente', stockItems);
+                if (!ok && alertas?.length) {
+                    mostrarBloqueoStock(alertas);
+                    // Registrar eventos de demanda no satisfecha
+                    for (const a of alertas) {
+                        window.orbitaStock.registrarEvento(
+                            'insuficiente', 'fuente',
+                            a.producto_id, a.nombre,
+                            a.pedido, a.disponible
+                        );
+                    }
+                    return; // Cliente no puede continuar
+                }
+            }
+        }
+        // ─────────────────────────────────────────────────────────────────────
 
         const totalPapas = papasEnPedido.reduce((a,p) => a+p.precio, 0) + extrasPapasEnPedido.reduce((a,p)=>a+p.precio,0);
         const totalBase  = productos.reduce((a,p) => {
@@ -1824,6 +1915,27 @@
                 if (!bebida) { alert(`Elige la bebida para: ${p.nombre} 🥤`); return; }
             }
         }
+
+        // ─── Verificación de stock (web: bloquea si no hay) ───────────────────
+        if (window.orbitaStock) {
+            const stockItems = pedidoWebAItems();
+            if (stockItems.length) {
+                const { ok, alertas } = await window.orbitaStock.verificarStock('fuente', stockItems);
+                if (!ok && alertas?.length) {
+                    mostrarBloqueoStock(alertas);
+                    for (const a of alertas) {
+                        window.orbitaStock.registrarEvento(
+                            'insuficiente', 'fuente',
+                            a.producto_id, a.nombre,
+                            a.pedido, a.disponible
+                        );
+                    }
+                    return;
+                }
+            }
+        }
+        // ─────────────────────────────────────────────────────────────────────
+
         const btn = document.getElementById('btn-mp');
         btn.disabled = true; btn.textContent = '⏳ Generando pago...';
         const items = [];
@@ -2506,6 +2618,8 @@
 
         if (found.length === 0) {
             results.innerHTML = '<div class="search-no-results">No se encontraron productos.</div>';
+            // Registrar búsqueda sin resultado — dato valioso para saber qué falta en el menú
+            if (window.orbitaStock) window.orbitaStock.registrarBusqueda('fuente', q, true);
         } else {
             results.innerHTML = found.map(p => `
                 <div class="search-result-item" onclick="agregarDesdeBusqueda('${p.id}')">
@@ -2516,6 +2630,8 @@
                     <div class="search-result-price">${p.precio > 0 ? '$' + Number(p.precio).toLocaleString('es-CL') : ''}</div>
                 </div>
             `).join('');
+            // Registrar búsqueda con resultado (con debounce interno en el módulo)
+            if (window.orbitaStock) window.orbitaStock.registrarBusqueda('fuente', q, false);
         }
         results.style.display = 'block';
     }
@@ -2639,6 +2755,84 @@
         }
     }
 
+    // ─── Stock en tiempo real ─────────────────────────────────────────────────
+    // Mapa global: producto_id → cantidad disponible
+    let _stockMap = new Map();
+
+    // Aplica el estado de stock visualmente a todas las cards del menú
+    function applyStockUI() {
+        // Productos con card clickeable (sándwiches, completos, extras)
+        productos.forEach(p => {
+            const card = document.getElementById('card-' + p.id)
+                      || document.querySelector(`[data-prod="${p.id}"]`);
+            if (!card) return;
+            const qty = _stockMap.has(p.id) ? _stockMap.get(p.id) : null;
+            const agotado = qty !== null && qty <= 0;
+            if (agotado) {
+                card.classList.add('card-agotado');
+                // Agrega badge "Agotado" si no existe
+                if (!card.querySelector('.badge-agotado')) {
+                    const badge = document.createElement('div');
+                    badge.className = 'badge-agotado';
+                    badge.textContent = 'Agotado';
+                    badge.style.cssText = 'position:absolute;top:10px;right:10px;background:#e53e3e;color:#fff;font-size:0.7rem;font-weight:700;padding:3px 10px;border-radius:20px;letter-spacing:0.5px;text-transform:uppercase;z-index:2;';
+                    card.style.position = 'relative';
+                    card.prepend(badge);
+                }
+                card.style.opacity = '0.45';
+                card.style.pointerEvents = 'none';
+                card.style.filter = 'grayscale(0.6)';
+            } else {
+                card.classList.remove('card-agotado');
+                card.querySelector('.badge-agotado')?.remove();
+                card.style.opacity = '';
+                card.style.pointerEvents = '';
+                card.style.filter = '';
+            }
+        });
+
+        // Bebidas / jugos / aguas — marcar fila como no disponible
+        productos.filter(p => ['bebida','agua','jugo'].includes(p.cat)).forEach(p => {
+            const qty = _stockMap.has(p.id) ? _stockMap.get(p.id) : null;
+            const agotado = qty !== null && qty <= 0;
+            const fila = document.getElementById('fila-' + p.id)
+                      || document.querySelector(`[data-fila="${p.id}"]`);
+            if (!fila) return;
+            fila.style.opacity      = agotado ? '0.45' : '';
+            fila.style.pointerEvents = agotado ? 'none' : '';
+        });
+    }
+
+    // Carga el stock de todos los productos de una vez (1 fetch) y aplica UI
+    async function cargarStockInicial() {
+        if (!window.orbitaStock) return;
+        const ids = productos.map(p => p.id);
+        if (!ids.length) return;
+        _stockMap = await window.orbitaStock.stockVariosProductos('fuente', ids);
+        applyStockUI();
+    }
+
+    // Suscripción Realtime — actualiza la pantalla cuando cambia stock_local
+    function suscribirStockRealtime() {
+        if (!window.supabase || !window.SUPABASE_URL || !window.SUPABASE_KEY) return;
+        const client = window.supabase.createClient(window.SUPABASE_URL, window.SUPABASE_KEY);
+        client
+            .channel('stock-fuente')
+            .on('postgres_changes', {
+                event:  'UPDATE',
+                schema: 'public',
+                table:  'stock_local',
+                filter: 'sitio=eq.fuente',
+            }, payload => {
+                // Actualiza solo el producto que cambió — sin refetch completo
+                if (payload.new?.producto_id !== undefined) {
+                    _stockMap.set(payload.new.producto_id, payload.new.cantidad ?? 0);
+                    applyStockUI();
+                }
+            })
+            .subscribe();
+    }
+
     (async function init() {
         await cargarCatalogoFuente();
         cargarCostoDeliveryFuente();
@@ -2646,6 +2840,9 @@
         if (window.orbitaPagoFlow) window.orbitaPagoFlow.detectarRetorno();
         renderMenu();
         cargarResenasPublicas();
+        // Stock: cargar estado inicial y activar Realtime
+        await cargarStockInicial();
+        suscribirStockRealtime();
     })();
     if (esAdmin) window.addEventListener('load', () => {
         mostrarAdminModoBanner();
