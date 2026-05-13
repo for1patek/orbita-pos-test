@@ -125,6 +125,8 @@
                 <button type="button" onclick="showCentralTab('rendimiento', this)">Rendimiento</button>
                 <button type="button" onclick="showCentralTab('inventario', this)">Inventario</button>
                 <button type="button" onclick="showCentralTab('margenes', this)">Márgenes</button>
+                <button type="button" onclick="showCentralTab('stock', this)" id="btn-tab-stock">📦 Stock</button>
+                <button type="button" onclick="showCentralTab('demanda', this)">📊 Demanda</button>
             </div>
 
             <!-- TAB VENTAS -->
@@ -200,6 +202,50 @@
                 <div id="margenes-por-local"></div>
             </div>
 
+
+            <!-- TAB STOCK -->
+            <div class="tab-panel" id="tab-stock">
+                <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:16px;flex-wrap:wrap;gap:10px;">
+                    <h3 style="font-family:'Bebas Neue',sans-serif;font-size:1.1rem;letter-spacing:2px;color:var(--muted);">Stock consolidado</h3>
+                    <a href="panel-inventario.html" style="padding:8px 16px;background:#ff4d00;color:#fff;border-radius:10px;font-family:'Bebas Neue',sans-serif;font-size:0.9rem;letter-spacing:1.5px;text-decoration:none;">Ir al panel de inventario →</a>
+                </div>
+                <div id="stock-alertas-wrap" style="margin-bottom:20px;"></div>
+                <div style="background:var(--card);border:1px solid var(--border);border-radius:14px;padding:16px;overflow-x:auto;">
+                    <div id="stock-tabla-wrap"><p style="color:var(--muted);font-size:0.9rem;text-align:center;padding:24px 0;">Cargando stock...</p></div>
+                </div>
+            </div>
+
+            <!-- TAB DEMANDA -->
+            <div class="tab-panel" id="tab-demanda">
+                <h3 style="font-family:'Bebas Neue',sans-serif;font-size:1.1rem;letter-spacing:2px;color:var(--muted);margin-bottom:16px;">Demanda no satisfecha</h3>
+                <div style="display:flex;gap:10px;margin-bottom:18px;flex-wrap:wrap;">
+                    <select id="dem-sitio" onchange="cargarDemanda()" style="padding:9px 13px;border-radius:10px;border:1px solid var(--border);background:#0a0a0c;color:var(--text);font-size:0.9rem;outline:none;">
+                        <option value="">Todos los locales</option>
+                        <option value="handroll">Hand Roll</option>
+                        <option value="cafe">Cafe</option>
+                        <option value="fuente">Fuente</option>
+                    </select>
+                    <select id="dem-periodo" onchange="cargarDemanda()" style="padding:9px 13px;border-radius:10px;border:1px solid var(--border);background:#0a0a0c;color:var(--text);font-size:0.9rem;outline:none;">
+                        <option value="7">Ultimos 7 dias</option>
+                        <option value="30" selected>Ultimos 30 dias</option>
+                        <option value="90">Ultimos 90 dias</option>
+                    </select>
+                </div>
+                <div class="grid-3" id="dem-kpis" style="margin-bottom:20px;"></div>
+                <div style="background:var(--card);border:1px solid var(--border);border-radius:14px;padding:16px;margin-bottom:16px;">
+                    <h4 style="font-size:0.72rem;text-transform:uppercase;letter-spacing:2px;color:var(--muted);margin-bottom:14px;">Productos con mas bloqueos por stock</h4>
+                    <div id="dem-productos-wrap"><p style="color:var(--muted);font-size:0.9rem;text-align:center;padding:16px 0;">Cargando...</p></div>
+                </div>
+                <div style="background:var(--card);border:1px solid var(--border);border-radius:14px;padding:16px;margin-bottom:16px;">
+                    <h4 style="font-size:0.72rem;text-transform:uppercase;letter-spacing:2px;color:var(--muted);margin-bottom:14px;">Busquedas mas frecuentes en el menu</h4>
+                    <div id="dem-busquedas-wrap"><p style="color:var(--muted);font-size:0.9rem;text-align:center;padding:16px 0;">Cargando...</p></div>
+                </div>
+                <div style="background:var(--card);border:1px solid var(--border);border-radius:14px;padding:16px;">
+                    <h4 style="font-size:0.72rem;text-transform:uppercase;letter-spacing:2px;color:var(--muted);margin-bottom:14px;">Busquedas sin resultado (lo que piden y no tienes)</h4>
+                    <div id="dem-sin-resultado-wrap"><p style="color:var(--muted);font-size:0.9rem;text-align:center;padding:16px 0;">Cargando...</p></div>
+                </div>
+            </div>
+
             <button type="button" class="logout" onclick="salir()">Cerrar sesión</button>
 
             <div class="nav-foot">
@@ -256,6 +302,8 @@
         if (btn) btn.classList.add('active');
         document.getElementById('tab-' + tab).classList.add('active');
         if (tab === 'margenes') renderMargenes();
+        if (tab === 'stock')   { cargarStockCentral().then(renderStockTab); }
+        if (tab === 'demanda') cargarDemanda();
     }
 
     async function fetchPedidosAnio(sitio) {
@@ -606,6 +654,106 @@
             cargarTodo();
         }
     });
+    // STOCK CENTRAL
+    const SB_URL_C = window.orbitaAuth?.url || '';
+    const LABEL_C = { handroll: 'Hand Roll', cafe: 'Cafe', fuente: 'Fuente' };
+    let _stockC = new Map();
+
+    async function apiFetchC(path) {
+        const hdrs = await window.orbitaAuth.restHeaders();
+        return fetch(SB_URL_C + '/rest/v1/' + path, { headers: { ...hdrs, 'Content-Type': 'application/json' } });
+    }
+
+    async function cargarStockCentral() {
+        try {
+            const res = await apiFetchC('stock_local?select=item_id,sitio,cantidad,alerta_min,stock_items(nombre,unidad)');
+            const data = await res.json();
+            _stockC.clear();
+            if (!Array.isArray(data)) return;
+            data.forEach(r => {
+                _stockC.set(r.item_id + '|' + r.sitio, {
+                    item_id: r.item_id, sitio: r.sitio,
+                    cantidad: r.cantidad ?? 0, alerta_min: r.alerta_min ?? 0,
+                    nombre: r.stock_items?.nombre || '?', unidad: r.stock_items?.unidad || 'u'
+                });
+            });
+        } catch(e) { console.error('stock central:', e); }
+    }
+
+    function renderStockTab() {
+        const alertasWrap = document.getElementById('stock-alertas-wrap');
+        const alertas = [];
+        _stockC.forEach(r => { if (r.cantidad <= r.alerta_min) alertas.push(r); });
+        const btnStock = document.getElementById('btn-tab-stock');
+        if (btnStock) {
+            btnStock.textContent = alertas.length ? ('Stock (' + alertas.length + ')') : 'Stock';
+        }
+        if (alertas.length) {
+            alertasWrap.innerHTML = '<div style="background:rgba(229,62,62,0.08);border:1px solid rgba(229,62,62,0.25);border-radius:12px;padding:14px 16px;margin-bottom:12px;"><div style="font-size:0.72rem;text-transform:uppercase;letter-spacing:2px;color:#e53e3e;margin-bottom:10px;">Alertas activas: ' + alertas.length + '</div>' +
+                alertas.map(r => '<div style="display:flex;justify-content:space-between;align-items:center;padding:6px 0;border-bottom:1px solid rgba(255,255,255,0.04);"><div><span style="font-weight:600;font-size:0.88rem;">' + escC(r.nombre) + '</span><span style="font-size:0.76rem;color:var(--muted);margin-left:8px;">' + (LABEL_C[r.sitio]||r.sitio) + '</span></div><span style="font-family:'Bebas Neue',sans-serif;color:' + (r.cantidad===0?'#e53e3e':'#f6c90e') + ';">' + r.cantidad + ' ' + escC(r.unidad) + '</span></div>').join('') + '</div>';
+        } else {
+            alertasWrap.innerHTML = '<div style="color:#25d366;font-size:0.88rem;margin-bottom:8px;">Sin alertas activas</div>';
+        }
+        const tablaWrap = document.getElementById('stock-tabla-wrap');
+        const itemIds = [...new Set([..._stockC.keys()].map(k => k.split('|')[0]))];
+        if (!itemIds.length) { tablaWrap.innerHTML = '<p style="color:var(--muted);text-align:center;padding:24px 0;">Stock vacio. <a href="panel-inventario.html" style="color:#ff4d00;">Ir al panel de inventario</a></p>'; return; }
+        const iMap = {};
+        _stockC.forEach(r => { if (!iMap[r.item_id]) iMap[r.item_id] = { nombre: r.nombre, unidad: r.unidad }; });
+        const rows = Object.entries(iMap).sort((a,b) => a[1].nombre.localeCompare(b[1].nombre));
+        const qc = (id, s) => { const r = _stockC.get(id+'|'+s); if (!r) return '<td style="text-align:center;color:var(--muted);">-</td>'; const col = r.cantidad===0?'#e53e3e':r.cantidad<=r.alerta_min?'#f6c90e':'#25d366'; return '<td style="text-align:center;font-family:Bebas Neue,sans-serif;color:' + col + ';">' + r.cantidad + '</td>'; };
+        tablaWrap.innerHTML = '<table style="width:100%;border-collapse:collapse;font-size:0.87rem;"><thead><tr><th style="text-align:left;padding:8px 10px;font-size:0.7rem;text-transform:uppercase;color:var(--muted);border-bottom:1px solid var(--border);">Insumo</th><th style="text-align:left;padding:8px 6px;font-size:0.7rem;color:var(--muted);border-bottom:1px solid var(--border);">Ud</th><th style="text-align:center;padding:8px 10px;font-size:0.7rem;color:#ff4d00;border-bottom:1px solid var(--border);">Hand Roll</th><th style="text-align:center;padding:8px 10px;font-size:0.7rem;color:#c97b7b;border-bottom:1px solid var(--border);">Cafe</th><th style="text-align:center;padding:8px 10px;font-size:0.7rem;color:#d4872a;border-bottom:1px solid var(--border);">Fuente</th></tr></thead><tbody>' +
+            rows.map(([id,it]) => '<tr style="border-bottom:1px solid rgba(255,255,255,0.04);"><td style="padding:9px 10px;font-weight:500;">' + escC(it.nombre) + '</td><td style="padding:9px 6px;color:var(--muted);font-size:0.78rem;">' + escC(it.unidad) + '</td>' + qc(id,'handroll') + qc(id,'cafe') + qc(id,'fuente') + '</tr>').join('') +
+            '</tbody></table>';
+    }
+
+    // DEMANDA
+    async function cargarDemanda() {
+        const sitio = document.getElementById('dem-sitio')?.value || '';
+        const dias  = parseInt(document.getElementById('dem-periodo')?.value) || 30;
+        const desde = new Date(Date.now() - dias * 864e5).toISOString();
+        let qs  = 'stock_eventos_cliente?select=tipo_evento,producto_id,sitio,creado_at&creado_at=gte.' + desde + '&limit=2000';
+        if (sitio) qs += '&sitio=eq.' + sitio;
+        let data = [];
+        try { const r = await apiFetchC(qs); data = await r.json(); if (!Array.isArray(data)) data = []; } catch(e) {}
+
+        const agotados = data.filter(e => e.tipo_evento==='agotado_visto').length;
+        const insuf    = data.filter(e => e.tipo_evento==='cantidad_reducida' || e.tipo_evento==='receta_limitada').length;
+        const busq     = data.filter(e => e.tipo_evento==='busqueda').length;
+        const sinR     = data.filter(e => e.tipo_evento==='busqueda_sin_resultado').length;
+
+        document.getElementById('dem-kpis').innerHTML = [
+            { label: 'Veces vio Agotado', val: agotados, color: '#e53e3e' },
+            { label: 'Stock insuficiente', val: insuf, color: '#f6c90e' },
+            { label: 'Busquedas en menu', val: busq, color: '#25d366' },
+            { label: 'Busquedas sin resultado', val: sinR, color: '#ff4d00' }
+        ].map(k => '<div class="loc-card" style="text-align:center;"><div style="font-family:Bebas Neue,sans-serif;font-size:2rem;color:' + k.color + ';">' + k.val + '</div><div style="font-size:0.78rem;color:var(--muted);margin-top:4px;">' + k.label + '</div></div>').join('');
+
+        const render_top = (items, color, emptyMsg, wrap_id) => {
+            const w = document.getElementById(wrap_id);
+            if (!items.length) { w.innerHTML = '<p style="color:var(--muted);font-size:0.88rem;text-align:center;padding:12px 0;">' + emptyMsg + '</p>'; return; }
+            const max = items[0][1];
+            w.innerHTML = items.map(([term,count]) => '<div style="display:flex;align-items:center;gap:10px;padding:8px 0;border-bottom:1px solid rgba(255,255,255,0.04);"><div style="flex:1;font-size:0.88rem;font-weight:500;">' + escC(term) + '</div><div style="width:100px;height:7px;background:rgba(255,255,255,0.06);border-radius:4px;overflow:hidden;"><div style="height:100%;width:' + Math.round(count/max*100) + '%;background:' + color + ';border-radius:4px;"></div></div><div style="font-family:Bebas Neue,sans-serif;font-size:1rem;color:' + color + ';min-width:28px;text-align:right;">' + count + '</div></div>').join('');
+        };
+
+        // Top bloqueados
+        const cB = {};
+        data.filter(e => ['agotado_visto','cantidad_reducida','receta_limitada'].includes(e.tipo_evento)).forEach(e => { const k = e.producto_id + ' (' + (LABEL_C[e.sitio]||e.sitio) + ')'; cB[k]=(cB[k]||0)+1; });
+        render_top(Object.entries(cB).sort((a,b)=>b[1]-a[1]).slice(0,12), '#ff4d00', 'Sin bloqueos en este periodo.', 'dem-productos-wrap');
+
+        // Busquedas con resultado
+        const cBq = {};
+        data.filter(e => e.tipo_evento==='busqueda').forEach(e => { cBq[e.producto_id]=(cBq[e.producto_id]||0)+1; });
+        render_top(Object.entries(cBq).sort((a,b)=>b[1]-a[1]).slice(0,10), '#25d366', 'Sin busquedas registradas.', 'dem-busquedas-wrap');
+
+        // Busquedas sin resultado
+        const cSR = {};
+        data.filter(e => e.tipo_evento==='busqueda_sin_resultado').forEach(e => { cSR[e.producto_id]=(cSR[e.producto_id]||0)+1; });
+        render_top(Object.entries(cSR).sort((a,b)=>b[1]-a[1]).slice(0,10), '#f6c90e', 'Ninguna busqueda sin resultado. Todo bien!', 'dem-sin-resultado-wrap');
+    }
+
+    function escC(s) { return String(s??'').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;'); }
+
+
 </script>
 </body>
 </html>
