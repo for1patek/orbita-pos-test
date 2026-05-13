@@ -789,6 +789,14 @@
         const sel = granoSel[p.id] || null;
         const chips = GRANOS_INFO.map(g => {
             const activo = sel === g.id;
+            const granoId = p.id + '_' + g.id.toLowerCase();
+            const granoAgotado = _stockMap.has(granoId) && _stockMap.get(granoId) <= 0;
+            if (granoAgotado) {
+                return `<button type="button" disabled style="flex:1;padding:8px 10px;font-size:0.78rem;border:1px solid var(--border);border-radius:8px;background:var(--surface);color:var(--muted);cursor:not-allowed;font-weight:700;display:flex;flex-direction:column;align-items:flex-start;gap:2px;line-height:1.2;text-align:left;opacity:0.45;position:relative;">
+                    <span>${escHtml(g.label)}</span>
+                    <span style="font-size:0.66rem;font-weight:500;color:var(--muted);text-transform:none;letter-spacing:0;">Agotado</span>
+                </button>`;
+            }
             return `<button type="button" onclick="setGranoCafe('${p.id}','${g.id}')" style="flex:1;padding:8px 10px;font-size:0.78rem;border:1px solid ${activo ? 'var(--primary)' : 'var(--border)'};border-radius:8px;background:${activo ? 'var(--primary)' : 'var(--surface)'};color:${activo ? '#FAF3E0' : 'var(--text)'};cursor:pointer;font-weight:700;display:flex;flex-direction:column;align-items:flex-start;gap:2px;line-height:1.2;text-align:left;">
                 <span>${escHtml(g.label)}</span>
                 <span style="font-size:0.66rem;font-weight:500;color:${activo ? '#FAF3E0' : 'var(--muted)'};text-transform:none;letter-spacing:0;">${escHtml(g.tagline)}</span>
@@ -1772,8 +1780,15 @@
     async function cargarStockInicial() {
         if (!window.orbitaStock) return;
         const ids = productos.map(p => p.id);
-        if (!ids.length) return;
-        _stockMap = await window.orbitaStock.stockVariosProductos('cafe', ids);
+        // Para cafés con grano, también cargar los ids combinados (c_americano_napoli, etc.)
+        // así applyStockUI puede bloquear el chip de grano agotado individualmente
+        const idsGrano = [];
+        productos.filter(p => p.grano).forEach(p => {
+            GRANOS_INFO.forEach(g => idsGrano.push(p.id + '_' + g.id.toLowerCase()));
+        });
+        const todosIds = [...new Set([...ids, ...idsGrano])];
+        if (!todosIds.length) return;
+        _stockMap = await window.orbitaStock.stockVariosProductos('cafe', todosIds);
         applyStockUI();
     }
 
@@ -1792,7 +1807,12 @@
                 // que stockVariosProductos recalcule disponibilidad por receta
                 if (!window.orbitaStock) return;
                 const ids = productos.map(p => p.id);
-                _stockMap = await window.orbitaStock.stockVariosProductos('cafe', ids);
+                const idsGrano = [];
+                productos.filter(p => p.grano).forEach(p => {
+                    GRANOS_INFO.forEach(g => idsGrano.push(p.id + '_' + g.id.toLowerCase()));
+                });
+                const todosIds = [...new Set([...ids, ...idsGrano])];
+                _stockMap = await window.orbitaStock.stockVariosProductos('cafe', todosIds);
                 applyStockUI();
             })
             .subscribe();
