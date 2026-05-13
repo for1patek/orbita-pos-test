@@ -93,43 +93,96 @@
         }
     }
 
-    // ─── Consultar stock disponible de un producto (para web) ─────────────────
-    // Devuelve número (0 si no hay, -1 si error).
-    async function stockDisponible(sitio, productoId) {
-        try {
-            const res = await fetch(
-                REST_URL() + `stock_local?sitio=eq.${sitio}&producto_id=eq.${encodeURIComponent(productoId)}&select=cantidad`,
-                { headers: headers() }
-            );
-            const data = await res.json();
-            if (!res.ok || !data?.length) return 0;
-            return data[0].cantidad ?? 0;
-        } catch (e) {
-            return -1;
-        }
-    }
-
     // ─── Consultar stock de VARIOS productos en una sola petición (para web) ──
-    // En vez de preguntar producto por producto (20 fetches), trae todo de una.
-    // Devuelve un Map: { producto_id → cantidad }
-    // Uso: const stock = await orbitaStock.stockVariosProductos('fuente', ids);
-    //      const quedan = stock.get('mechada_italiana') ?? 0;
+    // Flujo: stock_recetas (producto_id → item_id) + stock_local (item_id → cantidad)
+    // Lógica: mismo criterio que la edge function
+    //   · tipo_control='exacto'     → disponible si cantidad >= cantidad_receta
+    //   · tipo_control='tolerancia' → disponible si cantidad >= cantidad_receta * 0.80
+    // Devuelve un Map: { producto_id → cantidad_efectiva }
+    //   · null  = sin receta configurada (se muestra disponible, no se bloquea)
+    //   · 0     = agotado / bajo tolerancia (se bloquea en UI)
+    //   · N > 0 = unidades disponibles (tipo exacto) o stock restante (tipo tolerancia)
     async function stockVariosProductos(sitio, ids) {
         const mapa = new Map();
         if (!ids?.length) return mapa;
         try {
-            const lista = ids.map(id => encodeURIComponent(id)).join(',');
-            const res = await fetch(
-                REST_URL() + `stock_local?sitio=eq.${sitio}&producto_id=in.(${lista})&select=producto_id,cantidad`,
+            // 1. Traer todas las recetas del sitio para los productos pedidos
+            const lista = ids.map(id => `"${id}"`).join(',');
+            const resRecetas = await fetch(
+                REST_URL() + `stock_recetas?sitio=eq.${sitio}&producto_id=in.(${lista})&select=producto_id,item_id,cantidad_receta`,
                 { headers: headers() }
             );
-            const data = await res.json();
-            if (!res.ok || !Array.isArray(data)) return mapa;
-            data.forEach(row => mapa.set(row.producto_id, row.cantidad ?? 0));
+            const recetas = await resRecetas.json();
+            if (!resRecetas.ok || !Array.isArray(recetas) || !recetas.length) return mapa;
+
+            // 2. Recopilar todos los item_id únicos que necesitamos
+            const itemIds = [...new Set(recetas.map(r => r.item_id))];
+            const itemLista = itemIds.map(id => `"${id}"`).join(',');
+
+            // 3. Traer stock_local + tipo_control de stock_items en una sola query
+            const resStock = await fetch(
+                REST_URL() + `stock_local?sitio=eq.${sitio}&item_id=in.(${itemLista})&select=item_id,cantidad,stock_items(tipo_control)`,
+                { headers: headers() }
+            );
+            const stockRows = await resStock.json();
+            if (!resStock.ok || !Array.isArray(stockRows)) return mapa;
+
+            // 4. Construir mapa rápido item_id → { cantidad, tipo_control }
+            const stockPorItem = new Map();
+            stockRows.forEach(r => {
+                stockPorItem.set(r.item_id, {
+                    cantidad:     r.cantidad ?? 0,
+                    tipo_control: r.stock_items?.tipo_control ?? 'exacto',
+                });
+            });
+
+            // 5. Para cada producto, calcular disponibilidad según sus insumos
+            const TOLERANCIA = 0.80;
+            ids.forEach(prodId => {
+                const insumos = recetas.filter(r => r.producto_id === prodId);
+                if (!insumos.length) return; // sin receta → no se mete en el mapa → se muestra normal
+
+                let minDisponible = Infinity; // unidades del producto que se pueden hacer
+                let algoBloqueado = false;
+
+                for (const insumo of insumos) {
+                    const s = stockPorItem.get(insumo.item_id);
+                    if (!s) { algoBloqueado = true; break; } // sin fila de stock → bloqueado
+
+                    if (s.tipo_control === 'tolerancia') {
+                        // Gramos/ml: bloqueado si cantidad < cantidad_receta * tolerancia
+                        const minRequerido = insumo.cantidad_receta * TOLERANCIA;
+                        if (s.cantidad < minRequerido) { algoBloqueado = true; break; }
+                        // Para tolerancia devolvemos cuántas "porciones" quedan
+                        const porciones = Math.floor(s.cantidad / insumo.cantidad_receta);
+                        minDisponible = Math.min(minDisponible, porciones);
+                    } else {
+                        // Exacto (unidades): cuántos productos completos se pueden hacer
+                        const porciones = Math.floor(s.cantidad / insumo.cantidad_receta);
+                        minDisponible = Math.min(minDisponible, porciones);
+                    }
+                }
+
+                mapa.set(prodId, algoBloqueado ? 0 : (minDisponible === Infinity ? 0 : minDisponible));
+            });
+
         } catch (e) {
             console.error('[orbitaStock] stockVariosProductos error:', e);
         }
         return mapa;
+    }
+
+    // ─── Consultar stock disponible de un producto individual (para web) ───────
+    // Wrapper sobre stockVariosProductos para consultar uno solo.
+    // Devuelve número (null si sin receta, 0 si agotado, N si disponible, -1 si error).
+    async function stockDisponible(sitio, productoId) {
+        try {
+            const mapa = await stockVariosProductos(sitio, [productoId]);
+            if (!mapa.has(productoId)) return null; // sin receta → sin restricción
+            return mapa.get(productoId);
+        } catch (e) {
+            return -1;
+        }
     }
 
     // ─── Registrar evento de demanda no satisfecha ───────────────────────────
