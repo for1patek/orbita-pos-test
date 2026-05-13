@@ -444,7 +444,7 @@
                 <button class="tab-btn active" onclick="showTab('tab-pedidos', this)">📦 Pedidos</button>
                 <button class="tab-btn" onclick="showTab('tab-productos', this)">🍣 Productos</button>
                 <button class="tab-btn" onclick="showTab('tab-resenas', this)">⭐ Reseñas</button>
-                <button class="tab-btn" onclick="showTab('tab-inventario', this)">📦 Inventario</button>
+                <button class="tab-btn" onclick="showTab('tab-inventario', this)">⚙️ Configuración</button>
             </div>
             <div class="tab-content active" id="tab-pedidos">
                 <p class="section-label">Pedidos de hoy</p>
@@ -479,20 +479,6 @@
                     </div>
                 </div>
                 <button class="btn-modal btn-fire" type="button" style="margin-bottom:18px;" onclick="guardarHorarioDeliveryHandroll()">Guardar horario delivery</button>
-                <p class="section-label">Inventario e insumos</p>
-                <div class="perf-card" style="padding:16px;margin-bottom:14px;">
-                    <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(160px,1fr));gap:10px;">
-                        <input id="handroll-inv-name" type="text" placeholder="Nombre del insumo" style="width:100%;padding:10px;border:1px solid var(--border);border-radius:10px;background:var(--surface);color:var(--text);">
-                        <input id="handroll-inv-stock" type="number" placeholder="Stock inicial" min="0" step="0.01" style="width:100%;padding:10px;border:1px solid var(--border);border-radius:10px;background:var(--surface);color:var(--text);">
-                        <input id="handroll-inv-unit" type="text" placeholder="Unidad (kg, L, u)" style="width:100%;padding:10px;border:1px solid var(--border);border-radius:10px;background:var(--surface);color:var(--text);">
-                        <input id="handroll-inv-costo" type="number" placeholder="Costo unitario" min="0" step="100" style="width:100%;padding:10px;border:1px solid var(--border);border-radius:10px;background:var(--surface);color:var(--text);">
-                    </div>
-                    <button class="btn-modal btn-fire" type="button" style="margin-top:10px;" onclick="window.orbitaInventario.agregarInsumo('handroll','handroll')">Agregar insumo</button>
-                </div>
-                <div id="handroll-inv-list"></div>
-                <h4 style="margin:18px 0 10px;color:var(--hand);">Historial de movimientos</h4>
-                <div id="handroll-inv-history" class="history-list"></div>
-
                 <p class="section-label" style="margin-top:24px;">Cambiar contraseña</p>
                 <p style="font-size:0.78rem;color:var(--muted);text-align:left;margin-bottom:10px;">Por seguridad, te enviamos un link de restablecimiento a tu correo registrado. Desde ahí podrás elegir una nueva contraseña.</p>
                 <button class="btn-modal btn-fire" type="button" onclick="enviarResetPassAdmin()">Enviar link por correo</button>
@@ -519,7 +505,7 @@
 <script src="./orbita-delivery.js"></script>
 <script src="./orbita-productos.js"></script>
 <script src="./orbita-stock.js"></script>
-<script src="./orbita-inventario.js"></script>
+
 <script>
     const WSP_NUMBER  = "56971019691";
     const LINK_RESENA = "resenas.html?sitio=handroll";
@@ -1285,7 +1271,6 @@
         }
         renderProductosAdmin();
         cargarResenasAdmin();
-        if (window.orbitaInventario) window.orbitaInventario.init('handroll', 'handroll');
     }
 
     function cambiarBannerAdminAVolver() {
@@ -1300,8 +1285,7 @@
         document.querySelectorAll('.tab-btn').forEach(b => b.classList.remove('active'));
         document.getElementById(tabId).classList.add('active');
         btn.classList.add('active');
-        if (tabId === 'tab-inventario' && window.orbitaInventario) window.orbitaInventario.render('handroll', 'handroll');
-        else if (tabId === 'tab-resenas') cargarResenasAdmin();
+        if (tabId === 'tab-resenas') cargarResenasAdmin();
     }
 
     async function guardarCostoFijoHandroll() {
@@ -1757,15 +1741,15 @@
         client
             .channel('stock-handroll')
             .on('postgres_changes', {
-                event:  'UPDATE',
+                event:  '*',
                 schema: 'public',
                 table:  'stock_local',
                 filter: 'sitio=eq.handroll',
-            }, payload => {
-                if (payload.new?.producto_id !== undefined) {
-                    _stockMap.set(payload.new.producto_id, payload.new.cantidad ?? 0);
-                    applyStockUI();
-                }
+            }, async () => {
+                if (!window.orbitaStock) return;
+                const ids = productos.map(p => p.id);
+                _stockMap = await window.orbitaStock.stockVariosProductos('handroll', ids);
+                applyStockUI();
             })
             .subscribe();
     }
