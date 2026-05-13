@@ -48,6 +48,8 @@
 
         .card { background: var(--card); border: 1px solid var(--border); padding: 18px 20px; border-radius: 16px; margin-bottom: 14px; transition: border-color 0.25s; text-align: left; }
         .card.disabled { opacity: 0.4; pointer-events: none; }
+        .card.card-agotado { border-color: #e53e3e44 !important; cursor: not-allowed; }
+        .card.card-agotado:hover { border-color: #e53e3e44 !important; }
         .card:not(.disabled):hover { border-color: var(--fire); }
         .card-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 14px; }
         .card h3 { font-size: 1.05rem; font-weight: 600; }
@@ -519,7 +521,6 @@
 <script src="./orbita-delivery.js"></script>
 <script src="./orbita-productos.js"></script>
 <script src="./orbita-stock.js"></script>
-<script src="./orbita-inventario.js"></script>
 <script>
     const WSP_NUMBER  = "56971019691";
     const LINK_RESENA = "resenas.html?sitio=handroll";
@@ -791,7 +792,7 @@
         ));
         if (found.length === 0) {
             results.innerHTML = '<div class="search-no-results">No se encontraron productos</div>';
-            if (window.orbitaStock) window.orbitaStock.registrarBusqueda('handroll', q, false);
+            if (window.orbitaStock) window.orbitaStock.registrarBusqueda('handroll', q, true);
         } else {
             results.innerHTML = found.map(p => `
                 <div class="search-result-item" onclick="agregarDesdeBusqueda('${p.id}')">
@@ -801,7 +802,7 @@
                     <div class="search-result-price">$${(Number(p.precio)||0).toLocaleString('es-CL')}</div>
                 </div>
             `).join('');
-            if (window.orbitaStock) window.orbitaStock.registrarBusqueda('handroll', q, true);
+            if (window.orbitaStock) window.orbitaStock.registrarBusqueda('handroll', q, false);
         }
         results.style.display = 'block';
     }
@@ -1710,12 +1711,14 @@
         } else alert((r1.error || r2.error) || 'No se pudo guardar.');
     }
 
+    // ── INIT ──
     // ─── Stock en tiempo real ─────────────────────────────────────────────────
     let _stockMap = new Map();
 
     function applyStockUI() {
         productos.forEach(p => {
-            const card = document.getElementById('card-' + p.id);
+            const card = document.getElementById('card-' + p.id)
+                      || document.querySelector(`[data-prod="${p.id}"]`);
             if (!card) return;
             const enStock = _stockMap.has(p.id);
             const qty     = enStock ? _stockMap.get(p.id) : null;
@@ -1773,12 +1776,14 @@
     // Convierte el pedido de Hand Roll al formato de orbitaStock
     function pedidoWebAItems() {
         const items = [];
+        // Hand rolls con salsa
         const conteoHR = {};
         handrollsEnPedido.forEach(h => {
-            if (!conteoHR[h.baseId]) conteoHR[h.baseId] = { producto_id: h.baseId, nombre: h.nombre, cantidad: 0 };
+            conteoHR[h.baseId] = (conteoHR[h.baseId] || { producto_id: h.baseId, nombre: h.nombre, cantidad: 0 });
             conteoHR[h.baseId].cantidad++;
         });
         Object.values(conteoHR).forEach(i => items.push(i));
+        // Bebidas / jugos / aguas
         productos.forEach(p => {
             if (p.categoria === 'handroll') return;
             const qty = pedido[p.id] || 0;
@@ -1797,7 +1802,6 @@
         alert('😔 Lo sentimos, algunos productos no tienen stock suficiente:\n\n' + lineas + '\n\nPor favor ajusta tu pedido.');
     }
 
-    // ── INIT ──
     (async function init() {
         await cargarCatalogoHandroll();
         cargarCostoDeliveryHandroll();
