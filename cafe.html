@@ -486,7 +486,7 @@
                 <button class="tab-btn active" onclick="showTab('tab-pedidos',this)">📦 Pedidos</button>
                 <button class="tab-btn" onclick="showTab('tab-productos',this)">☕ Productos</button>
                 <button class="tab-btn" onclick="showTab('tab-resenas',this)">⭐ Reseñas</button>
-                <button class="tab-btn" onclick="showTab('tab-inventario',this)">📦 Inventario</button>
+                <button class="tab-btn" onclick="showTab('tab-inventario',this)">⚙️ Configuración</button>
             </div>
             <div class="tab-content active" id="tab-pedidos">
                 <p class="section-label">Pedidos de hoy</p>
@@ -521,21 +521,6 @@
                     </div>
                 </div>
                 <button class="btn-modal btn-fire" type="button" style="margin-bottom:18px;" onclick="guardarHorarioDeliveryCafe()">Guardar horario delivery</button>
-                <p class="section-label">Inventario e insumos</p>
-                <p style="font-size:0.78rem;color:var(--muted);text-align:left;margin-bottom:12px;">Registra insumos y movimientos desde el propio admin del local.</p>
-                <div class="perf-card" style="padding:16px;margin-bottom:14px;">
-                    <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(160px,1fr));gap:10px;">
-                        <input id="cafe-inv-name" type="text" placeholder="Nombre del insumo" style="width:100%;padding:10px;border:1px solid var(--border);border-radius:10px;background:var(--surface);color:var(--text);">
-                        <input id="cafe-inv-stock" type="number" placeholder="Stock inicial" min="0" step="0.01" style="width:100%;padding:10px;border:1px solid var(--border);border-radius:10px;background:var(--surface);color:var(--text);">
-                        <input id="cafe-inv-unit" type="text" placeholder="Unidad (kg, L, u)" style="width:100%;padding:10px;border:1px solid var(--border);border-radius:10px;background:var(--surface);color:var(--text);">
-                        <input id="cafe-inv-costo" type="number" placeholder="Costo unitario" min="0" step="100" style="width:100%;padding:10px;border:1px solid var(--border);border-radius:10px;background:var(--surface);color:var(--text);">
-                    </div>
-                    <button class="btn-modal btn-fire" type="button" style="margin-top:10px;" onclick="window.orbitaInventario.agregarInsumo('cafe','cafe')">Agregar insumo</button>
-                </div>
-                <div id="cafe-inv-list"></div>
-                <h4 style="margin:18px 0 10px;color:var(--primary);">Historial de movimientos</h4>
-                <div id="cafe-inv-history" class="history-list"></div>
-
                 <p class="section-label" style="margin-top:24px;">Cambiar contraseña</p>
                 <p style="font-size:0.78rem;color:var(--muted);text-align:left;margin-bottom:10px;">Por seguridad, te enviamos un link de restablecimiento a tu correo registrado.</p>
                 <button class="btn-modal btn-fire" type="button" onclick="enviarResetPassAdmin()">Enviar link por correo</button>
@@ -1272,7 +1257,6 @@
             try { await cargarCatalogoCafe(); } catch (e) {}
         }
         renderProductosAdmin();
-        if (window.orbitaInventario) window.orbitaInventario.init('cafe', 'cafe');
     }
 
     function cambiarBannerAdminAVolver() {
@@ -1286,7 +1270,6 @@
         document.querySelectorAll('.tab-btn').forEach(b => b.classList.remove('active'));
         document.getElementById(tabId).classList.add('active'); btn.classList.add('active');
         if (tabId === 'tab-resenas') cargarResenasAdmin();
-        else if (tabId === 'tab-inventario' && window.orbitaInventario) window.orbitaInventario.render('cafe', 'cafe');
     }
     async function guardarCostoFijoCafe() {
         const v = parseInt(document.getElementById('input-cf-cafe').value, 10) || 0;
@@ -1800,15 +1783,17 @@
         client
             .channel('stock-cafe')
             .on('postgres_changes', {
-                event:  'UPDATE',
+                event:  '*',
                 schema: 'public',
                 table:  'stock_local',
                 filter: 'sitio=eq.cafe',
-            }, payload => {
-                if (payload.new?.producto_id !== undefined) {
-                    _stockMap.set(payload.new.producto_id, payload.new.cantidad ?? 0);
-                    applyStockUI();
-                }
+            }, async () => {
+                // stock_local usa item_id — recargamos el mapa completo para
+                // que stockVariosProductos recalcule disponibilidad por receta
+                if (!window.orbitaStock) return;
+                const ids = productos.map(p => p.id);
+                _stockMap = await window.orbitaStock.stockVariosProductos('cafe', ids);
+                applyStockUI();
             })
             .subscribe();
     }
