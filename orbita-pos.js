@@ -1059,6 +1059,37 @@
         document.getElementById('cierre-num-trans').textContent   = ventas.length;
         document.getElementById('cierre-num-anul').textContent    = anuladas.length;
 
+        // Stock bajo al cierre — consulta stock_local del local con join a stock_items
+        try {
+            const { data: stockData } = await SB
+                .from('stock_local')
+                .select('cantidad, alerta_min, stock_items(nombre, unidad)')
+                .eq('sitio', estado.local);
+
+            const bajos = (stockData || []).filter(r => r.cantidad <= (r.alerta_min ?? 5));
+
+            const contenedor = document.getElementById('cierre-stock-alertas');
+            const lista      = document.getElementById('cierre-stock-lista');
+
+            if (bajos.length > 0) {
+                lista.innerHTML = bajos.map(r => {
+                    const min    = r.alerta_min ?? 5;
+                    const agotado = r.cantidad === 0;
+                    const color  = agotado ? 'var(--red)' : '#f59e0b';
+                    const icono  = agotado ? '\uD83D\uDD34' : '\uD83D\UDFE1';
+                    return '<div style="display:flex;justify-content:space-between;align-items:center;padding:6px 14px;border-bottom:1px solid var(--border);font-size:0.82rem;">'
+                         + '<span>' + icono + ' ' + (r.stock_items?.nombre || '\u2014') + '</span>'
+                         + '<span style="color:' + color + ';font-weight:700;">' + r.cantidad + ' / m\xedn ' + min + ' ' + (r.stock_items?.unidad || '') + '</span>'
+                         + '</div>';
+                }).join('');
+                contenedor.style.display = 'block';
+            } else {
+                contenedor.style.display = 'none';
+            }
+        } catch (e) {
+            document.getElementById('cierre-stock-alertas').style.display = 'none';
+        }
+
         document.getElementById('modal-cierre').classList.remove('hidden');
     };
 
