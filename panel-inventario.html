@@ -8,14 +8,15 @@
     <link href="https://fonts.googleapis.com/css2?family=Bebas+Neue&family=DM+Sans:wght@300;400;500;600;700&display=swap" rel="stylesheet">
     <style>
         :root {
-            --bg:     #0d0d0f; --card:   #16161a; --card2:  #1c1c22;
-            --border: #2a2a30; --text:   #ececf1; --muted:  #8b8b9a;
-            --fire:   #ff4d00; --green:  #25d366; --red:    #e53e3e;
-            --yellow: #f6c90e; --hand:   #ff4d00; --cafe:   #c97b7b; --fuente: #d4872a;
+            --bg:#0d0d0f; --card:#16161a; --card2:#1c1c22;
+            --border:#2a2a30; --text:#ececf1; --muted:#8b8b9a;
+            --fire:#ff4d00; --green:#25d366; --red:#e53e3e;
+            --yellow:#f6c90e; --hand:#ff4d00; --cafe:#c97b7b; --fuente:#d4872a;
         }
         * { margin:0; padding:0; box-sizing:border-box; }
         body { font-family:'DM Sans',sans-serif; background:var(--bg); color:var(--text); min-height:100vh; }
 
+        /* LOGIN */
         .login-wrap { display:flex; align-items:center; justify-content:center; min-height:100vh; padding:20px; }
         .login-card { background:var(--card); border:1px solid var(--border); border-radius:20px; padding:36px 28px; max-width:380px; width:100%; }
         .login-card h1 { font-family:'Bebas Neue',sans-serif; font-size:1.8rem; letter-spacing:3px; color:var(--fire); margin-bottom:4px; }
@@ -23,93 +24,89 @@
         .login-card input { width:100%; padding:12px 14px; border-radius:10px; border:1px solid var(--border); background:#0a0a0c; color:var(--text); font-size:1rem; margin-bottom:10px; outline:none; font-family:'DM Sans',sans-serif; }
         .login-card input:focus { border-color:var(--fire); }
         .login-err { color:var(--red); font-size:0.83rem; margin-bottom:10px; display:none; }
+        .btn-login { width:100%; padding:13px; background:var(--fire); color:#fff; border:none; border-radius:10px; font-family:'Bebas Neue',sans-serif; font-size:1.1rem; letter-spacing:2px; cursor:pointer; }
 
-        .wrap { max-width:1060px; margin:0 auto; padding:28px 18px 60px; }
+        /* LAYOUT */
+        .wrap { max-width:1100px; margin:0 auto; padding:28px 18px 60px; }
         header { display:flex; align-items:center; justify-content:space-between; margin-bottom:28px; flex-wrap:wrap; gap:12px; }
         header h1 { font-family:'Bebas Neue',sans-serif; font-size:1.7rem; letter-spacing:3px; color:var(--fire); }
-        header p  { font-size:0.78rem; color:var(--muted); }
+        .btn-logout { padding:8px 16px; border-radius:8px; border:1px solid var(--border); background:transparent; color:var(--muted); font-size:0.82rem; cursor:pointer; }
+        .btn-logout:hover { border-color:var(--red); color:var(--red); }
 
+        /* TABS */
         .tabs { display:flex; gap:8px; margin-bottom:24px; flex-wrap:wrap; }
         .tab-btn { padding:9px 18px; border-radius:10px; border:1px solid var(--border); background:var(--card); color:var(--muted); font-weight:600; font-size:0.85rem; cursor:pointer; transition:all 0.18s; position:relative; }
         .tab-btn:hover { border-color:var(--fire); color:var(--text); }
         .tab-btn.active { background:var(--fire); color:#fff; border-color:var(--fire); }
-        .tab-btn .badge { position:absolute; top:-7px; right:-7px; background:var(--red); color:#fff; font-size:0.65rem; font-weight:800; border-radius:50%; width:20px; height:20px; display:flex; align-items:center; justify-content:center; pointer-events:none; }
+        .tab-btn .badge { position:absolute; top:-7px; right:-7px; background:var(--red); color:#fff; font-size:0.65rem; font-weight:800; border-radius:50%; width:20px; height:20px; display:flex; align-items:center; justify-content:center; }
         .tab-panel { display:none; }
         .tab-panel.active { display:block; }
 
+        /* CARDS */
         .card { background:var(--card); border:1px solid var(--border); border-radius:16px; padding:20px; margin-bottom:16px; }
         .card-title { font-family:'Bebas Neue',sans-serif; font-size:1.05rem; letter-spacing:2px; margin-bottom:14px; }
-        .card-title.hand   { color:var(--hand); }
-        .card-title.cafe   { color:var(--cafe); }
-        .card-title.fuente { color:var(--fuente); }
 
+        /* TABLA GENERAL */
         .stock-table { width:100%; border-collapse:collapse; font-size:0.87rem; }
         .stock-table th { text-align:left; padding:8px 12px; font-size:0.7rem; text-transform:uppercase; letter-spacing:1.5px; color:var(--muted); border-bottom:1px solid var(--border); font-weight:700; }
         .stock-table th.c-hand   { color:var(--hand);   text-align:center; }
         .stock-table th.c-cafe   { color:var(--cafe);   text-align:center; }
         .stock-table th.c-fuente { color:var(--fuente); text-align:center; }
-        .stock-table td { padding:10px 12px; border-bottom:1px solid rgba(255,255,255,0.04); vertical-align:middle; }
+        .stock-table td { padding:8px 12px; border-bottom:1px solid var(--border); }
+        .stock-table td.qty { text-align:center; font-weight:700; font-size:0.95rem; }
+        .stock-table td.qty.ok     { color:var(--green); }
+        .stock-table td.qty.low    { color:var(--yellow); }
+        .stock-table td.qty.empty  { color:var(--red); }
+        .stock-table td.qty.none   { color:var(--border); }
         .stock-table tr:last-child td { border-bottom:none; }
-        .stock-table tr:hover td { background:rgba(255,255,255,0.02); }
-        .qty-cell { font-family:'Bebas Neue',sans-serif; font-size:1.1rem; text-align:center; min-width:60px; }
-        .qty-ok   { color:var(--green); }
-        .qty-low  { color:var(--yellow); }
-        .qty-zero { color:var(--red); }
-        .qty-na   { color:var(--muted); font-family:'DM Sans',sans-serif; font-size:0.8rem; }
-        .b-low  { background:rgba(246,201,14,0.15); color:var(--yellow); font-size:0.62rem; font-weight:700; padding:2px 7px; border-radius:20px; }
-        .b-zero { background:rgba(229,62,62,0.15);  color:var(--red);    font-size:0.62rem; font-weight:700; padding:2px 7px; border-radius:20px; }
+        .stock-table .cat-header td { background:var(--card2); font-size:0.7rem; text-transform:uppercase; letter-spacing:1.5px; color:var(--muted); padding:6px 12px; font-weight:700; }
 
-        .form-grid { display:grid; grid-template-columns:repeat(auto-fit,minmax(190px,1fr)); gap:12px; margin-bottom:14px; }
-        .form-group { display:flex; flex-direction:column; gap:5px; }
-        .form-group label { font-size:0.7rem; text-transform:uppercase; letter-spacing:1px; color:var(--muted); font-weight:700; }
-        .form-group select, .form-group input { padding:11px 13px; border-radius:10px; border:1px solid var(--border); background:#0a0a0c; color:var(--text); font-family:'DM Sans',sans-serif; font-size:0.95rem; outline:none; width:100%; }
-        .form-group select:focus, .form-group input:focus { border-color:var(--fire); }
+        /* FORMULARIOS */
+        .form-grid { display:grid; grid-template-columns:1fr 1fr; gap:14px; margin-bottom:16px; }
+        @media(max-width:560px){ .form-grid { grid-template-columns:1fr; } }
+        label { display:block; font-size:0.72rem; text-transform:uppercase; letter-spacing:1.5px; color:var(--muted); margin-bottom:6px; font-weight:700; }
+        select, input[type=number], input[type=text] { width:100%; padding:11px 13px; border-radius:10px; border:1px solid var(--border); background:#0a0a0c; color:var(--text); font-family:'DM Sans',sans-serif; font-size:0.95rem; outline:none; }
+        select:focus, input:focus { border-color:var(--fire); }
+        .btn-primary { padding:12px 28px; background:var(--fire); color:#fff; border:none; border-radius:10px; font-family:'Bebas Neue',sans-serif; font-size:1rem; letter-spacing:2px; cursor:pointer; transition:opacity 0.2s; }
+        .btn-primary:hover { opacity:0.85; }
+        .btn-secondary { padding:10px 20px; background:transparent; color:var(--muted); border:1px solid var(--border); border-radius:10px; font-size:0.85rem; cursor:pointer; }
+        .btn-secondary:hover { border-color:var(--text); color:var(--text); }
 
-        .btn { padding:11px 22px; border:none; border-radius:10px; font-family:'Bebas Neue',sans-serif; font-size:1rem; letter-spacing:1.5px; cursor:pointer; transition:opacity 0.18s; }
-        .btn:hover { opacity:0.85; }
-        .btn-fire  { background:var(--fire);  color:#fff; }
-        .btn-green { background:var(--green); color:#fff; }
-        .btn-gray  { background:var(--card2); color:var(--muted); border:1px solid var(--border); }
-        .btn-sm    { padding:6px 13px; font-size:0.82rem; letter-spacing:1px; }
-        .btn-full  { width:100%; }
+        /* ALERTAS */
+        .alerta-item { display:flex; justify-content:space-between; align-items:center; padding:10px 14px; border-radius:10px; margin-bottom:8px; font-size:0.88rem; }
+        .alerta-item.red    { background:rgba(229,62,62,0.12); border:1px solid rgba(229,62,62,0.3); }
+        .alerta-item.yellow { background:rgba(246,201,14,0.10); border:1px solid rgba(246,201,14,0.3); }
+        .alerta-sitio { font-size:0.7rem; text-transform:uppercase; letter-spacing:1px; }
+        .alerta-sitio.hand   { color:var(--hand);   }
+        .alerta-sitio.cafe   { color:var(--cafe);   }
+        .alerta-sitio.fuente { color:var(--fuente); }
 
-        .form-msg { font-size:0.83rem; margin-top:10px; padding:10px 14px; border-radius:10px; display:none; }
-        .form-msg.ok  { background:rgba(37,211,102,0.12); color:var(--green); display:block; }
-        .form-msg.err { background:rgba(229,62,62,0.12);  color:var(--red);   display:block; }
+        /* MÍNIMOS */
+        .min-row { display:flex; align-items:center; justify-content:space-between; padding:8px 0; border-bottom:1px solid var(--border); gap:12px; }
+        .min-row:last-child { border-bottom:none; }
+        .min-row input[type=number] { width:80px; padding:7px 10px; font-size:0.9rem; }
+        .btn-save-min { padding:6px 14px; background:var(--fire); color:#fff; border:none; border-radius:8px; font-size:0.8rem; cursor:pointer; }
 
-        .alerta-row { display:flex; align-items:center; gap:12px; padding:12px 14px; border-radius:12px; margin-bottom:8px; }
-        .alerta-row.low  { background:rgba(246,201,14,0.07); border:1px solid rgba(246,201,14,0.2); }
-        .alerta-row.zero { background:rgba(229,62,62,0.07);  border:1px solid rgba(229,62,62,0.2); }
-        .alerta-row .a-name { flex:1; font-weight:600; font-size:0.9rem; }
-        .alerta-row .a-site { font-size:0.74rem; color:var(--muted); margin-top:2px; }
+        /* HISTORIAL */
+        .hist-row { display:flex; gap:10px; padding:9px 0; border-bottom:1px solid var(--border); font-size:0.85rem; align-items:flex-start; }
+        .hist-row:last-child { border-bottom:none; }
+        .hist-tipo { font-size:0.7rem; font-weight:700; text-transform:uppercase; letter-spacing:1px; padding:2px 8px; border-radius:20px; white-space:nowrap; }
+        .hist-tipo.ingreso     { background:rgba(37,211,102,0.15); color:var(--green); }
+        .hist-tipo.salida      { background:rgba(229,62,62,0.15);  color:var(--red);   }
+        .hist-tipo.transferencia { background:rgba(246,201,14,0.15); color:var(--yellow); }
+        .hist-tipo.ajuste      { background:rgba(139,139,154,0.15); color:var(--muted); }
 
-        .min-table { width:100%; border-collapse:collapse; font-size:0.85rem; }
-        .min-table th { text-align:left; padding:8px 10px; font-size:0.7rem; text-transform:uppercase; letter-spacing:1px; color:var(--muted); border-bottom:1px solid var(--border); }
-        .min-table td { padding:9px 10px; border-bottom:1px solid rgba(255,255,255,0.04); }
-        .min-table input[type=number] { width:80px; padding:6px 10px; border-radius:8px; border:1px solid var(--border); background:#0a0a0c; color:var(--text); font-size:0.9rem; text-align:center; outline:none; }
-        .min-table input:focus { border-color:var(--fire); }
+        /* FILTROS */
+        .filtros { display:flex; gap:10px; margin-bottom:16px; flex-wrap:wrap; }
+        .filtros select { width:auto; }
 
-        .mov-row { display:flex; gap:10px; align-items:flex-start; padding:12px 0; border-bottom:1px solid rgba(255,255,255,0.04); font-size:0.85rem; }
-        .mov-row:last-child { border-bottom:none; }
-        .mov-icon { flex-shrink:0; width:32px; height:32px; border-radius:50%; display:flex; align-items:center; justify-content:center; font-size:1rem; }
-        .mov-icon.ingreso { background:rgba(37,211,102,0.15); }
-        .mov-icon.venta   { background:rgba(139,139,154,0.12); }
-        .mov-icon.ajuste  { background:rgba(255,77,0,0.12); }
-        .mov-body  { flex:1; }
-        .mov-title { font-weight:600; color:var(--text); }
-        .mov-meta  { color:var(--muted); font-size:0.78rem; margin-top:2px; }
-        .mov-qty   { font-family:'Bebas Neue',sans-serif; font-size:1.1rem; flex-shrink:0; }
-        .mov-qty.pos { color:var(--green); }
-        .mov-qty.neg { color:var(--red); }
+        .toast { position:fixed; bottom:24px; right:24px; padding:12px 20px; border-radius:12px; font-size:0.88rem; font-weight:600; z-index:999; opacity:0; transform:translateY(10px); transition:all 0.3s; pointer-events:none; }
+        .toast.show { opacity:1; transform:translateY(0); }
+        .toast.ok  { background:#1a3a2a; border:1px solid var(--green); color:var(--green); }
+        .toast.err { background:#3a1a1a; border:1px solid var(--red);   color:var(--red);   }
 
-        .section-label { font-size:0.7rem; text-transform:uppercase; letter-spacing:2px; color:var(--muted); margin-bottom:12px; display:block; }
-        .spinner { display:inline-block; width:18px; height:18px; border:2px solid var(--border); border-top-color:var(--fire); border-radius:50%; animation:spin 0.7s linear infinite; vertical-align:middle; margin-right:6px; }
-        @keyframes spin { to { transform:rotate(360deg); } }
-        .empty-state { text-align:center; color:var(--muted); font-size:0.9rem; padding:32px 0; }
-        .nav-foot { text-align:center; margin-top:36px; font-size:0.8rem; color:var(--muted); }
-        .nav-foot a { color:var(--fuente); margin:0 8px; text-decoration:none; }
-        .nav-foot a:hover { text-decoration:underline; }
-        @media (max-width:600px) { .stock-table { display:block; overflow-x:auto; } .form-grid { grid-template-columns:1fr; } }
+        .empty-msg { text-align:center; color:var(--muted); padding:32px 0; font-size:0.9rem; }
+        .loading   { text-align:center; color:var(--muted); padding:20px 0; font-size:0.85rem; }
     </style>
 </head>
 <body>
@@ -117,523 +114,692 @@
 <!-- LOGIN -->
 <div class="login-wrap" id="login-wrap">
     <div class="login-card">
-        <h1>📦 INVENTARIO</h1>
-        <p>Órbita · Acceso staff</p>
-        <div class="login-err" id="login-err"></div>
-        <input type="email" id="l-email" placeholder="Email" autocomplete="username">
-        <input type="password" id="l-pass" placeholder="Contraseña" autocomplete="current-password" onkeydown="if(event.key==='Enter')doLogin()">
-        <button class="btn btn-fire btn-full" onclick="doLogin()" style="margin-top:4px;">INGRESAR</button>
+        <h1>ÓRBITA</h1>
+        <p>Panel de Inventario · Acceso restringido</p>
+        <div class="login-err" id="login-err">Correo o contraseña incorrectos</div>
+        <input type="email"    id="inp-email" placeholder="Correo">
+        <input type="password" id="inp-pass"  placeholder="Contraseña">
+        <button class="btn-login" onclick="doLogin()">ENTRAR</button>
     </div>
 </div>
 
 <!-- DASHBOARD -->
-<div class="wrap" id="dashboard" style="display:none;">
+<div class="wrap" id="dashboard" style="display:none">
     <header>
         <div>
             <h1>📦 INVENTARIO</h1>
-            <p>Stock en tiempo real · 3 locales</p>
+            <p id="hdr-usuario" style="font-size:0.78rem;color:var(--muted);margin-top:2px;"></p>
         </div>
-        <div style="display:flex;gap:8px;align-items:center;">
-            <button class="btn btn-fire btn-sm" onclick="recargarTodo()">↺ Actualizar</button>
-            <button class="btn btn-gray btn-sm" onclick="doLogout()">Cerrar sesión</button>
-        </div>
+        <button class="btn-logout" onclick="doLogout()">Cerrar sesión</button>
     </header>
 
     <div class="tabs">
-        <button class="tab-btn active" onclick="showTab('tab-general',this)">📊 Vista general</button>
-        <button class="tab-btn" onclick="showTab('tab-reponer',this)">➕ Reponer stock</button>
-        <button class="tab-btn" onclick="showTab('tab-mover',this)">🔀 Mover entre locales</button>
-        <button class="tab-btn" onclick="showTab('tab-alertas',this)" id="btn-tab-alertas">⚠️ Alertas</button>
-        <button class="tab-btn" onclick="showTab('tab-minimos',this)">⚙️ Mínimos</button>
-        <button class="tab-btn" onclick="showTab('tab-historial',this)">📋 Historial</button>
+        <button class="tab-btn active" onclick="showTab('general',this)">📊 Vista general</button>
+        <button class="tab-btn" onclick="showTab('individual',this)">🏪 Por local</button>
+        <button class="tab-btn" onclick="showTab('reponer',this)">➕ Reponer</button>
+        <button class="tab-btn" onclick="showTab('mover',this)">🔀 Mover</button>
+        <button class="tab-btn" id="btn-tab-alertas" onclick="showTab('alertas',this)">⚠️ Alertas</button>
+        <button class="tab-btn" onclick="showTab('minimos',this)">⚙️ Mínimos</button>
+        <button class="tab-btn" onclick="showTab('historial',this)">📋 Historial</button>
     </div>
 
     <!-- VISTA GENERAL -->
     <div class="tab-panel active" id="tab-general">
-        <span class="section-label">Stock actual · todos los locales</span>
-        <div class="card" style="overflow-x:auto;padding:14px 10px;">
-            <div id="tbl-general-wrap"><div class="empty-state"><span class="spinner"></span>Cargando...</div></div>
+        <div class="card">
+            <div class="card-title">Stock consolidado — los 3 locales</div>
+            <div id="tabla-general"><p class="loading">Cargando...</p></div>
+        </div>
+    </div>
+
+    <!-- VISTA INDIVIDUAL -->
+    <div class="tab-panel" id="tab-individual">
+        <div class="card">
+            <div style="margin-bottom:16px;">
+                <label>Local</label>
+                <select id="ind-sitio" onchange="renderIndividual()">
+                    <option value="handroll">🍣 Hand Roll</option>
+                    <option value="cafe">☕ Café Órbita</option>
+                    <option value="fuente">🌭 Fuente de Soda</option>
+                </select>
+            </div>
+            <div id="tabla-individual"><p class="loading">Cargando...</p></div>
         </div>
     </div>
 
     <!-- REPONER -->
     <div class="tab-panel" id="tab-reponer">
-        <span class="section-label">Ingresa mercadería a un local</span>
         <div class="card">
+            <div class="card-title">Reponer stock</div>
             <div class="form-grid">
-                <div class="form-group">
+                <div>
                     <label>Local</label>
-                    <select id="rep-sitio" onchange="poblarInsumos('rep-sitio','rep-item')">
-                        <option value="">— Elige local —</option>
+                    <select id="rep-sitio" onchange="poblarProductos('rep-sitio','rep-prod')">
                         <option value="handroll">🍣 Hand Roll</option>
-                        <option value="cafe">☕ Café</option>
-                        <option value="fuente">🍔 Fuente de Soda</option>
+                        <option value="cafe">☕ Café Órbita</option>
+                        <option value="fuente">🌭 Fuente de Soda</option>
                     </select>
                 </div>
-                <div class="form-group">
-                    <label>Producto / Insumo</label>
-                    <select id="rep-item"><option value="">— Elige primero el local —</option></select>
+                <div>
+                    <label>Producto</label>
+                    <select id="rep-prod"></select>
                 </div>
-                <div class="form-group">
-                    <label>Cantidad a agregar (unidades)</label>
-                    <input type="number" id="rep-cantidad" placeholder="Ej: 10" min="1" step="1">
+                <div>
+                    <label>Cantidad a sumar</label>
+                    <input type="number" id="rep-cant" min="1" value="1" placeholder="Ej: 10">
                 </div>
-                <div class="form-group">
+                <div>
                     <label>Nota (opcional)</label>
-                    <input type="text" id="rep-nota" placeholder="Ej: Entrega proveedor martes">
+                    <input type="text" id="rep-nota" placeholder="Ej: Compra del día">
                 </div>
             </div>
-            <button class="btn btn-green" onclick="reponerStock()">✅ CONFIRMAR REPOSICIÓN</button>
-            <div class="form-msg" id="rep-msg"></div>
+            <button class="btn-primary" onclick="reponerStock()">CONFIRMAR REPOSICIÓN</button>
         </div>
     </div>
 
     <!-- MOVER -->
     <div class="tab-panel" id="tab-mover">
-        <span class="section-label">Transfiere unidades de un local a otro</span>
         <div class="card">
+            <div class="card-title">Mover stock entre locales</div>
             <div class="form-grid">
-                <div class="form-group">
-                    <label>Origen</label>
-                    <select id="mov-origen" onchange="poblarInsumos('mov-origen','mov-item')">
-                        <option value="">— Local de origen —</option>
+                <div>
+                    <label>Desde</label>
+                    <select id="mov-origen" onchange="poblarProductos('mov-origen','mov-prod')">
                         <option value="handroll">🍣 Hand Roll</option>
-                        <option value="cafe">☕ Café</option>
-                        <option value="fuente">🍔 Fuente de Soda</option>
+                        <option value="cafe">☕ Café Órbita</option>
+                        <option value="fuente">🌭 Fuente de Soda</option>
                     </select>
                 </div>
-                <div class="form-group">
-                    <label>Destino</label>
+                <div>
+                    <label>Hacia</label>
                     <select id="mov-destino">
-                        <option value="">— Local de destino —</option>
+                        <option value="cafe">☕ Café Órbita</option>
+                        <option value="fuente">🌭 Fuente de Soda</option>
                         <option value="handroll">🍣 Hand Roll</option>
-                        <option value="cafe">☕ Café</option>
-                        <option value="fuente">🍔 Fuente de Soda</option>
                     </select>
                 </div>
-                <div class="form-group">
-                    <label>Producto / Insumo</label>
-                    <select id="mov-item"><option value="">— Elige primero el origen —</option></select>
+                <div>
+                    <label>Producto</label>
+                    <select id="mov-prod"></select>
                 </div>
-                <div class="form-group">
-                    <label>Cantidad a mover (unidades)</label>
-                    <input type="number" id="mov-cantidad" placeholder="Ej: 5" min="1" step="1">
-                </div>
-                <div class="form-group" style="grid-column:1/-1;">
-                    <label>Nota (opcional)</label>
-                    <input type="text" id="mov-nota" placeholder="Ej: Fuente quedó sin bebidas">
+                <div>
+                    <label>Cantidad</label>
+                    <input type="number" id="mov-cant" min="1" value="1">
                 </div>
             </div>
-            <button class="btn btn-fire" onclick="moverStock()">🔀 CONFIRMAR TRANSFERENCIA</button>
-            <div class="form-msg" id="mov-msg"></div>
+            <button class="btn-primary" onclick="moverStock()">CONFIRMAR MOVIMIENTO</button>
         </div>
     </div>
 
     <!-- ALERTAS -->
     <div class="tab-panel" id="tab-alertas">
-        <span class="section-label">Productos bajo el mínimo configurado</span>
-        <div id="alertas-wrap"><div class="empty-state"><span class="spinner"></span>Cargando...</div></div>
+        <div class="card">
+            <div class="card-title" style="color:var(--red)">Productos agotados</div>
+            <div id="alertas-agotados"><p class="empty-msg">✅ Ninguno agotado</p></div>
+        </div>
+        <div class="card">
+            <div class="card-title" style="color:var(--yellow)">Stock bajo el mínimo</div>
+            <div id="alertas-bajos"><p class="empty-msg">✅ Todo dentro del mínimo</p></div>
+        </div>
     </div>
 
     <!-- MÍNIMOS -->
     <div class="tab-panel" id="tab-minimos">
-        <span class="section-label">Configura el stock mínimo por insumo y local</span>
-        <p style="font-size:0.82rem;color:var(--muted);margin-bottom:16px;">Cuando el stock baje de este número aparece la alerta ⚠️ en el panel y en el POS.</p>
-        <div id="minimos-wrap"><div class="empty-state"><span class="spinner"></span>Cargando...</div></div>
+        <div class="card">
+            <div style="margin-bottom:16px; display:flex; gap:10px; align-items:flex-end; flex-wrap:wrap;">
+                <div>
+                    <label>Local</label>
+                    <select id="min-sitio" onchange="renderMinimos()">
+                        <option value="handroll">🍣 Hand Roll</option>
+                        <option value="cafe">☕ Café Órbita</option>
+                        <option value="fuente">🌭 Fuente de Soda</option>
+                    </select>
+                </div>
+            </div>
+            <div id="tabla-minimos"></div>
+        </div>
     </div>
 
     <!-- HISTORIAL -->
     <div class="tab-panel" id="tab-historial">
-        <span class="section-label">Últimos 60 movimientos</span>
         <div class="card">
-            <div class="form-grid" style="grid-template-columns:repeat(auto-fit,minmax(140px,1fr));margin-bottom:16px;">
-                <div class="form-group">
+            <div class="filtros">
+                <div>
                     <label>Local</label>
                     <select id="hist-sitio" onchange="cargarHistorial()">
                         <option value="">Todos</option>
-                        <option value="handroll">🍣 Hand Roll</option>
-                        <option value="cafe">☕ Café</option>
-                        <option value="fuente">🍔 Fuente</option>
+                        <option value="handroll">Hand Roll</option>
+                        <option value="cafe">Café</option>
+                        <option value="fuente">Fuente</option>
                     </select>
                 </div>
-                <div class="form-group">
+                <div>
                     <label>Tipo</label>
                     <select id="hist-tipo" onchange="cargarHistorial()">
                         <option value="">Todos</option>
-                        <option value="ingreso">Ingreso (reposición)</option>
-                        <option value="venta">Venta</option>
-                        <option value="ajuste">Ajuste manual</option>
+                        <option value="ingreso">Ingreso</option>
+                        <option value="salida">Salida</option>
+                        <option value="transferencia">Transferencia</option>
+                        <option value="ajuste">Ajuste</option>
                     </select>
                 </div>
             </div>
-            <div id="hist-wrap"><div class="empty-state"><span class="spinner"></span>Cargando...</div></div>
+            <div id="tabla-historial"><p class="loading">Cargando...</p></div>
         </div>
-    </div>
-
-    <div class="nav-foot">
-        <a href="panel_central.html?k=orbita_8h3k2p_2026">Panel central</a> ·
-        <a href="orbita.html">Inicio Órbita</a> ·
-        <a href="cafe.html">Café</a> · <a href="fuente.html">Fuente</a> · <a href="index.html">Hand Roll</a>
     </div>
 </div>
 
-<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.45.4/dist/umd/supabase.min.js"></script>
+<div class="toast" id="toast"></div>
+
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/dist/umd/supabase.min.js"></script>
 <script src="./orbita-auth.js"></script>
 <script>
-    const SB_URL = window.orbitaAuth?.url || 'https://ftyxipxsyzldofdyamqt.supabase.co';
-    const LABEL  = { handroll:'🍣 Hand Roll', cafe:'☕ Café', fuente:'🍔 Fuente' };
-    const SITIOS = ['handroll','cafe','fuente'];
+// ─── CONFIG ────────────────────────────────────────────────────────────────
+const SB_URL = window.orbitaAuth?.url || 'https://uldqgxdmblhyqsnxenaz.supabase.co';
+const SB_KEY = window.orbitaAuth?.anonKey || '';
+const SB = window.supabase.createClient(SB_URL, SB_KEY);
 
-    // items    → catálogo maestro de stock_items (id uuid, nombre, unidad, sitios[])
-    // stockMap → Map< "itemId|sitio" → {id, item_id, sitio, cantidad, alerta_min, nombre, unidad} >
-    let items    = [];
-    let stockMap = new Map();
+// ─── CATÁLOGOS POR LOCAL ────────────────────────────────────────────────────
+// producto_id texto — el mismo que usan los menús web y orbita-stock.js
+const CATALOGO = {
+    cafe: [
+        { id:'c_americano',  nombre:'Americano',              cat:'Café' },
+        { id:'c_espresso',   nombre:'Espresso',               cat:'Café' },
+        { id:'c_cortado',    nombre:'Cortado',                cat:'Café' },
+        { id:'c_latte',      nombre:'Latte',                  cat:'Café' },
+        { id:'c_capuchino',  nombre:'Capuchino',              cat:'Café' },
+        { id:'c_mocachino',  nombre:'Mocachino',              cat:'Café' },
+        { id:'c_chocolate',  nombre:'Chocolate Caliente',     cat:'Café' },
+        { id:'p_kuchen',     nombre:'Kuchen de Migas',        cat:'Pasteles' },
+        { id:'p_pie',        nombre:'Pie de Limón',           cat:'Pasteles' },
+        { id:'p_brownie',    nombre:'Brownie',                cat:'Pasteles' },
+        { id:'p_cupcake',    nombre:'Cupcake',                cat:'Pasteles' },
+        { id:'p_queque',     nombre:'Queque de Zanahoria',    cat:'Pasteles' },
+        { id:'p_waffle',     nombre:'Waffle',                 cat:'Pasteles' },
+        { id:'jugo_frambuesa',   nombre:'Jugo Frambuesa',         cat:'Jugos' },
+        { id:'jugo_frutilla',    nombre:'Jugo Frutilla',          cat:'Jugos' },
+        { id:'jugo_arandano',    nombre:'Jugo Arándano',          cat:'Jugos' },
+        { id:'jugo_fru_ara',     nombre:'Jugo Frutilla-Arándano', cat:'Jugos' },
+    ],
+    fuente: [
+        { id:'salchipapa',   nombre:'Salchipapa',             cat:'Extras' },
+        { id:'nuggets',      nombre:'Papas con Nuggets',      cat:'Extras' },
+        { id:'mechada',      nombre:'Sándwich Mechada',       cat:'Sándwiches' },
+        { id:'lomo',         nombre:'Sándwich Lomo',          cat:'Sándwiches' },
+        { id:'hamburguesa',  nombre:'Hamburguesa',            cat:'Sándwiches' },
+        { id:'completo',     nombre:'Completo',               cat:'Completos' },
+        { id:'completo_promo', nombre:'Completo Promo',       cat:'Completos' },
+        { id:'completo_xl',  nombre:'Completo XL',            cat:'Completos' },
+        { id:'jugo_frambuesa',     nombre:'Jugo Frambuesa',          cat:'Jugos' },
+        { id:'jugo_frutilla',      nombre:'Jugo Frutilla',           cat:'Jugos' },
+        { id:'jugo_arandano',      nombre:'Jugo Arándano',           cat:'Jugos' },
+        { id:'jugo_fru_ara',       nombre:'Jugo Frutilla-Arándano',  cat:'Jugos' },
+        { id:'jugo_fram_ara',      nombre:'Jugo Frambuesa-Arándano', cat:'Jugos' },
+        { id:'jugo_melon_tuna',    nombre:'Jugo Melón Tuna',         cat:'Jugos' },
+        { id:'jugo_melon_cal',     nombre:'Jugo Melón Calameño',     cat:'Jugos' },
+        { id:'jugo_pina',          nombre:'Jugo Piña',               cat:'Jugos' },
+        { id:'jugo_mango',         nombre:'Jugo Mango',              cat:'Jugos' },
+        { id:'jugo_pina_mango',    nombre:'Jugo Piña-Mango',         cat:'Jugos' },
+        { id:'jugo_naranja_plat',  nombre:'Jugo Naranja-Plátano',    cat:'Jugos' },
+        { id:'beb_coca',       nombre:'Coca-Cola',            cat:'Bebidas' },
+        { id:'beb_coca_zero',  nombre:'Coca-Cola sin azúcar', cat:'Bebidas' },
+        { id:'beb_pepsi',      nombre:'Pepsi',                cat:'Bebidas' },
+        { id:'beb_kem',        nombre:'Kem',                  cat:'Bebidas' },
+        { id:'beb_bilz',       nombre:'Bilz',                 cat:'Bebidas' },
+        { id:'beb_pap',        nombre:'Pap',                  cat:'Bebidas' },
+        { id:'beb_fanta',      nombre:'Fanta',                cat:'Bebidas' },
+        { id:'beb_sprite',     nombre:'Sprite',               cat:'Bebidas' },
+        { id:'agua_gas',       nombre:'Agua con gas',         cat:'Aguas' },
+        { id:'agua_sin_gas',   nombre:'Agua sin gas',         cat:'Aguas' },
+    ],
+    handroll: [
+        { id:'pollo',    nombre:'Hand Roll Pollo',  cat:'Hand Rolls' },
+        { id:'camaron',  nombre:'Hand Roll Camarón', cat:'Hand Rolls' },
+        { id:'jugo_frambuesa',    nombre:'Jugo Frambuesa',          cat:'Jugos' },
+        { id:'jugo_frutilla',     nombre:'Jugo Frutilla',           cat:'Jugos' },
+        { id:'jugo_arandano',     nombre:'Jugo Arándano',           cat:'Jugos' },
+        { id:'jugo_fru_ara',      nombre:'Jugo Frutilla-Arándano',  cat:'Jugos' },
+        { id:'jugo_fram_ara',     nombre:'Jugo Frambuesa-Arándano', cat:'Jugos' },
+        { id:'jugo_melon_tuna',   nombre:'Jugo Melón Tuna',         cat:'Jugos' },
+        { id:'jugo_melon_cal',    nombre:'Jugo Melón Calameño',     cat:'Jugos' },
+        { id:'jugo_pina',         nombre:'Jugo Piña',               cat:'Jugos' },
+        { id:'jugo_mango',        nombre:'Jugo Mango',              cat:'Jugos' },
+        { id:'jugo_pina_mango',   nombre:'Jugo Piña-Mango',         cat:'Jugos' },
+        { id:'jugo_naranja_plat', nombre:'Jugo Naranja-Plátano',    cat:'Jugos' },
+        { id:'beb_coca',      nombre:'Coca-Cola',            cat:'Bebidas' },
+        { id:'beb_coca_zero', nombre:'Coca-Cola sin azúcar', cat:'Bebidas' },
+        { id:'beb_pepsi',     nombre:'Pepsi',                cat:'Bebidas' },
+        { id:'beb_kem',       nombre:'Kem',                  cat:'Bebidas' },
+        { id:'beb_bilz',      nombre:'Bilz',                 cat:'Bebidas' },
+        { id:'beb_pap',       nombre:'Pap',                  cat:'Bebidas' },
+        { id:'beb_fanta',     nombre:'Fanta',                cat:'Bebidas' },
+        { id:'beb_sprite',    nombre:'Sprite',               cat:'Bebidas' },
+        { id:'agua_gas',      nombre:'Agua con gas',         cat:'Aguas' },
+        { id:'agua_sin_gas',  nombre:'Agua sin gas',         cat:'Aguas' },
+    ]
+};
 
-    // ── AUTH ──────────────────────────────────────────────────────────────────
-    async function doLogin() {
-        const email = document.getElementById('l-email').value.trim();
-        const pass  = document.getElementById('l-pass').value;
-        const errEl = document.getElementById('login-err');
-        errEl.style.display = 'none';
-        if (!email || !pass) { errEl.textContent = 'Completa email y contraseña.'; errEl.style.display = 'block'; return; }
-        const r = await window.orbitaAuth.signIn(email, pass);
-        if (r?.error) { errEl.textContent = r.error.message || 'Error al iniciar sesión.'; errEl.style.display = 'block'; document.getElementById('l-pass').value = ''; return; }
-        mostrarDashboard();
-    }
-    async function doLogout() {
-        await window.orbitaAuth.signOut();
-        document.getElementById('dashboard').style.display = 'none';
-        document.getElementById('login-wrap').style.display = 'flex';
-    }
-    async function mostrarDashboard() {
-        document.getElementById('login-wrap').style.display = 'none';
-        document.getElementById('dashboard').style.display  = 'block';
-        await recargarTodo();
-    }
+const SITIO_LABEL = { handroll:'Hand Roll', cafe:'Café Órbita', fuente:'Fuente de Soda' };
+const SITIO_CLASS = { handroll:'hand', cafe:'cafe', fuente:'fuente' };
+const MIN_DEFAULT = 5;
 
-    // ── FETCH ─────────────────────────────────────────────────────────────────
-    async function apiFetch(path, opts = {}) {
-        const hdrs = await window.orbitaAuth.restHeaders();
-        return fetch(SB_URL + '/rest/v1/' + path, {
-            ...opts,
-            headers: { ...hdrs, 'Content-Type': 'application/json', ...(opts.headers || {}) }
-        });
-    }
+// ─── ESTADO ────────────────────────────────────────────────────────────────
+let stockMap = new Map(); // "producto_id|sitio" → { cantidad, alerta_min }
 
-    // ── CARGA DE DATOS ────────────────────────────────────────────────────────
-    async function recargarTodo() {
-        await Promise.all([cargarItems(), cargarStockLocal()]);
-        renderTabGeneral();
-        renderAlertas();
-        renderMinimos();
+// ─── AUTH ──────────────────────────────────────────────────────────────────
+async function doLogin() {
+    const email = document.getElementById('inp-email').value.trim();
+    const pass  = document.getElementById('inp-pass').value;
+    const err   = document.getElementById('login-err');
+    err.style.display = 'none';
+    try {
+        const { error } = await SB.auth.signInWithPassword({ email, password: pass });
+        if (error) throw error;
+        await mostrarDashboard();
+    } catch (e) {
+        err.style.display = 'block';
     }
+}
 
-    async function cargarItems() {
-        const res  = await apiFetch('stock_items?activo=eq.true&select=id,nombre,unidad,sitios&order=nombre.asc');
-        const data = await res.json();
-        items = Array.isArray(data) ? data : [];
-    }
+async function doLogout() {
+    await SB.auth.signOut();
+    document.getElementById('dashboard').style.display = 'none';
+    document.getElementById('login-wrap').style.display = 'flex';
+}
 
-    async function cargarStockLocal() {
-        // Join con stock_items para traer nombre y unidad en una sola petición
-        const res  = await apiFetch('stock_local?select=id,item_id,sitio,cantidad,alerta_min,stock_items(nombre,unidad)');
-        const data = await res.json();
+async function mostrarDashboard() {
+    const { data: { user } } = await SB.auth.getUser();
+    if (!user) return;
+    document.getElementById('login-wrap').style.display = 'none';
+    document.getElementById('dashboard').style.display  = 'block';
+    document.getElementById('hdr-usuario').textContent  = user.email;
+    await cargarTodo();
+    poblarProductos('rep-sitio', 'rep-prod');
+    poblarProductos('mov-origen', 'mov-prod');
+}
+
+// ─── CARGA DE DATOS ────────────────────────────────────────────────────────
+async function cargarTodo() {
+    try {
+        const { data, error } = await SB
+            .from('stock_local')
+            .select('producto_id, sitio, cantidad, alerta_min');
+        if (error) throw error;
         stockMap.clear();
-        if (!Array.isArray(data)) return;
-        data.forEach(row => {
-            stockMap.set(row.item_id + '|' + row.sitio, {
-                id:        row.id,
-                item_id:   row.item_id,
-                sitio:     row.sitio,
-                cantidad:  row.cantidad  ?? 0,
-                alerta_min: row.alerta_min ?? 0,
-                nombre:    row.stock_items?.nombre || '—',
-                unidad:    row.stock_items?.unidad || 'u',
+        (data || []).forEach(r => {
+            stockMap.set(r.producto_id + '|' + r.sitio, {
+                cantidad:  r.cantidad  ?? 0,
+                alerta_min: r.alerta_min ?? MIN_DEFAULT
             });
         });
+        renderGeneral();
+        renderIndividual();
+        renderAlertas();
+        renderMinimos();
+    } catch (e) {
+        console.error('cargarTodo:', e);
+        toast('Error cargando stock', 'err');
     }
+}
 
-    // ── VISTA GENERAL ─────────────────────────────────────────────────────────
-    function renderTabGeneral() {
-        const wrap = document.getElementById('tbl-general-wrap');
-        // Solo mostrar items que tengan al menos 1 fila en stock_local
-        const conStock = items.filter(it => SITIOS.some(s => stockMap.has(it.id + '|' + s)));
-        if (!conStock.length) {
-            wrap.innerHTML = '<div class="empty-state">Stock vacío — usa <strong>Reponer stock</strong> para cargar las primeras cantidades.</div>';
-            return;
+function getStock(productoId, sitio) {
+    return stockMap.get(productoId + '|' + sitio) || null;
+}
+
+function getCantidad(productoId, sitio) {
+    return getStock(productoId, sitio)?.cantidad ?? null;
+}
+
+// ─── VISTA GENERAL ─────────────────────────────────────────────────────────
+function renderGeneral() {
+    // Unir todos los productos de los 3 catálogos sin repetir
+    const todos = [];
+    const vistos = new Set();
+    ['cafe','fuente','handroll'].forEach(sitio => {
+        CATALOGO[sitio].forEach(p => {
+            const key = p.cat + '|' + p.id;
+            if (!vistos.has(key)) { vistos.add(key); todos.push({ ...p, sitios: [] }); }
+        });
+    });
+
+    // Agrupar por categoría
+    const porCat = {};
+    todos.forEach(p => {
+        if (!porCat[p.cat]) porCat[p.cat] = [];
+        porCat[p.cat].push(p);
+    });
+
+    let html = `<table class="stock-table">
+        <thead><tr>
+            <th>Producto</th>
+            <th class="c-hand">🍣 Hand Roll</th>
+            <th class="c-cafe">☕ Café</th>
+            <th class="c-fuente">🌭 Fuente</th>
+        </tr></thead><tbody>`;
+
+    Object.entries(porCat).forEach(([cat, prods]) => {
+        html += `<tr class="cat-header"><td colspan="4">${cat}</td></tr>`;
+        prods.forEach(p => {
+            html += `<tr><td>${p.nombre}</td>`;
+            ['handroll','cafe','fuente'].forEach(sitio => {
+                const enCatalogo = CATALOGO[sitio].some(x => x.id === p.id);
+                if (!enCatalogo) { html += `<td class="qty none">—</td>`; return; }
+                const qty = getCantidad(p.id, sitio);
+                if (qty === null) { html += `<td class="qty none">-</td>`; return; }
+                const min = getStock(p.id, sitio)?.alerta_min ?? MIN_DEFAULT;
+                const cls = qty === 0 ? 'empty' : qty <= min ? 'low' : 'ok';
+                html += `<td class="qty ${cls}">${qty}</td>`;
+            });
+            html += `</tr>`;
+        });
+    });
+
+    html += '</tbody></table>';
+    document.getElementById('tabla-general').innerHTML = html;
+}
+
+// ─── VISTA INDIVIDUAL ──────────────────────────────────────────────────────
+function renderIndividual() {
+    const sitio = document.getElementById('ind-sitio').value;
+    const prods = CATALOGO[sitio];
+    const porCat = {};
+    prods.forEach(p => {
+        if (!porCat[p.cat]) porCat[p.cat] = [];
+        porCat[p.cat].push(p);
+    });
+
+    let html = `<table class="stock-table">
+        <thead><tr>
+            <th>Producto</th>
+            <th>Stock</th>
+            <th>Mínimo</th>
+            <th>Estado</th>
+        </tr></thead><tbody>`;
+
+    Object.entries(porCat).forEach(([cat, prods]) => {
+        html += `<tr class="cat-header"><td colspan="4">${cat}</td></tr>`;
+        prods.forEach(p => {
+            const s   = getStock(p.id, sitio);
+            const qty = s?.cantidad ?? null;
+            const min = s?.alerta_min ?? MIN_DEFAULT;
+            let estado = '—', cls = 'none';
+            if (qty !== null) {
+                if (qty === 0)    { estado = '🔴 Agotado'; cls = 'empty'; }
+                else if (qty <= min) { estado = '🟡 Bajo';    cls = 'low';   }
+                else               { estado = '🟢 OK';       cls = 'ok';    }
+            }
+            html += `<tr>
+                <td>${p.nombre}</td>
+                <td class="qty ${cls}">${qty ?? '-'}</td>
+                <td style="text-align:center;color:var(--muted)">${min}</td>
+                <td style="font-size:0.82rem">${estado}</td>
+            </tr>`;
+        });
+    });
+
+    html += '</tbody></table>';
+    document.getElementById('tabla-individual').innerHTML = html;
+}
+
+// ─── POBLAR SELECTS ─────────────────────────────────────────────────────────
+function poblarProductos(selectSitioId, selectProdId) {
+    const sitio = document.getElementById(selectSitioId).value;
+    const sel   = document.getElementById(selectProdId);
+    const prods = CATALOGO[sitio];
+    let html = '';
+    let lastCat = '';
+    prods.forEach(p => {
+        if (p.cat !== lastCat) {
+            if (lastCat) html += '</optgroup>';
+            html += `<optgroup label="${p.cat}">`;
+            lastCat = p.cat;
         }
+        const qty = getCantidad(p.id, sitio);
+        const label = qty !== null ? `${p.nombre} (stock: ${qty})` : p.nombre;
+        html += `<option value="${p.id}">${label}</option>`;
+    });
+    if (lastCat) html += '</optgroup>';
+    sel.innerHTML = html;
+}
 
-        const qCell = (itemId, sitio) => {
-            const key = itemId + '|' + sitio;
-            if (!stockMap.has(key)) return '<td class="qty-cell qty-na">—</td>';
-            const r = stockMap.get(key);
-            const cls = r.cantidad === 0 ? 'qty-zero' : r.cantidad <= r.alerta_min ? 'qty-low' : 'qty-ok';
-            return `<td class="qty-cell ${cls}">${r.cantidad}</td>`;
-        };
+// ─── REPONER ────────────────────────────────────────────────────────────────
+async function reponerStock() {
+    const sitio    = document.getElementById('rep-sitio').value;
+    const prodId   = document.getElementById('rep-prod').value;
+    const cant     = parseInt(document.getElementById('rep-cant').value);
+    const nota     = document.getElementById('rep-nota').value.trim();
+    const prodNombre = CATALOGO[sitio].find(p => p.id === prodId)?.nombre || prodId;
 
-        const alerta = (itemId) => SITIOS.some(s => {
-            const r = stockMap.get(itemId + '|' + s);
-            return r && r.cantidad <= r.alerta_min;
+    if (!cant || cant < 1) { toast('Ingresa una cantidad válida', 'err'); return; }
+
+    const actual = getCantidad(prodId, sitio) ?? 0;
+    const nueva  = actual + cant;
+    const min    = getStock(prodId, sitio)?.alerta_min ?? MIN_DEFAULT;
+
+    try {
+        // Upsert stock_local
+        const { error: e1 } = await SB.from('stock_local').upsert(
+            { producto_id: prodId, sitio, cantidad: nueva, alerta_min: min, updated_at: new Date().toISOString() },
+            { onConflict: 'producto_id,sitio' }
+        );
+        if (e1) throw e1;
+
+        // Registrar movimiento
+        await SB.from('stock_movimientos').insert({
+            producto_id: prodId, producto_nombre: prodNombre,
+            sitio, tipo: 'ingreso',
+            cantidad: cant, cantidad_anterior: actual,
+            nota: nota || 'Reposición manual',
+            creado_at: new Date().toISOString()
         });
 
-        wrap.innerHTML = `
-        <table class="stock-table">
-            <thead><tr>
-                <th>Producto / Insumo</th><th>Unidad</th>
-                <th class="c-hand">Hand Roll</th>
-                <th class="c-cafe">Café</th>
-                <th class="c-fuente">Fuente</th>
-            </tr></thead>
-            <tbody>
-            ${conStock.map(it => `<tr>
-                <td><span style="font-weight:500;">${esc(it.nombre)}</span>${alerta(it.id) ? ' <span class="b-low">⚠️</span>' : ''}</td>
-                <td style="color:var(--muted);font-size:0.8rem;">${esc(it.unidad)}</td>
-                ${qCell(it.id,'handroll')}${qCell(it.id,'cafe')}${qCell(it.id,'fuente')}
-            </tr>`).join('')}
-            </tbody>
-        </table>`;
-    }
-
-    // ── POBLAR SELECT DE INSUMOS ───────────────────────────────────────────────
-    async function poblarInsumos(selectSitioId, selectItemId) {
-        const sitio = document.getElementById(selectSitioId).value;
-        const sel   = document.getElementById(selectItemId);
-        if (!sitio) { sel.innerHTML = '<option value="">— Elige primero el local —</option>'; return; }
-        // Items que aplican a este sitio (sitios[] vacío = todos los sitios)
-        const candidatos = items.filter(it => !it.sitios?.length || it.sitios.includes(sitio));
-        if (!candidatos.length) { sel.innerHTML = '<option value="">Sin insumos para este local</option>'; return; }
-        sel.innerHTML = '<option value="">— Elige insumo —</option>' +
-            candidatos.map(it => {
-                const r   = stockMap.get(it.id + '|' + sitio);
-                const qty = r ? r.cantidad : 0;
-                return `<option value="${esc(it.id)}">${esc(it.nombre)} (stock: ${qty} ${esc(it.unidad)})</option>`;
-            }).join('');
-    }
-
-    // ── REPONER STOCK ─────────────────────────────────────────────────────────
-    async function reponerStock() {
-        const sitio    = document.getElementById('rep-sitio').value;
-        const itemId   = document.getElementById('rep-item').value;
-        const cantidad = parseFloat(document.getElementById('rep-cantidad').value);
-        const nota     = document.getElementById('rep-nota').value.trim();
-        const msgEl    = document.getElementById('rep-msg');
-        msgEl.className = 'form-msg';
-
-        if (!sitio || !itemId || !cantidad || cantidad <= 0) {
-            msgEl.className = 'form-msg err'; msgEl.textContent = 'Completa todos los campos correctamente.'; return;
-        }
-
-        const key        = itemId + '|' + sitio;
-        const actual     = stockMap.get(key);
-        const cantActual = actual?.cantidad  ?? 0;
-        const alertaMin  = actual?.alerta_min ?? 0;
-        const nuevaCant  = cantActual + cantidad;
-        const itemNombre = items.find(i => i.id === itemId)?.nombre || '—';
-
-        // Upsert stock_local (UNIQUE item_id + sitio)
-        const resUp = await apiFetch('stock_local', {
-            method:  'POST',
-            headers: { Prefer: 'resolution=merge-duplicates,return=minimal' },
-            body:    JSON.stringify({ item_id: itemId, sitio, cantidad: nuevaCant, alerta_min: alertaMin, updated_at: new Date().toISOString() })
-        });
-        if (!resUp.ok) { msgEl.className = 'form-msg err'; msgEl.textContent = 'Error al actualizar stock: ' + (await resUp.text()); return; }
-
-        // Registrar en stock_movimientos
-        await apiFetch('stock_movimientos', {
-            method:  'POST',
-            headers: { Prefer: 'return=minimal' },
-            body:    JSON.stringify({ item_id: itemId, sitio, tipo: 'ingreso', cantidad, cantidad_anterior: cantActual, nota: nota || 'Reposición manual', creado_at: new Date().toISOString() })
-        });
-
-        msgEl.className = 'form-msg ok';
-        msgEl.textContent = `✅ ${itemNombre} en ${LABEL[sitio]}: ${cantActual} → ${nuevaCant} ${items.find(i=>i.id===itemId)?.unidad||'u'}`;
-        document.getElementById('rep-cantidad').value = '';
+        stockMap.set(prodId + '|' + sitio, { cantidad: nueva, alerta_min: min });
+        await cargarTodo();
+        poblarProductos('rep-sitio', 'rep-prod');
+        document.getElementById('rep-cant').value = 1;
         document.getElementById('rep-nota').value = '';
-        await recargarTodo();
-        poblarInsumos('rep-sitio','rep-item');
+        toast(`✅ ${prodNombre}: +${cant} en ${SITIO_LABEL[sitio]}`, 'ok');
+    } catch (e) {
+        console.error(e);
+        toast('Error al reponer: ' + (e.message || e), 'err');
     }
+}
 
-    // ── MOVER ENTRE LOCALES ───────────────────────────────────────────────────
-    async function moverStock() {
-        const origen   = document.getElementById('mov-origen').value;
-        const destino  = document.getElementById('mov-destino').value;
-        const itemId   = document.getElementById('mov-item').value;
-        const cantidad = parseFloat(document.getElementById('mov-cantidad').value);
-        const nota     = document.getElementById('mov-nota').value.trim();
-        const msgEl    = document.getElementById('mov-msg');
-        msgEl.className = 'form-msg';
+// ─── MOVER ──────────────────────────────────────────────────────────────────
+async function moverStock() {
+    const origen  = document.getElementById('mov-origen').value;
+    const destino = document.getElementById('mov-destino').value;
+    const prodId  = document.getElementById('mov-prod').value;
+    const cant    = parseInt(document.getElementById('mov-cant').value);
+    const prodNombre = CATALOGO[origen].find(p => p.id === prodId)?.nombre || prodId;
 
-        if (!origen || !destino || !itemId || !cantidad || cantidad <= 0) {
-            msgEl.className = 'form-msg err'; msgEl.textContent = 'Completa todos los campos.'; return;
-        }
-        if (origen === destino) {
-            msgEl.className = 'form-msg err'; msgEl.textContent = 'Origen y destino deben ser distintos.'; return;
-        }
+    if (origen === destino) { toast('Origen y destino no pueden ser el mismo', 'err'); return; }
+    if (!cant || cant < 1)  { toast('Ingresa una cantidad válida', 'err'); return; }
 
-        const dO = stockMap.get(itemId + '|' + origen);
-        const dD = stockMap.get(itemId + '|' + destino);
-        const cantO = dO?.cantidad ?? 0;
-        const cantD = dD?.cantidad ?? 0;
-        const itemNombre = items.find(i => i.id === itemId)?.nombre || '—';
-        const unidad     = items.find(i => i.id === itemId)?.unidad || 'u';
+    const cantO = getCantidad(prodId, origen) ?? 0;
+    if (cantO < cant) { toast(`Stock insuficiente en ${SITIO_LABEL[origen]} (hay ${cantO})`, 'err'); return; }
 
-        if (cantO < cantidad) {
-            msgEl.className = 'form-msg err';
-            msgEl.textContent = `Stock insuficiente en ${LABEL[origen]}: hay ${cantO} ${unidad}, pediste mover ${cantidad}.`;
+    const cantD   = getCantidad(prodId, destino) ?? 0;
+    const nuevaO  = cantO - cant;
+    const nuevaD  = cantD + cant;
+    const minO    = getStock(prodId, origen)?.alerta_min  ?? MIN_DEFAULT;
+    const minD    = getStock(prodId, destino)?.alerta_min ?? MIN_DEFAULT;
+
+    try {
+        const { error: e1 } = await SB.from('stock_local').upsert(
+            { producto_id: prodId, sitio: origen,  cantidad: nuevaO, alerta_min: minO, updated_at: new Date().toISOString() },
+            { onConflict: 'producto_id,sitio' }
+        );
+        if (e1) throw e1;
+
+        const { error: e2 } = await SB.from('stock_local').upsert(
+            { producto_id: prodId, sitio: destino, cantidad: nuevaD, alerta_min: minD, updated_at: new Date().toISOString() },
+            { onConflict: 'producto_id,sitio' }
+        );
+        if (e2) throw e2;
+
+        await SB.from('stock_movimientos').insert({
+            producto_id: prodId, producto_nombre: prodNombre,
+            sitio: origen, sitio_destino: destino, tipo: 'transferencia',
+            cantidad: cant, cantidad_anterior: cantO,
+            nota: `${SITIO_LABEL[origen]} → ${SITIO_LABEL[destino]}`,
+            creado_at: new Date().toISOString()
+        });
+
+        stockMap.set(prodId + '|' + origen,  { cantidad: nuevaO, alerta_min: minO });
+        stockMap.set(prodId + '|' + destino, { cantidad: nuevaD, alerta_min: minD });
+        await cargarTodo();
+        toast(`✅ ${prodNombre}: ${cant} movidos a ${SITIO_LABEL[destino]}`, 'ok');
+    } catch (e) {
+        console.error(e);
+        toast('Error al mover: ' + (e.message || e), 'err');
+    }
+}
+
+// ─── ALERTAS ────────────────────────────────────────────────────────────────
+function renderAlertas() {
+    const agotados = [];
+    const bajos    = [];
+
+    ['cafe','fuente','handroll'].forEach(sitio => {
+        CATALOGO[sitio].forEach(p => {
+            const s = getStock(p.id, sitio);
+            if (!s) return;
+            if (s.cantidad === 0) agotados.push({ ...p, sitio, cantidad: 0, min: s.alerta_min });
+            else if (s.cantidad <= s.alerta_min) bajos.push({ ...p, sitio, cantidad: s.cantidad, min: s.alerta_min });
+        });
+    });
+
+    // Badge en tab
+    const total = agotados.length + bajos.length;
+    const btn   = document.getElementById('btn-tab-alertas');
+    btn.innerHTML = `⚠️ Alertas${total > 0 ? ` <span class="badge">${total}</span>` : ''}`;
+
+    const renderLista = (items, contenedor, cls) => {
+        if (!items.length) {
+            document.getElementById(contenedor).innerHTML = `<p class="empty-msg">✅ Ninguno</p>`;
             return;
         }
-
-        const nuevaO = cantO - cantidad;
-        const nuevaD = cantD + cantidad;
-
-        await apiFetch('stock_local', {
-            method: 'POST', headers: { Prefer: 'resolution=merge-duplicates,return=minimal' },
-            body: JSON.stringify({ item_id: itemId, sitio: origen,  cantidad: nuevaO, alerta_min: dO?.alerta_min ?? 0, updated_at: new Date().toISOString() })
-        });
-        await apiFetch('stock_local', {
-            method: 'POST', headers: { Prefer: 'resolution=merge-duplicates,return=minimal' },
-            body: JSON.stringify({ item_id: itemId, sitio: destino, cantidad: nuevaD, alerta_min: dD?.alerta_min ?? 0, updated_at: new Date().toISOString() })
-        });
-
-        // Registro: ajuste negativo en origen con nota de transferencia
-        const notaFinal = nota || `Transferencia ${LABEL[origen]} → ${LABEL[destino]}`;
-        await apiFetch('stock_movimientos', {
-            method: 'POST', headers: { Prefer: 'return=minimal' },
-            body: JSON.stringify({ item_id: itemId, sitio: origen, tipo: 'ajuste', cantidad: -cantidad, cantidad_anterior: cantO, nota: notaFinal, creado_at: new Date().toISOString() })
-        });
-
-        msgEl.className = 'form-msg ok';
-        msgEl.textContent = `✅ ${cantidad} ${unidad} de ${itemNombre}: ${LABEL[origen]} → ${LABEL[destino]}`;
-        document.getElementById('mov-cantidad').value = '';
-        document.getElementById('mov-nota').value = '';
-        await recargarTodo();
-        poblarInsumos('mov-origen','mov-item');
-    }
-
-    // ── ALERTAS ───────────────────────────────────────────────────────────────
-    function renderAlertas() {
-        const wrap   = document.getElementById('alertas-wrap');
-        const btnTab = document.getElementById('btn-tab-alertas');
-        const alertas = [];
-        stockMap.forEach(r => { if (r.cantidad <= r.alerta_min) alertas.push(r); });
-
-        // Badge
-        btnTab.querySelector('.badge')?.remove();
-        if (alertas.length) {
-            const b = document.createElement('span');
-            b.className = 'badge'; b.textContent = alertas.length;
-            btnTab.appendChild(b);
-        }
-
-        if (!alertas.length) { wrap.innerHTML = '<div class="empty-state">✅ Todo en orden.</div>'; return; }
-
-        const zeros = alertas.filter(r => r.cantidad === 0);
-        const lows  = alertas.filter(r => r.cantidad > 0);
-        const row = (r, tipo) => `
-            <div class="alerta-row ${tipo}">
-                <div style="font-size:1.2rem;">${tipo==='zero'?'🔴':'🟡'}</div>
-                <div style="flex:1;">
-                    <div class="a-name">${esc(r.nombre)}</div>
-                    <div class="a-site">${LABEL[r.sitio]} · Mínimo: ${r.alerta_min} ${esc(r.unidad)}</div>
+        document.getElementById(contenedor).innerHTML = items.map(p => `
+            <div class="alerta-item ${cls}">
+                <div>
+                    <span class="alerta-sitio ${SITIO_CLASS[p.sitio]}">${SITIO_LABEL[p.sitio]}</span>
+                    <div style="font-weight:600;margin-top:2px">${p.nombre}</div>
                 </div>
-                <div style="font-family:'Bebas Neue',sans-serif;font-size:1.2rem;color:${tipo==='zero'?'var(--red)':'var(--yellow)'};">${r.cantidad} ${esc(r.unidad)}</div>
-            </div>`;
-        wrap.innerHTML =
-            (zeros.length ? `<span class="section-label" style="color:var(--red);">Agotados (${zeros.length})</span>` + zeros.map(r=>row(r,'zero')).join('') : '') +
-            (lows.length  ? `<span class="section-label" style="${zeros.length?'display:block;margin-top:20px;':''}color:var(--yellow);">Stock bajo (${lows.length})</span>` + lows.map(r=>row(r,'low')).join('') : '');
-    }
-
-    // ── MÍNIMOS ───────────────────────────────────────────────────────────────
-    function renderMinimos() {
-        const wrap = document.getElementById('minimos-wrap');
-        const porSitio = { handroll:[], cafe:[], fuente:[] };
-        stockMap.forEach(r => { if (porSitio[r.sitio]) porSitio[r.sitio].push(r); });
-        const bloques = SITIOS.filter(s => porSitio[s].length).map(sitio => `
-            <div class="card" style="margin-bottom:16px;">
-                <div class="card-title ${sitio==='handroll'?'hand':sitio}">${LABEL[sitio]}</div>
-                <table class="min-table">
-                    <thead><tr><th>Insumo</th><th>Stock actual</th><th>Mínimo</th><th></th></tr></thead>
-                    <tbody>${porSitio[sitio].sort((a,b)=>a.nombre.localeCompare(b.nombre)).map(r=>`
-                        <tr>
-                            <td>${esc(r.nombre)} <span style="font-size:0.72rem;color:var(--muted);">(${esc(r.unidad)})</span></td>
-                            <td style="color:${r.cantidad===0?'var(--red)':r.cantidad<=r.alerta_min?'var(--yellow)':'var(--green)'};">${r.cantidad}</td>
-                            <td><input type="number" min="0" step="1" value="${r.alerta_min}" id="min-${esc(r.item_id)}-${sitio}"></td>
-                            <td><button class="btn btn-sm btn-fire" onclick="guardarMinimo('${esc(r.item_id)}','${sitio}')">Guardar</button></td>
-                        </tr>`).join('')}
-                    </tbody>
-                </table>
+                <div style="text-align:right;font-size:0.82rem">
+                    <div style="font-weight:700">${p.cantidad} uds</div>
+                    <div style="color:var(--muted)">mín ${p.min}</div>
+                </div>
             </div>`).join('');
-        wrap.innerHTML = bloques || '<div class="empty-state">Carga stock primero desde <strong>Reponer stock</strong>.</div>';
-    }
+    };
 
-    async function guardarMinimo(itemId, sitio) {
-        const inp = document.getElementById(`min-${itemId}-${sitio}`);
-        const min = parseFloat(inp.value);
-        if (isNaN(min) || min < 0) { alert('Mínimo inválido.'); return; }
-        const res = await apiFetch(`stock_local?item_id=eq.${itemId}&sitio=eq.${sitio}`, {
-            method: 'PATCH', headers: { Prefer: 'return=minimal' },
-            body: JSON.stringify({ alerta_min: min, updated_at: new Date().toISOString() })
-        });
-        if (res.ok) {
-            const key = itemId + '|' + sitio;
-            if (stockMap.has(key)) stockMap.get(key).alerta_min = min;
-            renderTabGeneral(); renderAlertas();
-            inp.style.borderColor = 'var(--green)';
-            setTimeout(() => inp.style.borderColor = '', 1500);
-        } else {
-            alert('No se pudo guardar. Revisa RLS en Supabase.');
-        }
-    }
+    renderLista(agotados, 'alertas-agotados', 'red');
+    renderLista(bajos,    'alertas-bajos',    'yellow');
+}
 
-    // ── HISTORIAL ─────────────────────────────────────────────────────────────
-    async function cargarHistorial() {
-        const wrap  = document.getElementById('hist-wrap');
-        wrap.innerHTML = '<div class="empty-state"><span class="spinner"></span>Cargando...</div>';
-        const sitio = document.getElementById('hist-sitio').value;
-        const tipo  = document.getElementById('hist-tipo').value;
-        let qs = 'stock_movimientos?select=id,tipo,sitio,cantidad,cantidad_anterior,nota,creado_at,usuario,stock_items(nombre,unidad)&order=creado_at.desc&limit=60';
-        if (sitio) qs += `&sitio=eq.${sitio}`;
-        if (tipo)  qs += `&tipo=eq.${tipo}`;
-        const res  = await apiFetch(qs);
-        const data = await res.json();
-        if (!Array.isArray(data) || !data.length) {
-            wrap.innerHTML = '<div class="empty-state">Sin movimientos para este filtro.</div>'; return;
+// ─── MÍNIMOS ────────────────────────────────────────────────────────────────
+function renderMinimos() {
+    const sitio = document.getElementById('min-sitio').value;
+    const prods = CATALOGO[sitio];
+    document.getElementById('tabla-minimos').innerHTML = prods.map(p => {
+        const min = getStock(p.id, sitio)?.alerta_min ?? MIN_DEFAULT;
+        return `<div class="min-row">
+            <span style="font-size:0.88rem">${p.nombre}</span>
+            <div style="display:flex;gap:8px;align-items:center">
+                <input type="number" id="min-${p.id}" value="${min}" min="0" style="width:72px">
+                <button class="btn-save-min" onclick="guardarMinimo('${p.id}','${sitio}')">Guardar</button>
+            </div>
+        </div>`;
+    }).join('');
+}
+
+async function guardarMinimo(prodId, sitio) {
+    const min = parseInt(document.getElementById('min-' + prodId).value);
+    if (isNaN(min) || min < 0) { toast('Valor inválido', 'err'); return; }
+    const cant = getCantidad(prodId, sitio) ?? 0;
+    try {
+        const { error } = await SB.from('stock_local').upsert(
+            { producto_id: prodId, sitio, cantidad: cant, alerta_min: min, updated_at: new Date().toISOString() },
+            { onConflict: 'producto_id,sitio' }
+        );
+        if (error) throw error;
+        const s = stockMap.get(prodId + '|' + sitio) || { cantidad: cant };
+        s.alerta_min = min;
+        stockMap.set(prodId + '|' + sitio, s);
+        renderAlertas();
+        toast('Mínimo guardado', 'ok');
+    } catch (e) {
+        toast('Error: ' + (e.message || e), 'err');
+    }
+}
+
+// ─── HISTORIAL ──────────────────────────────────────────────────────────────
+async function cargarHistorial() {
+    document.getElementById('tabla-historial').innerHTML = '<p class="loading">Cargando...</p>';
+    const sitio = document.getElementById('hist-sitio').value;
+    const tipo  = document.getElementById('hist-tipo').value;
+    try {
+        let q = SB.from('stock_movimientos')
+            .select('producto_nombre, sitio, sitio_destino, tipo, cantidad, cantidad_anterior, nota, creado_at')
+            .order('creado_at', { ascending: false })
+            .limit(60);
+        if (sitio) q = q.eq('sitio', sitio);
+        if (tipo)  q = q.eq('tipo', tipo);
+        const { data, error } = await q;
+        if (error) throw error;
+        if (!data?.length) {
+            document.getElementById('tabla-historial').innerHTML = '<p class="empty-msg">Sin movimientos</p>';
+            return;
         }
-        const iconMap = { ingreso:{icon:'📥',cls:'ingreso'}, venta:{icon:'🛒',cls:'venta'}, ajuste:{icon:'✏️',cls:'ajuste'} };
-        const fmt = d => new Date(d).toLocaleString('es-CL',{day:'numeric',month:'short',hour:'2-digit',minute:'2-digit'});
-        wrap.innerHTML = data.map(m => {
-            const ic  = iconMap[m.tipo] || {icon:'📦',cls:'ajuste'};
-            const pos = (m.cantidad ?? 0) >= 0;
-            const meta = [LABEL[m.sitio]||m.sitio, fmt(m.creado_at), m.nota].filter(Boolean).join(' · ');
-            return `<div class="mov-row">
-                <div class="mov-icon ${ic.cls}">${ic.icon}</div>
-                <div class="mov-body">
-                    <div class="mov-title">${esc(m.stock_items?.nombre||'—')}</div>
-                    <div class="mov-meta">${esc(meta)}</div>
+        document.getElementById('tabla-historial').innerHTML = data.map(r => {
+            const fecha = new Date(r.creado_at).toLocaleString('es-CL', { day:'2-digit', month:'2-digit', hour:'2-digit', minute:'2-digit' });
+            const destino = r.sitio_destino ? ` → ${SITIO_LABEL[r.sitio_destino] || r.sitio_destino}` : '';
+            return `<div class="hist-row">
+                <span class="hist-tipo ${r.tipo}">${r.tipo}</span>
+                <div style="flex:1">
+                    <div style="font-weight:600;font-size:0.87rem">${r.producto_nombre || '—'}</div>
+                    <div style="color:var(--muted);font-size:0.78rem">${SITIO_LABEL[r.sitio] || r.sitio}${destino} · ${r.nota || ''}</div>
                 </div>
-                <div class="mov-qty ${pos?'pos':'neg'}">${pos?'+':''}${m.cantidad} ${esc(m.stock_items?.unidad||'')}</div>
+                <div style="text-align:right;white-space:nowrap">
+                    <div style="font-weight:700">${r.cantidad > 0 ? '+' : ''}${r.cantidad}</div>
+                    <div style="color:var(--muted);font-size:0.75rem">${fecha}</div>
+                </div>
             </div>`;
         }).join('');
+    } catch (e) {
+        document.getElementById('tabla-historial').innerHTML = '<p class="empty-msg">Error al cargar historial</p>';
     }
+}
 
-    // ── TABS ──────────────────────────────────────────────────────────────────
-    function showTab(id, btn) {
-        document.querySelectorAll('.tab-panel').forEach(p => p.classList.remove('active'));
-        document.querySelectorAll('.tab-btn').forEach(b => b.classList.remove('active'));
-        document.getElementById(id).classList.add('active');
-        btn.classList.add('active');
-        if (id === 'tab-historial') cargarHistorial();
+// ─── UI ─────────────────────────────────────────────────────────────────────
+function showTab(id, btn) {
+    document.querySelectorAll('.tab-panel').forEach(p => p.classList.remove('active'));
+    document.querySelectorAll('.tab-btn').forEach(b => b.classList.remove('active'));
+    document.getElementById('tab-' + id).classList.add('active');
+    btn.classList.add('active');
+    if (id === 'historial') cargarHistorial();
+    if (id === 'individual') renderIndividual();
+    if (id === 'minimos')   renderMinimos();
+}
+
+let _toastTimer;
+function toast(msg, tipo) {
+    const el = document.getElementById('toast');
+    el.textContent = msg;
+    el.className   = 'toast show ' + (tipo || 'ok');
+    clearTimeout(_toastTimer);
+    _toastTimer = setTimeout(() => el.classList.remove('show'), 3000);
+}
+
+// ─── INIT ────────────────────────────────────────────────────────────────────
+(async function init() {
+    const { data: { session } } = await SB.auth.getSession();
+    if (session) {
+        await mostrarDashboard();
     }
-
-    function esc(s) {
-        return String(s??'').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');
-    }
-
-    // ── INIT ──────────────────────────────────────────────────────────────────
-    (async function init() {
-        const { data: { session } } = await window.orbitaAuth.getSession();
-        if (session) mostrarDashboard();
-    })();
+    document.getElementById('inp-pass').addEventListener('keydown', e => {
+        if (e.key === 'Enter') doLogin();
+    });
+})();
 </script>
 </body>
 </html>
