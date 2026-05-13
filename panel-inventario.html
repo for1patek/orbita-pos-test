@@ -7,33 +7,22 @@
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link href="https://fonts.googleapis.com/css2?family=Bebas+Neue&family=DM+Sans:wght@300;400;500;600;700&display=swap" rel="stylesheet">
     <style>
-        :root {
-            --bg:#0d0d0f; --card:#16161a; --card2:#1c1c22;
-            --border:#2a2a30; --text:#ececf1; --muted:#8b8b9a;
-            --fire:#ff4d00; --green:#25d366; --red:#e53e3e;
-            --yellow:#f6c90e; --hand:#ff4d00; --cafe:#c97b7b; --fuente:#d4872a;
-        }
+        :root { --bg:#0d0d0f; --card:#16161a; --card2:#1c1c22; --border:#2a2a30; --text:#ececf1; --muted:#8b8b9a; --fire:#ff4d00; --green:#25d366; --red:#e53e3e; --yellow:#f6c90e; --hand:#ff4d00; --cafe:#c97b7b; --fuente:#d4872a; }
         * { margin:0; padding:0; box-sizing:border-box; }
         body { font-family:'DM Sans',sans-serif; background:var(--bg); color:var(--text); min-height:100vh; }
-
-        /* LOGIN */
         .login-wrap { display:flex; align-items:center; justify-content:center; min-height:100vh; padding:20px; }
         .login-card { background:var(--card); border:1px solid var(--border); border-radius:20px; padding:36px 28px; max-width:380px; width:100%; }
         .login-card h1 { font-family:'Bebas Neue',sans-serif; font-size:1.8rem; letter-spacing:3px; color:var(--fire); margin-bottom:4px; }
-        .login-card p  { font-size:0.8rem; color:var(--muted); margin-bottom:24px; }
+        .login-card p { font-size:0.8rem; color:var(--muted); margin-bottom:24px; }
         .login-card input { width:100%; padding:12px 14px; border-radius:10px; border:1px solid var(--border); background:#0a0a0c; color:var(--text); font-size:1rem; margin-bottom:10px; outline:none; font-family:'DM Sans',sans-serif; }
         .login-card input:focus { border-color:var(--fire); }
         .login-err { color:var(--red); font-size:0.83rem; margin-bottom:10px; display:none; }
         .btn-login { width:100%; padding:13px; background:var(--fire); color:#fff; border:none; border-radius:10px; font-family:'Bebas Neue',sans-serif; font-size:1.1rem; letter-spacing:2px; cursor:pointer; }
-
-        /* LAYOUT */
         .wrap { max-width:1100px; margin:0 auto; padding:28px 18px 60px; }
         header { display:flex; align-items:center; justify-content:space-between; margin-bottom:28px; flex-wrap:wrap; gap:12px; }
         header h1 { font-family:'Bebas Neue',sans-serif; font-size:1.7rem; letter-spacing:3px; color:var(--fire); }
         .btn-logout { padding:8px 16px; border-radius:8px; border:1px solid var(--border); background:transparent; color:var(--muted); font-size:0.82rem; cursor:pointer; }
         .btn-logout:hover { border-color:var(--red); color:var(--red); }
-
-        /* TABS */
         .tabs { display:flex; gap:8px; margin-bottom:24px; flex-wrap:wrap; }
         .tab-btn { padding:9px 18px; border-radius:10px; border:1px solid var(--border); background:var(--card); color:var(--muted); font-weight:600; font-size:0.85rem; cursor:pointer; transition:all 0.18s; position:relative; }
         .tab-btn:hover { border-color:var(--fire); color:var(--text); }
@@ -41,225 +30,161 @@
         .tab-btn .badge { position:absolute; top:-7px; right:-7px; background:var(--red); color:#fff; font-size:0.65rem; font-weight:800; border-radius:50%; width:20px; height:20px; display:flex; align-items:center; justify-content:center; }
         .tab-panel { display:none; }
         .tab-panel.active { display:block; }
-
-        /* CARDS */
         .card { background:var(--card); border:1px solid var(--border); border-radius:16px; padding:20px; margin-bottom:16px; }
-        .card-title { font-family:'Bebas Neue',sans-serif; font-size:1.05rem; letter-spacing:2px; margin-bottom:14px; }
-
-        /* TABLA GENERAL */
+        .card-title { font-family:'Bebas Neue',sans-serif; font-size:1.05rem; letter-spacing:2px; margin-bottom:14px; color:var(--fire); }
         .stock-table { width:100%; border-collapse:collapse; font-size:0.87rem; }
         .stock-table th { text-align:left; padding:8px 12px; font-size:0.7rem; text-transform:uppercase; letter-spacing:1.5px; color:var(--muted); border-bottom:1px solid var(--border); font-weight:700; }
-        .stock-table th.c-hand   { color:var(--hand);   text-align:center; }
-        .stock-table th.c-cafe   { color:var(--cafe);   text-align:center; }
+        .stock-table th.c-hand { color:var(--hand); text-align:center; }
+        .stock-table th.c-cafe { color:var(--cafe); text-align:center; }
         .stock-table th.c-fuente { color:var(--fuente); text-align:center; }
-        .stock-table td { padding:8px 12px; border-bottom:1px solid var(--border); }
+        .stock-table td { padding:8px 12px; border-bottom:1px solid var(--border); vertical-align:middle; }
         .stock-table td.qty { text-align:center; font-weight:700; font-size:0.95rem; }
-        .stock-table td.qty.ok     { color:var(--green); }
-        .stock-table td.qty.low    { color:var(--yellow); }
-        .stock-table td.qty.empty  { color:var(--red); }
-        .stock-table td.qty.none   { color:var(--border); }
+        .stock-table td.qty.ok { color:var(--green); }
+        .stock-table td.qty.low { color:var(--yellow); }
+        .stock-table td.qty.empty { color:var(--red); }
+        .stock-table td.qty.none { color:var(--border); }
         .stock-table tr:last-child td { border-bottom:none; }
-        .stock-table .cat-header td { background:var(--card2); font-size:0.7rem; text-transform:uppercase; letter-spacing:1.5px; color:var(--muted); padding:6px 12px; font-weight:700; }
-
-        /* FORMULARIOS */
+        .stock-table .cat-row td { background:var(--card2); font-size:0.7rem; text-transform:uppercase; letter-spacing:1.5px; color:var(--muted); padding:5px 12px; font-weight:700; }
         .form-grid { display:grid; grid-template-columns:1fr 1fr; gap:14px; margin-bottom:16px; }
         @media(max-width:560px){ .form-grid { grid-template-columns:1fr; } }
         label { display:block; font-size:0.72rem; text-transform:uppercase; letter-spacing:1.5px; color:var(--muted); margin-bottom:6px; font-weight:700; }
         select, input[type=number], input[type=text] { width:100%; padding:11px 13px; border-radius:10px; border:1px solid var(--border); background:#0a0a0c; color:var(--text); font-family:'DM Sans',sans-serif; font-size:0.95rem; outline:none; }
         select:focus, input:focus { border-color:var(--fire); }
-        .btn-primary { padding:12px 28px; background:var(--fire); color:#fff; border:none; border-radius:10px; font-family:'Bebas Neue',sans-serif; font-size:1rem; letter-spacing:2px; cursor:pointer; transition:opacity 0.2s; }
+        .btn-primary { padding:12px 28px; background:var(--fire); color:#fff; border:none; border-radius:10px; font-family:'Bebas Neue',sans-serif; font-size:1rem; letter-spacing:2px; cursor:pointer; }
         .btn-primary:hover { opacity:0.85; }
-        .btn-secondary { padding:10px 20px; background:transparent; color:var(--muted); border:1px solid var(--border); border-radius:10px; font-size:0.85rem; cursor:pointer; }
-        .btn-secondary:hover { border-color:var(--text); color:var(--text); }
-
-        /* ALERTAS */
+        .btn-save-min { padding:6px 14px; background:var(--fire); color:#fff; border:none; border-radius:8px; font-size:0.8rem; cursor:pointer; white-space:nowrap; }
         .alerta-item { display:flex; justify-content:space-between; align-items:center; padding:10px 14px; border-radius:10px; margin-bottom:8px; font-size:0.88rem; }
-        .alerta-item.red    { background:rgba(229,62,62,0.12); border:1px solid rgba(229,62,62,0.3); }
+        .alerta-item.red { background:rgba(229,62,62,0.12); border:1px solid rgba(229,62,62,0.3); }
         .alerta-item.yellow { background:rgba(246,201,14,0.10); border:1px solid rgba(246,201,14,0.3); }
-        .alerta-sitio { font-size:0.7rem; text-transform:uppercase; letter-spacing:1px; }
-        .alerta-sitio.hand   { color:var(--hand);   }
-        .alerta-sitio.cafe   { color:var(--cafe);   }
+        .alerta-sitio { font-size:0.7rem; text-transform:uppercase; letter-spacing:1px; font-weight:700; }
+        .alerta-sitio.hand { color:var(--hand); }
+        .alerta-sitio.cafe { color:var(--cafe); }
         .alerta-sitio.fuente { color:var(--fuente); }
-
-        /* MÍNIMOS */
         .min-row { display:flex; align-items:center; justify-content:space-between; padding:8px 0; border-bottom:1px solid var(--border); gap:12px; }
         .min-row:last-child { border-bottom:none; }
         .min-row input[type=number] { width:80px; padding:7px 10px; font-size:0.9rem; }
-        .btn-save-min { padding:6px 14px; background:var(--fire); color:#fff; border:none; border-radius:8px; font-size:0.8rem; cursor:pointer; }
-
-        /* HISTORIAL */
         .hist-row { display:flex; gap:10px; padding:9px 0; border-bottom:1px solid var(--border); font-size:0.85rem; align-items:flex-start; }
         .hist-row:last-child { border-bottom:none; }
         .hist-tipo { font-size:0.7rem; font-weight:700; text-transform:uppercase; letter-spacing:1px; padding:2px 8px; border-radius:20px; white-space:nowrap; }
-        .hist-tipo.ingreso     { background:rgba(37,211,102,0.15); color:var(--green); }
-        .hist-tipo.salida      { background:rgba(229,62,62,0.15);  color:var(--red);   }
-        .hist-tipo.transferencia { background:rgba(246,201,14,0.15); color:var(--yellow); }
-        .hist-tipo.ajuste      { background:rgba(139,139,154,0.15); color:var(--muted); }
-
-        /* FILTROS */
+        .hist-tipo.ingreso { background:rgba(37,211,102,0.15); color:var(--green); }
+        .hist-tipo.venta { background:rgba(229,62,62,0.15); color:var(--red); }
+        .hist-tipo.ajuste { background:rgba(139,139,154,0.15); color:var(--muted); }
         .filtros { display:flex; gap:10px; margin-bottom:16px; flex-wrap:wrap; }
         .filtros select { width:auto; }
-
         .toast { position:fixed; bottom:24px; right:24px; padding:12px 20px; border-radius:12px; font-size:0.88rem; font-weight:600; z-index:999; opacity:0; transform:translateY(10px); transition:all 0.3s; pointer-events:none; }
         .toast.show { opacity:1; transform:translateY(0); }
-        .toast.ok  { background:#1a3a2a; border:1px solid var(--green); color:var(--green); }
-        .toast.err { background:#3a1a1a; border:1px solid var(--red);   color:var(--red);   }
-
+        .toast.ok { background:#1a3a2a; border:1px solid var(--green); color:var(--green); }
+        .toast.err { background:#3a1a1a; border:1px solid var(--red); color:var(--red); }
         .empty-msg { text-align:center; color:var(--muted); padding:32px 0; font-size:0.9rem; }
-        .loading   { text-align:center; color:var(--muted); padding:20px 0; font-size:0.85rem; }
+        .loading { text-align:center; color:var(--muted); padding:20px 0; font-size:0.85rem; }
     </style>
 </head>
 <body>
 
-<!-- LOGIN -->
 <div class="login-wrap" id="login-wrap">
     <div class="login-card">
         <h1>ÓRBITA</h1>
         <p>Panel de Inventario · Acceso restringido</p>
         <div class="login-err" id="login-err">Correo o contraseña incorrectos</div>
-        <input type="email"    id="inp-email" placeholder="Correo">
-        <input type="password" id="inp-pass"  placeholder="Contraseña">
+        <input type="email" id="inp-email" placeholder="Correo">
+        <input type="password" id="inp-pass" placeholder="Contraseña">
         <button class="btn-login" onclick="doLogin()">ENTRAR</button>
     </div>
 </div>
 
-<!-- DASHBOARD -->
 <div class="wrap" id="dashboard" style="display:none">
     <header>
         <div>
-            <h1>📦 INVENTARIO</h1>
+            <h1>INVENTARIO</h1>
             <p id="hdr-usuario" style="font-size:0.78rem;color:var(--muted);margin-top:2px;"></p>
         </div>
         <button class="btn-logout" onclick="doLogout()">Cerrar sesión</button>
     </header>
 
     <div class="tabs">
-        <button class="tab-btn active" onclick="showTab('general',this)">📊 Vista general</button>
-        <button class="tab-btn" onclick="showTab('individual',this)">🏪 Por local</button>
-        <button class="tab-btn" onclick="showTab('reponer',this)">➕ Reponer</button>
-        <button class="tab-btn" onclick="showTab('mover',this)">🔀 Mover</button>
-        <button class="tab-btn" id="btn-tab-alertas" onclick="showTab('alertas',this)">⚠️ Alertas</button>
-        <button class="tab-btn" onclick="showTab('minimos',this)">⚙️ Mínimos</button>
-        <button class="tab-btn" onclick="showTab('historial',this)">📋 Historial</button>
+        <button class="tab-btn active" onclick="showTab('general',this)">Vista general</button>
+        <button class="tab-btn" onclick="showTab('individual',this)">Por local</button>
+        <button class="tab-btn" onclick="showTab('reponer',this)">Reponer</button>
+        <button class="tab-btn" onclick="showTab('alertas',this)" id="btn-tab-alertas">Alertas</button>
+        <button class="tab-btn" onclick="showTab('minimos',this)">Minimos</button>
+        <button class="tab-btn" onclick="showTab('historial',this)">Historial</button>
     </div>
 
-    <!-- VISTA GENERAL -->
     <div class="tab-panel active" id="tab-general">
         <div class="card">
-            <div class="card-title">Stock consolidado — los 3 locales</div>
+            <div class="card-title">Stock consolidado — todos los insumos</div>
             <div id="tabla-general"><p class="loading">Cargando...</p></div>
         </div>
     </div>
 
-    <!-- VISTA INDIVIDUAL -->
     <div class="tab-panel" id="tab-individual">
         <div class="card">
             <div style="margin-bottom:16px;">
                 <label>Local</label>
                 <select id="ind-sitio" onchange="renderIndividual()">
-                    <option value="handroll">🍣 Hand Roll</option>
-                    <option value="cafe">☕ Café Órbita</option>
-                    <option value="fuente">🌭 Fuente de Soda</option>
+                    <option value="handroll">Hand Roll</option>
+                    <option value="cafe">Cafe Orbita</option>
+                    <option value="fuente">Fuente de Soda</option>
                 </select>
             </div>
             <div id="tabla-individual"><p class="loading">Cargando...</p></div>
         </div>
     </div>
 
-    <!-- REPONER -->
     <div class="tab-panel" id="tab-reponer">
         <div class="card">
             <div class="card-title">Reponer stock</div>
             <div class="form-grid">
                 <div>
                     <label>Local</label>
-                    <select id="rep-sitio" onchange="poblarProductos('rep-sitio','rep-prod')">
-                        <option value="handroll">🍣 Hand Roll</option>
-                        <option value="cafe">☕ Café Órbita</option>
-                        <option value="fuente">🌭 Fuente de Soda</option>
+                    <select id="rep-sitio" onchange="poblarInsumos('rep-sitio','rep-item')">
+                        <option value="handroll">Hand Roll</option>
+                        <option value="cafe">Cafe Orbita</option>
+                        <option value="fuente">Fuente de Soda</option>
                     </select>
                 </div>
                 <div>
-                    <label>Producto</label>
-                    <select id="rep-prod"></select>
+                    <label>Insumo</label>
+                    <select id="rep-item"></select>
                 </div>
                 <div>
                     <label>Cantidad a sumar</label>
-                    <input type="number" id="rep-cant" min="1" value="1" placeholder="Ej: 10">
+                    <input type="number" id="rep-cant" min="1" value="1">
                 </div>
                 <div>
                     <label>Nota (opcional)</label>
-                    <input type="text" id="rep-nota" placeholder="Ej: Compra del día">
+                    <input type="text" id="rep-nota" placeholder="Ej: Compra del dia">
                 </div>
             </div>
-            <button class="btn-primary" onclick="reponerStock()">CONFIRMAR REPOSICIÓN</button>
+            <button class="btn-primary" onclick="reponerStock()">CONFIRMAR REPOSICION</button>
         </div>
     </div>
 
-    <!-- MOVER -->
-    <div class="tab-panel" id="tab-mover">
-        <div class="card">
-            <div class="card-title">Mover stock entre locales</div>
-            <div class="form-grid">
-                <div>
-                    <label>Desde</label>
-                    <select id="mov-origen" onchange="poblarProductos('mov-origen','mov-prod')">
-                        <option value="handroll">🍣 Hand Roll</option>
-                        <option value="cafe">☕ Café Órbita</option>
-                        <option value="fuente">🌭 Fuente de Soda</option>
-                    </select>
-                </div>
-                <div>
-                    <label>Hacia</label>
-                    <select id="mov-destino">
-                        <option value="cafe">☕ Café Órbita</option>
-                        <option value="fuente">🌭 Fuente de Soda</option>
-                        <option value="handroll">🍣 Hand Roll</option>
-                    </select>
-                </div>
-                <div>
-                    <label>Producto</label>
-                    <select id="mov-prod"></select>
-                </div>
-                <div>
-                    <label>Cantidad</label>
-                    <input type="number" id="mov-cant" min="1" value="1">
-                </div>
-            </div>
-            <button class="btn-primary" onclick="moverStock()">CONFIRMAR MOVIMIENTO</button>
-        </div>
-    </div>
-
-    <!-- ALERTAS -->
     <div class="tab-panel" id="tab-alertas">
         <div class="card">
-            <div class="card-title" style="color:var(--red)">Productos agotados</div>
-            <div id="alertas-agotados"><p class="empty-msg">✅ Ninguno agotado</p></div>
+            <div class="card-title" style="color:var(--red)">Insumos agotados</div>
+            <div id="alertas-agotados"><p class="empty-msg">Ninguno agotado</p></div>
         </div>
         <div class="card">
-            <div class="card-title" style="color:var(--yellow)">Stock bajo el mínimo</div>
-            <div id="alertas-bajos"><p class="empty-msg">✅ Todo dentro del mínimo</p></div>
+            <div class="card-title" style="color:var(--yellow)">Stock bajo el minimo</div>
+            <div id="alertas-bajos"><p class="empty-msg">Todo dentro del minimo</p></div>
         </div>
     </div>
 
-    <!-- MÍNIMOS -->
     <div class="tab-panel" id="tab-minimos">
         <div class="card">
-            <div style="margin-bottom:16px; display:flex; gap:10px; align-items:flex-end; flex-wrap:wrap;">
-                <div>
-                    <label>Local</label>
-                    <select id="min-sitio" onchange="renderMinimos()">
-                        <option value="handroll">🍣 Hand Roll</option>
-                        <option value="cafe">☕ Café Órbita</option>
-                        <option value="fuente">🌭 Fuente de Soda</option>
-                    </select>
-                </div>
+            <div style="margin-bottom:16px;">
+                <label>Local</label>
+                <select id="min-sitio" onchange="renderMinimos()">
+                    <option value="handroll">Hand Roll</option>
+                    <option value="cafe">Cafe Orbita</option>
+                    <option value="fuente">Fuente de Soda</option>
+                </select>
             </div>
             <div id="tabla-minimos"></div>
         </div>
     </div>
 
-    <!-- HISTORIAL -->
     <div class="tab-panel" id="tab-historial">
         <div class="card">
             <div class="filtros">
@@ -268,7 +193,7 @@
                     <select id="hist-sitio" onchange="cargarHistorial()">
                         <option value="">Todos</option>
                         <option value="handroll">Hand Roll</option>
-                        <option value="cafe">Café</option>
+                        <option value="cafe">Cafe</option>
                         <option value="fuente">Fuente</option>
                     </select>
                 </div>
@@ -277,8 +202,7 @@
                     <select id="hist-tipo" onchange="cargarHistorial()">
                         <option value="">Todos</option>
                         <option value="ingreso">Ingreso</option>
-                        <option value="salida">Salida</option>
-                        <option value="transferencia">Transferencia</option>
+                        <option value="venta">Venta</option>
                         <option value="ajuste">Ajuste</option>
                     </select>
                 </div>
@@ -293,116 +217,31 @@
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/dist/umd/supabase.min.js"></script>
 <script src="./orbita-auth.js"></script>
 <script>
-// ─── CONFIG ────────────────────────────────────────────────────────────────
-const SB_URL = window.orbitaAuth?.url || 'https://uldqgxdmblhyqsnxenaz.supabase.co';
-const SB_KEY = window.orbitaAuth?.anonKey || '';
-const SB = window.supabase.createClient(SB_URL, SB_KEY);
+const SB = window.supabase.createClient(
+    window.orbitaAuth?.url     || 'https://ftyxipxsyzldofdyamqt.supabase.co',
+    window.orbitaAuth?.anonKey || ''
+);
 
-// ─── CATÁLOGOS POR LOCAL ────────────────────────────────────────────────────
-// producto_id texto — el mismo que usan los menús web y orbita-stock.js
-const CATALOGO = {
-    cafe: [
-        { id:'c_americano',  nombre:'Americano',              cat:'Café' },
-        { id:'c_espresso',   nombre:'Espresso',               cat:'Café' },
-        { id:'c_cortado',    nombre:'Cortado',                cat:'Café' },
-        { id:'c_latte',      nombre:'Latte',                  cat:'Café' },
-        { id:'c_capuchino',  nombre:'Capuchino',              cat:'Café' },
-        { id:'c_mocachino',  nombre:'Mocachino',              cat:'Café' },
-        { id:'c_chocolate',  nombre:'Chocolate Caliente',     cat:'Café' },
-        { id:'p_kuchen',     nombre:'Kuchen de Migas',        cat:'Pasteles' },
-        { id:'p_pie',        nombre:'Pie de Limón',           cat:'Pasteles' },
-        { id:'p_brownie',    nombre:'Brownie',                cat:'Pasteles' },
-        { id:'p_cupcake',    nombre:'Cupcake',                cat:'Pasteles' },
-        { id:'p_queque',     nombre:'Queque de Zanahoria',    cat:'Pasteles' },
-        { id:'p_waffle',     nombre:'Waffle',                 cat:'Pasteles' },
-        { id:'jugo_frambuesa',   nombre:'Jugo Frambuesa',         cat:'Jugos' },
-        { id:'jugo_frutilla',    nombre:'Jugo Frutilla',          cat:'Jugos' },
-        { id:'jugo_arandano',    nombre:'Jugo Arándano',          cat:'Jugos' },
-        { id:'jugo_fru_ara',     nombre:'Jugo Frutilla-Arándano', cat:'Jugos' },
-    ],
-    fuente: [
-        { id:'salchipapa',   nombre:'Salchipapa',             cat:'Extras' },
-        { id:'nuggets',      nombre:'Papas con Nuggets',      cat:'Extras' },
-        { id:'mechada',      nombre:'Sándwich Mechada',       cat:'Sándwiches' },
-        { id:'lomo',         nombre:'Sándwich Lomo',          cat:'Sándwiches' },
-        { id:'hamburguesa',  nombre:'Hamburguesa',            cat:'Sándwiches' },
-        { id:'completo',     nombre:'Completo',               cat:'Completos' },
-        { id:'completo_promo', nombre:'Completo Promo',       cat:'Completos' },
-        { id:'completo_xl',  nombre:'Completo XL',            cat:'Completos' },
-        { id:'jugo_frambuesa',     nombre:'Jugo Frambuesa',          cat:'Jugos' },
-        { id:'jugo_frutilla',      nombre:'Jugo Frutilla',           cat:'Jugos' },
-        { id:'jugo_arandano',      nombre:'Jugo Arándano',           cat:'Jugos' },
-        { id:'jugo_fru_ara',       nombre:'Jugo Frutilla-Arándano',  cat:'Jugos' },
-        { id:'jugo_fram_ara',      nombre:'Jugo Frambuesa-Arándano', cat:'Jugos' },
-        { id:'jugo_melon_tuna',    nombre:'Jugo Melón Tuna',         cat:'Jugos' },
-        { id:'jugo_melon_cal',     nombre:'Jugo Melón Calameño',     cat:'Jugos' },
-        { id:'jugo_pina',          nombre:'Jugo Piña',               cat:'Jugos' },
-        { id:'jugo_mango',         nombre:'Jugo Mango',              cat:'Jugos' },
-        { id:'jugo_pina_mango',    nombre:'Jugo Piña-Mango',         cat:'Jugos' },
-        { id:'jugo_naranja_plat',  nombre:'Jugo Naranja-Plátano',    cat:'Jugos' },
-        { id:'beb_coca',       nombre:'Coca-Cola',            cat:'Bebidas' },
-        { id:'beb_coca_zero',  nombre:'Coca-Cola sin azúcar', cat:'Bebidas' },
-        { id:'beb_pepsi',      nombre:'Pepsi',                cat:'Bebidas' },
-        { id:'beb_kem',        nombre:'Kem',                  cat:'Bebidas' },
-        { id:'beb_bilz',       nombre:'Bilz',                 cat:'Bebidas' },
-        { id:'beb_pap',        nombre:'Pap',                  cat:'Bebidas' },
-        { id:'beb_fanta',      nombre:'Fanta',                cat:'Bebidas' },
-        { id:'beb_sprite',     nombre:'Sprite',               cat:'Bebidas' },
-        { id:'agua_gas',       nombre:'Agua con gas',         cat:'Aguas' },
-        { id:'agua_sin_gas',   nombre:'Agua sin gas',         cat:'Aguas' },
-    ],
-    handroll: [
-        { id:'pollo',    nombre:'Hand Roll Pollo',  cat:'Hand Rolls' },
-        { id:'camaron',  nombre:'Hand Roll Camarón', cat:'Hand Rolls' },
-        { id:'jugo_frambuesa',    nombre:'Jugo Frambuesa',          cat:'Jugos' },
-        { id:'jugo_frutilla',     nombre:'Jugo Frutilla',           cat:'Jugos' },
-        { id:'jugo_arandano',     nombre:'Jugo Arándano',           cat:'Jugos' },
-        { id:'jugo_fru_ara',      nombre:'Jugo Frutilla-Arándano',  cat:'Jugos' },
-        { id:'jugo_fram_ara',     nombre:'Jugo Frambuesa-Arándano', cat:'Jugos' },
-        { id:'jugo_melon_tuna',   nombre:'Jugo Melón Tuna',         cat:'Jugos' },
-        { id:'jugo_melon_cal',    nombre:'Jugo Melón Calameño',     cat:'Jugos' },
-        { id:'jugo_pina',         nombre:'Jugo Piña',               cat:'Jugos' },
-        { id:'jugo_mango',        nombre:'Jugo Mango',              cat:'Jugos' },
-        { id:'jugo_pina_mango',   nombre:'Jugo Piña-Mango',         cat:'Jugos' },
-        { id:'jugo_naranja_plat', nombre:'Jugo Naranja-Plátano',    cat:'Jugos' },
-        { id:'beb_coca',      nombre:'Coca-Cola',            cat:'Bebidas' },
-        { id:'beb_coca_zero', nombre:'Coca-Cola sin azúcar', cat:'Bebidas' },
-        { id:'beb_pepsi',     nombre:'Pepsi',                cat:'Bebidas' },
-        { id:'beb_kem',       nombre:'Kem',                  cat:'Bebidas' },
-        { id:'beb_bilz',      nombre:'Bilz',                 cat:'Bebidas' },
-        { id:'beb_pap',       nombre:'Pap',                  cat:'Bebidas' },
-        { id:'beb_fanta',     nombre:'Fanta',                cat:'Bebidas' },
-        { id:'beb_sprite',    nombre:'Sprite',               cat:'Bebidas' },
-        { id:'agua_gas',      nombre:'Agua con gas',         cat:'Aguas' },
-        { id:'agua_sin_gas',  nombre:'Agua sin gas',         cat:'Aguas' },
-    ]
-};
-
-const SITIO_LABEL = { handroll:'Hand Roll', cafe:'Café Órbita', fuente:'Fuente de Soda' };
+const SITIO_LABEL = { handroll:'Hand Roll', cafe:'Cafe Orbita', fuente:'Fuente de Soda' };
 const SITIO_CLASS = { handroll:'hand', cafe:'cafe', fuente:'fuente' };
-const MIN_DEFAULT = 5;
+const CAT_LABEL   = { proteina:'Proteinas', panaderia:'Panaderia', vegetal:'Vegetales', lacteo:'Lacteos', bebida:'Bebidas', fruta:'Jugos', cafe:'Cafe', congelado:'Congelados', otro:'Otros' };
 
-// ─── ESTADO ────────────────────────────────────────────────────────────────
-let stockMap = new Map(); // "producto_id|sitio" → { cantidad, alerta_min }
+let items    = [];
+let stockMap = new Map();
 
-// ─── AUTH ──────────────────────────────────────────────────────────────────
 async function doLogin() {
     const email = document.getElementById('inp-email').value.trim();
     const pass  = document.getElementById('inp-pass').value;
     const err   = document.getElementById('login-err');
     err.style.display = 'none';
-    try {
-        const { error } = await SB.auth.signInWithPassword({ email, password: pass });
-        if (error) throw error;
-        await mostrarDashboard();
-    } catch (e) {
-        err.style.display = 'block';
-    }
+    const { error } = await SB.auth.signInWithPassword({ email, password: pass });
+    if (error) { err.style.display = 'block'; return; }
+    await mostrarDashboard();
 }
 
 async function doLogout() {
     await SB.auth.signOut();
-    document.getElementById('dashboard').style.display = 'none';
+    document.getElementById('dashboard').style.display  = 'none';
     document.getElementById('login-wrap').style.display = 'flex';
 }
 
@@ -413,392 +252,247 @@ async function mostrarDashboard() {
     document.getElementById('dashboard').style.display  = 'block';
     document.getElementById('hdr-usuario').textContent  = user.email;
     await cargarTodo();
-    poblarProductos('rep-sitio', 'rep-prod');
-    poblarProductos('mov-origen', 'mov-prod');
+    poblarInsumos('rep-sitio', 'rep-item');
 }
 
-// ─── CARGA DE DATOS ────────────────────────────────────────────────────────
 async function cargarTodo() {
     try {
-        const { data, error } = await SB
+        const { data: itemsData, error: e1 } = await SB
+            .from('stock_items')
+            .select('id, nombre, unidad, categoria, tipo_control, sitios, activo')
+            .eq('activo', true)
+            .order('categoria');
+        if (e1) throw e1;
+        items = itemsData || [];
+
+        const { data: stockData, error: e2 } = await SB
             .from('stock_local')
-            .select('producto_id, sitio, cantidad, alerta_min');
-        if (error) throw error;
+            .select('id, item_id, sitio, cantidad, alerta_min');
+        if (e2) throw e2;
+
         stockMap.clear();
-        (data || []).forEach(r => {
-            stockMap.set(r.producto_id + '|' + r.sitio, {
-                cantidad:  r.cantidad  ?? 0,
-                alerta_min: r.alerta_min ?? MIN_DEFAULT
+        (stockData || []).forEach(r => {
+            stockMap.set(r.item_id + '|' + r.sitio, {
+                cantidad:   r.cantidad   ?? 0,
+                alerta_min: r.alerta_min ?? 0,
+                local_id:   r.id
             });
         });
+
         renderGeneral();
         renderIndividual();
         renderAlertas();
         renderMinimos();
     } catch (e) {
-        console.error('cargarTodo:', e);
-        toast('Error cargando stock', 'err');
+        toast('Error cargando datos: ' + (e.message || e), 'err');
     }
 }
 
-function getStock(productoId, sitio) {
-    return stockMap.get(productoId + '|' + sitio) || null;
+function getStock(itemId, sitio) {
+    return stockMap.get(itemId + '|' + sitio) || null;
 }
 
-function getCantidad(productoId, sitio) {
-    return getStock(productoId, sitio)?.cantidad ?? null;
-}
-
-// ─── VISTA GENERAL ─────────────────────────────────────────────────────────
 function renderGeneral() {
-    // Unir todos los productos de los 3 catálogos sin repetir
-    const todos = [];
-    const vistos = new Set();
-    ['cafe','fuente','handroll'].forEach(sitio => {
-        CATALOGO[sitio].forEach(p => {
-            const key = p.cat + '|' + p.id;
-            if (!vistos.has(key)) { vistos.add(key); todos.push({ ...p, sitios: [] }); }
-        });
-    });
-
-    // Agrupar por categoría
+    if (!items.length) { document.getElementById('tabla-general').innerHTML = '<p class="empty-msg">No hay insumos en el catalogo</p>'; return; }
     const porCat = {};
-    todos.forEach(p => {
-        if (!porCat[p.cat]) porCat[p.cat] = [];
-        porCat[p.cat].push(p);
-    });
-
-    let html = `<table class="stock-table">
-        <thead><tr>
-            <th>Producto</th>
-            <th class="c-hand">🍣 Hand Roll</th>
-            <th class="c-cafe">☕ Café</th>
-            <th class="c-fuente">🌭 Fuente</th>
-        </tr></thead><tbody>`;
-
-    Object.entries(porCat).forEach(([cat, prods]) => {
-        html += `<tr class="cat-header"><td colspan="4">${cat}</td></tr>`;
-        prods.forEach(p => {
-            html += `<tr><td>${p.nombre}</td>`;
+    items.forEach(p => { const c = p.categoria||'otro'; if(!porCat[c]) porCat[c]=[]; porCat[c].push(p); });
+    let html = '<table class="stock-table"><thead><tr><th>Insumo</th><th>Ud.</th><th class="c-hand">Hand Roll</th><th class="c-cafe">Cafe</th><th class="c-fuente">Fuente</th></tr></thead><tbody>';
+    Object.entries(porCat).forEach(([cat, insumos]) => {
+        html += '<tr class="cat-row"><td colspan="5">' + (CAT_LABEL[cat]||cat) + '</td></tr>';
+        insumos.forEach(p => {
+            html += '<tr><td>' + p.nombre + '</td><td style="color:var(--muted);font-size:0.8rem">' + p.unidad + '</td>';
             ['handroll','cafe','fuente'].forEach(sitio => {
-                const enCatalogo = CATALOGO[sitio].some(x => x.id === p.id);
-                if (!enCatalogo) { html += `<td class="qty none">—</td>`; return; }
-                const qty = getCantidad(p.id, sitio);
-                if (qty === null) { html += `<td class="qty none">-</td>`; return; }
-                const min = getStock(p.id, sitio)?.alerta_min ?? MIN_DEFAULT;
-                const cls = qty === 0 ? 'empty' : qty <= min ? 'low' : 'ok';
-                html += `<td class="qty ${cls}">${qty}</td>`;
+                if (!p.sitios?.includes(sitio)) { html += '<td class="qty none">-</td>'; return; }
+                const s = getStock(p.id, sitio);
+                if (!s) { html += '<td class="qty none">-</td>'; return; }
+                const cls = s.cantidad===0 ? 'empty' : s.cantidad<=s.alerta_min ? 'low' : 'ok';
+                html += '<td class="qty ' + cls + '">' + s.cantidad + '</td>';
             });
-            html += `</tr>`;
+            html += '</tr>';
         });
     });
-
     html += '</tbody></table>';
     document.getElementById('tabla-general').innerHTML = html;
 }
 
-// ─── VISTA INDIVIDUAL ──────────────────────────────────────────────────────
 function renderIndividual() {
-    const sitio = document.getElementById('ind-sitio').value;
-    const prods = CATALOGO[sitio];
+    const sitio   = document.getElementById('ind-sitio').value;
+    const insumos = items.filter(p => p.sitios?.includes(sitio));
+    if (!insumos.length) { document.getElementById('tabla-individual').innerHTML = '<p class="empty-msg">No hay insumos para este local</p>'; return; }
     const porCat = {};
-    prods.forEach(p => {
-        if (!porCat[p.cat]) porCat[p.cat] = [];
-        porCat[p.cat].push(p);
-    });
-
-    let html = `<table class="stock-table">
-        <thead><tr>
-            <th>Producto</th>
-            <th>Stock</th>
-            <th>Mínimo</th>
-            <th>Estado</th>
-        </tr></thead><tbody>`;
-
-    Object.entries(porCat).forEach(([cat, prods]) => {
-        html += `<tr class="cat-header"><td colspan="4">${cat}</td></tr>`;
-        prods.forEach(p => {
-            const s   = getStock(p.id, sitio);
+    insumos.forEach(p => { const c = p.categoria||'otro'; if(!porCat[c]) porCat[c]=[]; porCat[c].push(p); });
+    let html = '<table class="stock-table"><thead><tr><th>Insumo</th><th>Ud.</th><th>Stock</th><th>Minimo</th><th>Estado</th></tr></thead><tbody>';
+    Object.entries(porCat).forEach(([cat, ins]) => {
+        html += '<tr class="cat-row"><td colspan="5">' + (CAT_LABEL[cat]||cat) + '</td></tr>';
+        ins.forEach(p => {
+            const s = getStock(p.id, sitio);
             const qty = s?.cantidad ?? null;
-            const min = s?.alerta_min ?? MIN_DEFAULT;
-            let estado = '—', cls = 'none';
+            const min = s?.alerta_min ?? 0;
+            let estado = '-', cls = 'none';
             if (qty !== null) {
-                if (qty === 0)    { estado = '🔴 Agotado'; cls = 'empty'; }
-                else if (qty <= min) { estado = '🟡 Bajo';    cls = 'low';   }
-                else               { estado = '🟢 OK';       cls = 'ok';    }
+                if (qty===0) { estado='Agotado'; cls='empty'; }
+                else if (qty<=min) { estado='Bajo'; cls='low'; }
+                else { estado='OK'; cls='ok'; }
             }
-            html += `<tr>
-                <td>${p.nombre}</td>
-                <td class="qty ${cls}">${qty ?? '-'}</td>
-                <td style="text-align:center;color:var(--muted)">${min}</td>
-                <td style="font-size:0.82rem">${estado}</td>
-            </tr>`;
+            html += '<tr><td>' + p.nombre + '</td><td style="color:var(--muted);font-size:0.8rem">' + p.unidad + '</td><td class="qty ' + cls + '">' + (qty??'-') + '</td><td style="text-align:center;color:var(--muted)">' + min + '</td><td style="font-size:0.82rem">' + estado + '</td></tr>';
         });
     });
-
     html += '</tbody></table>';
     document.getElementById('tabla-individual').innerHTML = html;
 }
 
-// ─── POBLAR SELECTS ─────────────────────────────────────────────────────────
-function poblarProductos(selectSitioId, selectProdId) {
-    const sitio = document.getElementById(selectSitioId).value;
-    const sel   = document.getElementById(selectProdId);
-    const prods = CATALOGO[sitio];
-    let html = '';
-    let lastCat = '';
-    prods.forEach(p => {
-        if (p.cat !== lastCat) {
-            if (lastCat) html += '</optgroup>';
-            html += `<optgroup label="${p.cat}">`;
-            lastCat = p.cat;
-        }
-        const qty = getCantidad(p.id, sitio);
-        const label = qty !== null ? `${p.nombre} (stock: ${qty})` : p.nombre;
-        html += `<option value="${p.id}">${label}</option>`;
+function poblarInsumos(selectSitioId, selectItemId) {
+    const sitio   = document.getElementById(selectSitioId).value;
+    const sel     = document.getElementById(selectItemId);
+    const insumos = items.filter(p => p.sitios?.includes(sitio));
+    let html = '', lastCat = '';
+    insumos.forEach(p => {
+        const cat = CAT_LABEL[p.categoria]||p.categoria;
+        if (cat !== lastCat) { if (lastCat) html += '</optgroup>'; html += '<optgroup label="' + cat + '">'; lastCat = cat; }
+        const s = getStock(p.id, sitio);
+        const stock = s !== null ? ' (stock: ' + (s?.cantidad??0) + ' ' + p.unidad + ')' : '';
+        html += '<option value="' + p.id + '" data-unidad="' + p.unidad + '" data-nombre="' + p.nombre + '">' + p.nombre + stock + '</option>';
     });
     if (lastCat) html += '</optgroup>';
     sel.innerHTML = html;
 }
 
-// ─── REPONER ────────────────────────────────────────────────────────────────
 async function reponerStock() {
-    const sitio    = document.getElementById('rep-sitio').value;
-    const prodId   = document.getElementById('rep-prod').value;
-    const cant     = parseInt(document.getElementById('rep-cant').value);
-    const nota     = document.getElementById('rep-nota').value.trim();
-    const prodNombre = CATALOGO[sitio].find(p => p.id === prodId)?.nombre || prodId;
-
-    if (!cant || cant < 1) { toast('Ingresa una cantidad válida', 'err'); return; }
-
-    const actual = getCantidad(prodId, sitio) ?? 0;
+    const sitio  = document.getElementById('rep-sitio').value;
+    const itemId = document.getElementById('rep-item').value;
+    const cant   = parseFloat(document.getElementById('rep-cant').value);
+    const nota   = document.getElementById('rep-nota').value.trim();
+    const opt    = document.getElementById('rep-item').selectedOptions[0];
+    const nombre = opt?.dataset?.nombre || itemId;
+    const unidad = opt?.dataset?.unidad || '';
+    if (!cant || cant <= 0) { toast('Ingresa una cantidad valida', 'err'); return; }
+    const s      = getStock(itemId, sitio);
+    const actual = s?.cantidad ?? 0;
+    const min    = s?.alerta_min ?? 0;
     const nueva  = actual + cant;
-    const min    = getStock(prodId, sitio)?.alerta_min ?? MIN_DEFAULT;
-
     try {
-        // Upsert stock_local
         const { error: e1 } = await SB.from('stock_local').upsert(
-            { producto_id: prodId, sitio, cantidad: nueva, alerta_min: min, updated_at: new Date().toISOString() },
-            { onConflict: 'producto_id,sitio' }
+            { item_id: itemId, sitio, cantidad: nueva, alerta_min: min, updated_at: new Date().toISOString() },
+            { onConflict: 'item_id,sitio' }
         );
         if (e1) throw e1;
-
-        // Registrar movimiento
-        await SB.from('stock_movimientos').insert({
-            producto_id: prodId, producto_nombre: prodNombre,
-            sitio, tipo: 'ingreso',
+        const { error: e2 } = await SB.from('stock_movimientos').insert({
+            item_id: itemId, sitio, tipo: 'ingreso',
             cantidad: cant, cantidad_anterior: actual,
-            nota: nota || 'Reposición manual',
-            creado_at: new Date().toISOString()
+            usuario: 'panel_inventario',
+            nota: nota || 'Reposicion manual'
         });
-
-        stockMap.set(prodId + '|' + sitio, { cantidad: nueva, alerta_min: min });
+        if (e2) throw e2;
+        stockMap.set(itemId + '|' + sitio, { cantidad: nueva, alerta_min: min });
         await cargarTodo();
-        poblarProductos('rep-sitio', 'rep-prod');
+        poblarInsumos('rep-sitio', 'rep-item');
         document.getElementById('rep-cant').value = 1;
         document.getElementById('rep-nota').value = '';
-        toast(`✅ ${prodNombre}: +${cant} en ${SITIO_LABEL[sitio]}`, 'ok');
-    } catch (e) {
-        console.error(e);
-        toast('Error al reponer: ' + (e.message || e), 'err');
-    }
+        toast(nombre + ': +' + cant + ' ' + unidad + ' en ' + SITIO_LABEL[sitio], 'ok');
+    } catch(e) { toast('Error al reponer: ' + (e.message||e), 'err'); }
 }
 
-// ─── MOVER ──────────────────────────────────────────────────────────────────
-async function moverStock() {
-    const origen  = document.getElementById('mov-origen').value;
-    const destino = document.getElementById('mov-destino').value;
-    const prodId  = document.getElementById('mov-prod').value;
-    const cant    = parseInt(document.getElementById('mov-cant').value);
-    const prodNombre = CATALOGO[origen].find(p => p.id === prodId)?.nombre || prodId;
-
-    if (origen === destino) { toast('Origen y destino no pueden ser el mismo', 'err'); return; }
-    if (!cant || cant < 1)  { toast('Ingresa una cantidad válida', 'err'); return; }
-
-    const cantO = getCantidad(prodId, origen) ?? 0;
-    if (cantO < cant) { toast(`Stock insuficiente en ${SITIO_LABEL[origen]} (hay ${cantO})`, 'err'); return; }
-
-    const cantD   = getCantidad(prodId, destino) ?? 0;
-    const nuevaO  = cantO - cant;
-    const nuevaD  = cantD + cant;
-    const minO    = getStock(prodId, origen)?.alerta_min  ?? MIN_DEFAULT;
-    const minD    = getStock(prodId, destino)?.alerta_min ?? MIN_DEFAULT;
-
-    try {
-        const { error: e1 } = await SB.from('stock_local').upsert(
-            { producto_id: prodId, sitio: origen,  cantidad: nuevaO, alerta_min: minO, updated_at: new Date().toISOString() },
-            { onConflict: 'producto_id,sitio' }
-        );
-        if (e1) throw e1;
-
-        const { error: e2 } = await SB.from('stock_local').upsert(
-            { producto_id: prodId, sitio: destino, cantidad: nuevaD, alerta_min: minD, updated_at: new Date().toISOString() },
-            { onConflict: 'producto_id,sitio' }
-        );
-        if (e2) throw e2;
-
-        await SB.from('stock_movimientos').insert({
-            producto_id: prodId, producto_nombre: prodNombre,
-            sitio: origen, sitio_destino: destino, tipo: 'transferencia',
-            cantidad: cant, cantidad_anterior: cantO,
-            nota: `${SITIO_LABEL[origen]} → ${SITIO_LABEL[destino]}`,
-            creado_at: new Date().toISOString()
-        });
-
-        stockMap.set(prodId + '|' + origen,  { cantidad: nuevaO, alerta_min: minO });
-        stockMap.set(prodId + '|' + destino, { cantidad: nuevaD, alerta_min: minD });
-        await cargarTodo();
-        toast(`✅ ${prodNombre}: ${cant} movidos a ${SITIO_LABEL[destino]}`, 'ok');
-    } catch (e) {
-        console.error(e);
-        toast('Error al mover: ' + (e.message || e), 'err');
-    }
-}
-
-// ─── ALERTAS ────────────────────────────────────────────────────────────────
 function renderAlertas() {
-    const agotados = [];
-    const bajos    = [];
-
-    ['cafe','fuente','handroll'].forEach(sitio => {
-        CATALOGO[sitio].forEach(p => {
+    const agotados = [], bajos = [];
+    items.forEach(p => {
+        (p.sitios||[]).forEach(sitio => {
             const s = getStock(p.id, sitio);
             if (!s) return;
-            if (s.cantidad === 0) agotados.push({ ...p, sitio, cantidad: 0, min: s.alerta_min });
-            else if (s.cantidad <= s.alerta_min) bajos.push({ ...p, sitio, cantidad: s.cantidad, min: s.alerta_min });
+            const e = { ...p, sitio, cantidad: s.cantidad, min: s.alerta_min };
+            if (s.cantidad===0) agotados.push(e);
+            else if (s.cantidad<=s.alerta_min) bajos.push(e);
         });
     });
-
-    // Badge en tab
     const total = agotados.length + bajos.length;
-    const btn   = document.getElementById('btn-tab-alertas');
-    btn.innerHTML = `⚠️ Alertas${total > 0 ? ` <span class="badge">${total}</span>` : ''}`;
-
-    const renderLista = (items, contenedor, cls) => {
-        if (!items.length) {
-            document.getElementById(contenedor).innerHTML = `<p class="empty-msg">✅ Ninguno</p>`;
-            return;
-        }
-        document.getElementById(contenedor).innerHTML = items.map(p => `
-            <div class="alerta-item ${cls}">
-                <div>
-                    <span class="alerta-sitio ${SITIO_CLASS[p.sitio]}">${SITIO_LABEL[p.sitio]}</span>
-                    <div style="font-weight:600;margin-top:2px">${p.nombre}</div>
-                </div>
-                <div style="text-align:right;font-size:0.82rem">
-                    <div style="font-weight:700">${p.cantidad} uds</div>
-                    <div style="color:var(--muted)">mín ${p.min}</div>
-                </div>
-            </div>`).join('');
+    const btn = document.getElementById('btn-tab-alertas');
+    btn.innerHTML = 'Alertas' + (total>0 ? ' <span class="badge">' + total + '</span>' : '');
+    const render = (lista, id, cls) => {
+        if (!lista.length) { document.getElementById(id).innerHTML = '<p class="empty-msg">Ninguno</p>'; return; }
+        document.getElementById(id).innerHTML = lista.map(p =>
+            '<div class="alerta-item ' + cls + '"><div><span class="alerta-sitio ' + SITIO_CLASS[p.sitio] + '">' + SITIO_LABEL[p.sitio] + '</span><div style="font-weight:600;margin-top:2px">' + p.nombre + '</div></div><div style="text-align:right;font-size:0.82rem"><div style="font-weight:700">' + p.cantidad + ' ' + p.unidad + '</div><div style="color:var(--muted)">min ' + p.min + '</div></div></div>'
+        ).join('');
     };
-
-    renderLista(agotados, 'alertas-agotados', 'red');
-    renderLista(bajos,    'alertas-bajos',    'yellow');
+    render(agotados, 'alertas-agotados', 'red');
+    render(bajos,    'alertas-bajos',    'yellow');
 }
 
-// ─── MÍNIMOS ────────────────────────────────────────────────────────────────
 function renderMinimos() {
-    const sitio = document.getElementById('min-sitio').value;
-    const prods = CATALOGO[sitio];
-    document.getElementById('tabla-minimos').innerHTML = prods.map(p => {
-        const min = getStock(p.id, sitio)?.alerta_min ?? MIN_DEFAULT;
-        return `<div class="min-row">
-            <span style="font-size:0.88rem">${p.nombre}</span>
-            <div style="display:flex;gap:8px;align-items:center">
-                <input type="number" id="min-${p.id}" value="${min}" min="0" style="width:72px">
-                <button class="btn-save-min" onclick="guardarMinimo('${p.id}','${sitio}')">Guardar</button>
-            </div>
-        </div>`;
+    const sitio   = document.getElementById('min-sitio').value;
+    const insumos = items.filter(p => p.sitios?.includes(sitio));
+    if (!insumos.length) { document.getElementById('tabla-minimos').innerHTML = '<p class="empty-msg">No hay insumos</p>'; return; }
+    document.getElementById('tabla-minimos').innerHTML = insumos.map(p => {
+        const s = getStock(p.id, sitio);
+        const min = s?.alerta_min ?? 0;
+        return '<div class="min-row"><span style="font-size:0.88rem">' + p.nombre + ' <span style="font-size:0.7rem;color:var(--muted)">' + p.unidad + '</span></span><div style="display:flex;gap:8px;align-items:center"><input type="number" id="min-' + p.id + '" value="' + min + '" min="0" style="width:80px"><button class="btn-save-min" onclick="guardarMinimo(\'' + p.id + '\',\'' + sitio + '\')">Guardar</button></div></div>';
     }).join('');
 }
 
-async function guardarMinimo(prodId, sitio) {
-    const min = parseInt(document.getElementById('min-' + prodId).value);
-    if (isNaN(min) || min < 0) { toast('Valor inválido', 'err'); return; }
-    const cant = getCantidad(prodId, sitio) ?? 0;
+async function guardarMinimo(itemId, sitio) {
+    const min  = parseFloat(document.getElementById('min-' + itemId).value);
+    if (isNaN(min)||min<0) { toast('Valor invalido', 'err'); return; }
+    const s    = getStock(itemId, sitio);
+    const cant = s?.cantidad ?? 0;
     try {
         const { error } = await SB.from('stock_local').upsert(
-            { producto_id: prodId, sitio, cantidad: cant, alerta_min: min, updated_at: new Date().toISOString() },
-            { onConflict: 'producto_id,sitio' }
+            { item_id: itemId, sitio, cantidad: cant, alerta_min: min, updated_at: new Date().toISOString() },
+            { onConflict: 'item_id,sitio' }
         );
         if (error) throw error;
-        const s = stockMap.get(prodId + '|' + sitio) || { cantidad: cant };
-        s.alerta_min = min;
-        stockMap.set(prodId + '|' + sitio, s);
+        const cur = stockMap.get(itemId + '|' + sitio) || { cantidad: cant };
+        cur.alerta_min = min;
+        stockMap.set(itemId + '|' + sitio, cur);
         renderAlertas();
-        toast('Mínimo guardado', 'ok');
-    } catch (e) {
-        toast('Error: ' + (e.message || e), 'err');
-    }
+        toast('Minimo guardado', 'ok');
+    } catch(e) { toast('Error: ' + (e.message||e), 'err'); }
 }
 
-// ─── HISTORIAL ──────────────────────────────────────────────────────────────
 async function cargarHistorial() {
     document.getElementById('tabla-historial').innerHTML = '<p class="loading">Cargando...</p>';
     const sitio = document.getElementById('hist-sitio').value;
     const tipo  = document.getElementById('hist-tipo').value;
     try {
         let q = SB.from('stock_movimientos')
-            .select('producto_nombre, sitio, sitio_destino, tipo, cantidad, cantidad_anterior, nota, creado_at')
-            .order('creado_at', { ascending: false })
-            .limit(60);
+            .select('item_id, sitio, tipo, cantidad, cantidad_anterior, usuario, nota, creado_at')
+            .order('creado_at', { ascending: false }).limit(60);
         if (sitio) q = q.eq('sitio', sitio);
         if (tipo)  q = q.eq('tipo', tipo);
         const { data, error } = await q;
         if (error) throw error;
-        if (!data?.length) {
-            document.getElementById('tabla-historial').innerHTML = '<p class="empty-msg">Sin movimientos</p>';
-            return;
-        }
+        if (!data?.length) { document.getElementById('tabla-historial').innerHTML = '<p class="empty-msg">Sin movimientos</p>'; return; }
         document.getElementById('tabla-historial').innerHTML = data.map(r => {
-            const fecha = new Date(r.creado_at).toLocaleString('es-CL', { day:'2-digit', month:'2-digit', hour:'2-digit', minute:'2-digit' });
-            const destino = r.sitio_destino ? ` → ${SITIO_LABEL[r.sitio_destino] || r.sitio_destino}` : '';
-            return `<div class="hist-row">
-                <span class="hist-tipo ${r.tipo}">${r.tipo}</span>
-                <div style="flex:1">
-                    <div style="font-weight:600;font-size:0.87rem">${r.producto_nombre || '—'}</div>
-                    <div style="color:var(--muted);font-size:0.78rem">${SITIO_LABEL[r.sitio] || r.sitio}${destino} · ${r.nota || ''}</div>
-                </div>
-                <div style="text-align:right;white-space:nowrap">
-                    <div style="font-weight:700">${r.cantidad > 0 ? '+' : ''}${r.cantidad}</div>
-                    <div style="color:var(--muted);font-size:0.75rem">${fecha}</div>
-                </div>
-            </div>`;
+            const insumo = items.find(i => i.id === r.item_id);
+            const nombre = insumo?.nombre || r.item_id;
+            const unidad = insumo?.unidad || '';
+            const fecha  = new Date(r.creado_at).toLocaleString('es-CL', { day:'2-digit', month:'2-digit', hour:'2-digit', minute:'2-digit' });
+            const signo  = r.tipo==='ingreso' ? '+' : r.tipo==='venta' ? '-' : '+-';
+            return '<div class="hist-row"><span class="hist-tipo ' + r.tipo + '">' + r.tipo + '</span><div style="flex:1"><div style="font-weight:600;font-size:0.87rem">' + nombre + '</div><div style="color:var(--muted);font-size:0.78rem">' + (SITIO_LABEL[r.sitio]||r.sitio) + ' - ' + (r.nota||r.usuario||'') + '</div></div><div style="text-align:right;white-space:nowrap"><div style="font-weight:700">' + signo + r.cantidad + ' ' + unidad + '</div><div style="color:var(--muted);font-size:0.75rem">' + fecha + '</div></div></div>';
         }).join('');
-    } catch (e) {
-        document.getElementById('tabla-historial').innerHTML = '<p class="empty-msg">Error al cargar historial</p>';
-    }
+    } catch(e) { document.getElementById('tabla-historial').innerHTML = '<p class="empty-msg">Error al cargar historial</p>'; }
 }
 
-// ─── UI ─────────────────────────────────────────────────────────────────────
 function showTab(id, btn) {
     document.querySelectorAll('.tab-panel').forEach(p => p.classList.remove('active'));
     document.querySelectorAll('.tab-btn').forEach(b => b.classList.remove('active'));
     document.getElementById('tab-' + id).classList.add('active');
     btn.classList.add('active');
-    if (id === 'historial') cargarHistorial();
-    if (id === 'individual') renderIndividual();
-    if (id === 'minimos')   renderMinimos();
+    if (id==='historial')  cargarHistorial();
+    if (id==='individual') renderIndividual();
+    if (id==='minimos')    renderMinimos();
 }
 
 let _toastTimer;
 function toast(msg, tipo) {
     const el = document.getElementById('toast');
     el.textContent = msg;
-    el.className   = 'toast show ' + (tipo || 'ok');
+    el.className = 'toast show ' + (tipo||'ok');
     clearTimeout(_toastTimer);
-    _toastTimer = setTimeout(() => el.classList.remove('show'), 3000);
+    _toastTimer = setTimeout(() => el.classList.remove('show'), 3500);
 }
 
-// ─── INIT ────────────────────────────────────────────────────────────────────
 (async function init() {
     const { data: { session } } = await SB.auth.getSession();
-    if (session) {
-        await mostrarDashboard();
-    }
-    document.getElementById('inp-pass').addEventListener('keydown', e => {
-        if (e.key === 'Enter') doLogin();
-    });
+    if (session) await mostrarDashboard();
+    document.getElementById('inp-pass').addEventListener('keydown', e => { if (e.key==='Enter') doLogin(); });
 })();
 </script>
 </body>
