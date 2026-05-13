@@ -399,6 +399,13 @@
             <div class="cierre-item"><div class="cierre-label">✅ Transacciones</div><div class="cierre-valor" id="cierre-num-trans">0</div></div>
             <div class="cierre-item"><div class="cierre-label">❌ Anuladas</div><div class="cierre-valor" id="cierre-num-anul">0</div></div>
         </div>
+        <!-- Alertas de stock al cierre — solo visible si hay insumos bajo el mínimo -->
+        <div id="cierre-stock-alertas" style="display:none; margin: 4px 0 16px; border-radius:10px; overflow:hidden; border:1px solid var(--border);">
+            <div style="background:rgba(239,68,68,0.12); padding:8px 14px; font-size:0.7rem; letter-spacing:2px; text-transform:uppercase; color:var(--red); font-weight:700;">
+                ⚠️ Stock bajo al cierre
+            </div>
+            <div id="cierre-stock-lista" style="padding:8px 0; max-height:140px; overflow-y:auto;"></div>
+        </div>
         <div class="modal-acciones">
             <button class="btn-modal-cancel" onclick="cerrarModalCierre()">Volver</button>
             <button class="btn-modal-confirm" onclick="confirmarCierre()">CERRAR TURNO</button>
