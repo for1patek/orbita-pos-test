@@ -119,20 +119,21 @@
             const itemIds = [...new Set(recetas.map(r => r.item_id))];
             const itemLista = itemIds.map(id => `"${id}"`).join(',');
 
-            // 3. Traer stock_local + tipo_control de stock_items en una sola query
+            // 3. Traer stock_local + tipo_control + nombre de stock_items en una sola query
             const resStock = await fetch(
-                REST_URL() + `stock_local?sitio=eq.${sitio}&item_id=in.(${itemLista})&select=item_id,cantidad,stock_items(tipo_control)`,
+                REST_URL() + `stock_local?sitio=eq.${sitio}&item_id=in.(${itemLista})&select=item_id,cantidad,stock_items(tipo_control,nombre)`,
                 { headers: headers() }
             );
             const stockRows = await resStock.json();
             if (!resStock.ok || !Array.isArray(stockRows)) return mapa;
 
-            // 4. Construir mapa rápido item_id → { cantidad, tipo_control }
+            // 4. Construir mapa rápido item_id → { cantidad, tipo_control, nombre }
             const stockPorItem = new Map();
             stockRows.forEach(r => {
                 stockPorItem.set(r.item_id, {
                     cantidad:     r.cantidad ?? 0,
                     tipo_control: r.stock_items?.tipo_control ?? 'exacto',
+                    nombre:       r.stock_items?.nombre ?? '',
                 });
             });
 
@@ -142,28 +143,27 @@
                 const insumos = recetas.filter(r => r.producto_id === prodId);
                 if (!insumos.length) return; // sin receta → no se mete en el mapa → se muestra normal
 
-                let minDisponible = Infinity; // unidades del producto que se pueden hacer
+                let minDisponible = Infinity;
                 let algoBloqueado = false;
+                let motivoBloqueo = null;
 
                 for (const insumo of insumos) {
                     const s = stockPorItem.get(insumo.item_id);
-                    if (!s) { algoBloqueado = true; break; } // sin fila de stock → bloqueado
+                    if (!s) { algoBloqueado = true; motivoBloqueo = 'insumo sin stock'; break; }
 
                     if (s.tipo_control === 'tolerancia') {
-                        // Gramos/ml: bloqueado si cantidad < cantidad_receta * tolerancia
                         const minRequerido = insumo.cantidad_receta * TOLERANCIA;
-                        if (s.cantidad < minRequerido) { algoBloqueado = true; break; }
-                        // Para tolerancia devolvemos cuántas "porciones" quedan
+                        if (s.cantidad < minRequerido) { algoBloqueado = true; motivoBloqueo = s.nombre; break; }
                         const porciones = Math.floor(s.cantidad / insumo.cantidad_receta);
                         minDisponible = Math.min(minDisponible, porciones);
                     } else {
-                        // Exacto (unidades): cuántos productos completos se pueden hacer
                         const porciones = Math.floor(s.cantidad / insumo.cantidad_receta);
+                        if (porciones <= 0) { algoBloqueado = true; motivoBloqueo = s.nombre; break; }
                         minDisponible = Math.min(minDisponible, porciones);
                     }
                 }
 
-                mapa.set(prodId, algoBloqueado ? 0 : (minDisponible === Infinity ? 0 : minDisponible));
+                mapa.set(prodId, { qty: algoBloqueado ? 0 : (minDisponible === Infinity ? 0 : minDisponible), motivo: algoBloqueado ? motivoBloqueo : null });
             });
 
         } catch (e) {
