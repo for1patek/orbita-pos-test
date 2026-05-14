@@ -790,7 +790,8 @@
         const chips = GRANOS_INFO.map(g => {
             const activo = sel === g.id;
             const granoId = p.id + '_' + g.id.toLowerCase();
-            const granoAgotado = _stockMap.has(granoId) && _stockMap.get(granoId) <= 0;
+            const granoEntrada = _stockMap.has(granoId) ? _stockMap.get(granoId) : null;
+            const granoAgotado = granoEntrada !== null && granoEntrada.qty <= 0;
             if (granoAgotado) {
                 return `<button type="button" disabled style="flex:1;padding:8px 10px;font-size:0.78rem;border:1px solid var(--border);border-radius:8px;background:var(--surface);color:var(--muted);cursor:not-allowed;font-weight:700;display:flex;flex-direction:column;align-items:flex-start;gap:2px;line-height:1.2;text-align:left;opacity:0.45;position:relative;">
                     <span>${escHtml(g.label)}</span>
