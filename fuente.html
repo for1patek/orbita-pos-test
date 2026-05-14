@@ -2749,19 +2749,21 @@
             const card = document.getElementById('card-' + p.id)
                       || document.querySelector(`[data-prod="${p.id}"]`);
             if (!card) return;
-            const qty = _stockMap.has(p.id) ? _stockMap.get(p.id) : null;
-            const agotado = qty !== null && qty <= 0;
+            const entrada = _stockMap.has(p.id) ? _stockMap.get(p.id) : null;
+            const qty     = entrada !== null ? entrada.qty   : null;
+            const motivo  = entrada !== null ? entrada.motivo : null;
+            const agotado = entrada !== null && qty <= 0;
             if (agotado) {
                 card.classList.add('card-agotado');
-                // Agrega badge "Agotado" si no existe
-                if (!card.querySelector('.badge-agotado')) {
-                    const badge = document.createElement('div');
+                let badge = card.querySelector('.badge-agotado');
+                if (!badge) {
+                    badge = document.createElement('div');
                     badge.className = 'badge-agotado';
-                    badge.textContent = 'Agotado';
                     badge.style.cssText = 'position:absolute;top:10px;right:10px;background:#e53e3e;color:#fff;font-size:0.7rem;font-weight:700;padding:3px 10px;border-radius:20px;letter-spacing:0.5px;text-transform:uppercase;z-index:2;';
                     card.style.position = 'relative';
                     card.prepend(badge);
                 }
+                badge.textContent = motivo ? `Sin ${motivo}` : 'Agotado';
                 card.style.opacity = '0.45';
                 card.style.pointerEvents = 'none';
                 card.style.filter = 'grayscale(0.6)';
@@ -2776,13 +2778,14 @@
 
         // Bebidas / jugos / aguas — marcar fila como no disponible
         productos.filter(p => ['bebida','agua','jugo'].includes(p.cat)).forEach(p => {
-            const qty = _stockMap.has(p.id) ? _stockMap.get(p.id) : null;
-            const agotado = qty !== null && qty <= 0;
+            const entrada = _stockMap.has(p.id) ? _stockMap.get(p.id) : null;
+            const qty     = entrada !== null ? entrada.qty : null;
+            const agotado = entrada !== null && qty <= 0;
             const fila = document.getElementById('fila-' + p.id)
                       || document.querySelector(`[data-fila="${p.id}"]`);
             if (!fila) return;
-            fila.style.opacity      = agotado ? '0.45' : '';
-            fila.style.pointerEvents = agotado ? 'none' : '';
+            fila.style.opacity       = agotado ? '0.45' : '';
+            fila.style.pointerEvents = agotado ? 'none'  : '';
         });
     }
 
