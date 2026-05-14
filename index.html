@@ -1701,19 +1701,21 @@
         productos.forEach(p => {
             const card = document.getElementById('card-' + p.id);
             if (!card) return;
-            const enStock = _stockMap.has(p.id);
-            const qty     = enStock ? _stockMap.get(p.id) : null;
-            const agotado = enStock && qty <= 0;
+            const entrada = _stockMap.has(p.id) ? _stockMap.get(p.id) : null;
+            const qty     = entrada !== null ? entrada.qty   : null;
+            const motivo  = entrada !== null ? entrada.motivo : null;
+            const agotado = entrada !== null && qty <= 0;
             if (agotado) {
                 card.classList.add('card-agotado');
-                if (!card.querySelector('.badge-agotado')) {
-                    const badge = document.createElement('div');
+                let badge = card.querySelector('.badge-agotado');
+                if (!badge) {
+                    badge = document.createElement('div');
                     badge.className = 'badge-agotado';
-                    badge.textContent = 'Agotado';
                     badge.style.cssText = 'position:absolute;top:10px;right:10px;background:#e53e3e;color:#fff;font-size:0.7rem;font-weight:700;padding:3px 10px;border-radius:20px;letter-spacing:0.5px;text-transform:uppercase;z-index:2;';
                     card.style.position = 'relative';
                     card.prepend(badge);
                 }
+                badge.textContent = motivo ? `Sin ${motivo}` : 'Agotado';
                 card.style.opacity       = '0.45';
                 card.style.pointerEvents = 'none';
                 card.style.filter        = 'grayscale(0.6)';
