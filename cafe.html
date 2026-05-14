@@ -633,6 +633,10 @@
     let granoSel = {}; // { [baseId]: 'Armonia'|'Napoli' }  (selección actual para el próximo +)
     function _qtyCafe(baseId) { return cafesEnPedido.filter(c => c.baseId === baseId).length; }
     function setGranoCafe(baseId, granoId) {
+        // No seleccionar si el grano está agotado
+        const granoKey = baseId + '_' + granoId.toLowerCase();
+        const entrada = _stockMap.has(granoKey) ? _stockMap.get(granoKey) : null;
+        if (entrada !== null && entrada.qty <= 0) return;
         granoSel[baseId] = granoId;
         renderMenu();
     }
@@ -663,6 +667,10 @@
     function agregarCafeDeGrano(baseId, granoId) {
         const prod = productos.find(p => p.id === baseId);
         if (!prod || !prod.activo) return;
+        // Bloquear si el grano está agotado en el mapa de stock
+        const granoKey = baseId + '_' + granoId.toLowerCase();
+        const entrada = _stockMap.has(granoKey) ? _stockMap.get(granoKey) : null;
+        if (entrada !== null && entrada.qty <= 0) return;
         _pushCafe(baseId, granoId);
         renderMenu();
         actualizarResumen();
@@ -1790,6 +1798,7 @@
         const todosIds = [...new Set([...ids, ...idsGrano])];
         if (!todosIds.length) return;
         _stockMap = await window.orbitaStock.stockVariosProductos('cafe', todosIds);
+        renderMenu(); // re-render chips con stock ya cargado
         applyStockUI();
     }
 
